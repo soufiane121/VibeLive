@@ -22,6 +22,10 @@ target 'VibeLive' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
+  # // highlight-start
+  pre_install do |installer|
+    $RNMapboxMaps.pre_install(installer)
+  end
 
   target 'VibeLiveTests' do
     inherit! :complete
@@ -29,6 +33,7 @@ target 'VibeLive' do
   end
 
   post_install do |installer|
+    $RNMapboxMaps.post_install(installer)
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,
