@@ -1,9 +1,18 @@
 import React, {useState, useEffect} from 'react';
-import MapboxGL from '@rnmapbox/maps';
-import {View, StyleSheet, Alert} from 'react-native';
+import {
+  MapView,
+  ShapeSource,
+  LineLayer,
+  Camera,
+  FillLayer,
+  LocationPuck,
+  setAccessToken
+} from '@rnmapbox/maps';
+import {View, StyleSheet, Alert, Text, Dimensions} from 'react-native';
+import {PUB_MAPBOX_KEY} from '@env';
 
-MapboxGL.setAccessToken(
-  'sk.eyJ1IjoidGVzdC0xMjEiLCJhIjoiY20xd3drYzVhMHJ3azJqb2ttZmJjYTY1ZCJ9.k03054nYYuW8sQtJkU522w',
+setAccessToken(
+  PUB_MAPBOX_KEY,
 );
 
 // Utility function to generate a radar arc polygon (animated beam)
@@ -94,14 +103,14 @@ const RadarMap = () => {
   };
 
   useEffect(() => {
-    getLocation();
-    const rotateRadar = () => {
-      setStartAngle(prevAngle => (prevAngle + 0.5) % 360); // Increment angle for slower rotation
-      requestAnimationFrame(rotateRadar); // Continue the animation
-    };
+    // getLocation();
+    // const rotateRadar = () => {
+    //   setStartAngle(prevAngle => (prevAngle + 0.09) % 360); // Increment angle for slower rotation
+    //   requestAnimationFrame(rotateRadar); // Continue the animation
+    // };
 
-    rotateRadar(); // Start rotation
-    return () => cancelAnimationFrame(rotateRadar); // Clean up animation
+    // rotateRadar(); // Start rotation
+    // return () => cancelAnimationFrame(rotateRadar); // Clean up animation
   }, []);
 
   // Create the radar beam polygon (sweeping animation)
@@ -111,33 +120,38 @@ const RadarMap = () => {
 
   return (
     <View style={styles.container}>
-      <MapboxGL.MapView
+      <MapView
         style={styles.map}
-        styleURL="mapbox://styles/mapbox/dark-v11">
-        <MapboxGL.Camera zoomLevel={14} centerCoordinate={center} />
-
+        styleURL="mapbox://styles/mapbox/dark-v11"
+        attributionControl={false}
+        scaleBarEnabled={false}
+        logoEnabled={false}>
+        <Camera zoomLevel={14} centerCoordinate={center} />
         {/* Static Circle Border Shape */}
-        <MapboxGL.ShapeSource id="circleBorderSource" shape={staticCircle}>
-          <MapboxGL.LineLayer
+        {/* <ShapeSource id="circleBorderSource" shape={staticCircle}>
+          <LineLayer
             id="circleBorder"
             style={{
               lineColor: 'rgba(110, 255, 0, 0.6)', // Static border color (green, semi-transparent)
               lineWidth: 2,
             }}
           />
-        </MapboxGL.ShapeSource>
-
+        </ShapeSource> */}
+        {/* <LocationPuck puckBearingEnabled puckBearing="course" /> */}
         {/* Animated Radar Beam Shape */}
-        <MapboxGL.ShapeSource id="radarSource" shape={radarBeam}>
-          <MapboxGL.FillLayer
+        {/* <ShapeSource id="radarSource" shape={radarBeam}>
+          <FillLayer
             id="radarBeam"
             style={{
               fillColor: 'rgba(255, 165, 0, 0.3)', // Radar beam color (orange, semi-transparent)
               fillOpacity: 0.6,
             }}
           />
-        </MapboxGL.ShapeSource>
-      </MapboxGL.MapView>
+        </ShapeSource> */}
+      </MapView>
+      {/* <View style={styles.textContainer}>
+        <Text style={styles.text}>Hello there</Text>
+      </View> */}
     </View>
   );
 };
@@ -148,6 +162,24 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  textContainer: {
+    zIndex: 1,
+    flexDirection: 'column-reverse',
+    justifyContent: 'flex-end', // Pushes the content to the bottom
+    alignItems: 'flex-end', // Center horizontally
+    // paddingBottom: 20, // Add padding at the bottom
+    backgroundColor: 'transparent', // Semi-transparent background for readability
+    position: 'absolute', // Position at the bottom
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 10,
+    // width: "20%"
+  },
+  text: {
+    color: 'red',
+    fontSize: 20,
   },
 });
 
