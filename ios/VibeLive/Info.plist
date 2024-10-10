@@ -50,5 +50,9 @@
 	<false/>
 	<key>MBXAccessToken</key>
 	<string>pk.eyJ1IjoidGVzdC0xMjEiLCJhIjoiY20xd3R1bWxyMHFvZjJsb3JjeDM2enNiMSJ9.-YrUOqgHpXtcRxE6iblfTg</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Please allow VibeLive to use location</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>please allow </string>
 </dict>
 </plist>
