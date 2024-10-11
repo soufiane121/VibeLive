@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo, useRef} from 'react';
 import {
   MapView,
   ShapeSource,
@@ -6,16 +6,14 @@ import {
   Camera,
   FillLayer,
   LocationPuck,
-  setAccessToken
+  setAccessToken,
 } from '@rnmapbox/maps';
 import {View, StyleSheet, Alert, Text, Dimensions} from 'react-native';
 import {PUB_MAPBOX_KEY} from '@env';
+import Geolocation from '@react-native-community/geolocation';
 
-setAccessToken(
-  PUB_MAPBOX_KEY,
-);
+setAccessToken(PUB_MAPBOX_KEY);
 
-// Utility function to generate a radar arc polygon (animated beam)
 const createRadarBeam = (
   center,
   radius,
@@ -24,24 +22,19 @@ const createRadarBeam = (
   numPoints = 30,
 ) => {
   const coordinates = [center]; // Start with center point
-
-  // Convert angles to radians
   const startRadians = (startAngle * Math.PI) / 180;
   const sweepRadians = (sweepAngle * Math.PI) / 180;
-  const latitude = center[1]; // Latitude of the center point
-
-  // Factor in the distortion due to the latitude when calculating the circle
-  const adjustedRadiusX = radius / Math.cos((latitude * Math.PI) / 180); // Adjust radius for longitude
+  const latitude = center[1];
+  const adjustedRadiusX = radius / Math.cos((latitude * Math.PI) / 180);
 
   for (let i = 0; i <= numPoints; i++) {
     const angle = startRadians + (i * sweepRadians) / numPoints;
-    const x = center[0] + adjustedRadiusX * Math.cos(angle); // Adjust longitude
-    const y = center[1] + radius * Math.sin(angle); // Latitude stays the same
+    const x = center[0] + adjustedRadiusX * Math.cos(angle);
+    const y = center[1] + radius * Math.sin(angle);
     coordinates.push([x, y]);
   }
 
-  coordinates.push(center); // Close the polygon by returning to the center
-
+  coordinates.push(center); // Close the polygon
   return {
     type: 'Polygon',
     coordinates: [coordinates], // GeoJSON format
@@ -51,73 +44,79 @@ const createRadarBeam = (
 // Utility function to generate static circle border
 const createStaticCircle = (center, radius, numPoints = 64) => {
   const coordinates = [];
-  const latitude = center[1]; // Latitude of the center point
-
-  // Factor in the distortion due to latitude when calculating the circle
-  const adjustedRadiusX = radius / Math.cos((latitude * Math.PI) / 180); // Adjust radius for longitude
+  const latitude = center[1];
+  const adjustedRadiusX = radius / Math.cos((latitude * Math.PI) / 180);
 
   for (let i = 0; i <= numPoints; i++) {
     const angle = (i * 2 * Math.PI) / numPoints;
-    const x = center[0] + adjustedRadiusX * Math.cos(angle); // Adjust longitude
-    const y = center[1] + radius * Math.sin(angle); // Latitude stays the same
+    const x = center[0] + adjustedRadiusX * Math.cos(angle);
+    const y = center[1] + radius * Math.sin(angle);
     coordinates.push([x, y]);
   }
 
+  coordinates.push(coordinates[0]); // Close the circle
   return {
     type: 'Polygon',
-    coordinates: [coordinates], // GeoJSON format for static circle
+    coordinates: [coordinates], // GeoJSON format
   };
 };
 
 const RadarMap = () => {
-  const [startAngle, setStartAngle] = useState(0); // Initial radar sweep angle
-  const [center, setCenter] = useState([-122.406417, 37.785834]); // Center of radar (longitude, latitude)
-  const radius = 0.005; // Radar radius (in degrees, adjust accordingly)
+  const center = useMemo(() => [-122.406417, 37.785834], []); // Center of radar
+  const radius = 0.005; // Radar radius (in degrees)
+  const angleRef = useRef(0); // Use ref to store angle
+  const animationIdRef = useRef(null); // Use ref to hold the animation frame ID
+  const radarRef = useRef(null); // Use ref for ShapeSource
 
-  const getLocation = async () => {
-    try {
-        const hasPermission = await requestLocationPermission();
-        if (!hasPermission) {
-          Alert.alert(
-            'Permission Denied',
-            'Location permission is required to use this feature.',
-          );
-          return;
-        }
-    
-        Geolocation.getCurrentPosition(
-          position => {
-            const {latitude, longitude} = position.coords;
-            setCenter([longitude, latitude]);
-          },
-          error => {
-            console.log(error);
-            Alert.alert('Error', 'Unable to get location.');
-          },
-          {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-        );
-        
-    } catch (error) {
-        
-    }
+const radarBeam = useMemo(
+  () => createRadarBeam(center, radius, angleRef.current, 45),
+  [center, radius, angleRef.current], // Add angleRef.current to dependencies
+);
+
+const staticCircle = useMemo(
+  () => createStaticCircle(center, radius),
+  [center, radius],
+);
+
+useEffect(() => {
+  startRadarAnimation();
+  // const rotateRadar = () => {
+  //   angleRef.current = (angleRef.current + 0.09) % 360; // Increment angle
+
+  //   // Update radar beam shape directly
+  //   radarRef.current?.setNativeProps({
+  //     shape: createRadarBeam(center, radius, angleRef.current, 45), // Use angleRef.current directly
+  //   });
+
+  //   animationIdRef.current = requestAnimationFrame(rotateRadar); // Request next frame
+  // };
+
+  // rotateRadar(); // Start rotation
+
+  return () => {
+    cancelAnimationFrame(animationIdRef.current); // Clean up animation
   };
+}, [center, radius]);  // Add dependencies for re-calculating radarBeam if center or radius change
 
-  useEffect(() => {
-    // getLocation();
-    // const rotateRadar = () => {
-    //   setStartAngle(prevAngle => (prevAngle + 0.09) % 360); // Increment angle for slower rotation
-    //   requestAnimationFrame(rotateRadar); // Continue the animation
-    // };
 
-    // rotateRadar(); // Start rotation
-    // return () => cancelAnimationFrame(rotateRadar); // Clean up animation
-  }, []);
+  const startRadarAnimation = () => {
+    const rotateRadar = () => {
+      angleRef.current = (angleRef.current + 1) % 360;
+      if (radarRef.current) {
+        console.log({angleRef: angleRef.current, radarRef: radarRef.current});
+        // console.log({cc: radarRef.current.setNativeProps});
+        radarRef.current.setNativeProps({
+          style: {
+            transform: [{rotate: `${angleRef.current}deg`}],
+          },
+        });
+      }
 
-  // Create the radar beam polygon (sweeping animation)
-  const radarBeam = createRadarBeam(center, radius, startAngle, 45); // Sweep angle of 45 degrees
-  // Create the static circle border
-  const staticCircle = createStaticCircle(center, radius);
+      animationIdRef.current = requestAnimationFrame(rotateRadar);
+    };
 
+    // rotateRadar();
+  };
   return (
     <View style={styles.container}>
       <MapView
@@ -128,30 +127,26 @@ const RadarMap = () => {
         logoEnabled={false}>
         <Camera zoomLevel={14} centerCoordinate={center} />
         {/* Static Circle Border Shape */}
-        {/* <ShapeSource id="circleBorderSource" shape={staticCircle}>
+        <ShapeSource id="circleBorderSource" shape={staticCircle}>
           <LineLayer
             id="circleBorder"
             style={{
-              lineColor: 'rgba(110, 255, 0, 0.6)', // Static border color (green, semi-transparent)
+              lineColor: 'rgba(110, 255, 0, 0.6)', // Static border color
               lineWidth: 2,
             }}
           />
-        </ShapeSource> */}
-        {/* <LocationPuck puckBearingEnabled puckBearing="course" /> */}
+        </ShapeSource>
         {/* Animated Radar Beam Shape */}
-        {/* <ShapeSource id="radarSource" shape={radarBeam}>
+        <ShapeSource id="radarSource" shape={radarBeam} ref={radarRef}>
           <FillLayer
             id="radarBeam"
             style={{
-              fillColor: 'rgba(255, 165, 0, 0.3)', // Radar beam color (orange, semi-transparent)
+              fillColor: 'rgba(255, 165, 0, 0.3)', // Radar beam color
               fillOpacity: 0.6,
             }}
           />
-        </ShapeSource> */}
+        </ShapeSource>
       </MapView>
-      {/* <View style={styles.textContainer}>
-        <Text style={styles.text}>Hello there</Text>
-      </View> */}
     </View>
   );
 };
