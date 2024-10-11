@@ -7,8 +7,17 @@ import {
   FillLayer,
   LocationPuck,
   setAccessToken,
+ 
 } from '@rnmapbox/maps';
-import {View, StyleSheet, Alert, Text, Dimensions} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Text,
+  Dimensions,
+  Animated,
+  Easing,
+} from 'react-native';
 import {PUB_MAPBOX_KEY} from '@env';
 import Geolocation from '@react-native-community/geolocation';
 
@@ -41,7 +50,6 @@ const createRadarBeam = (
   };
 };
 
-// Utility function to generate static circle border
 const createStaticCircle = (center, radius, numPoints = 64) => {
   const coordinates = [];
   const latitude = center[1];
@@ -64,59 +72,52 @@ const createStaticCircle = (center, radius, numPoints = 64) => {
 const RadarMap = () => {
   const center = useMemo(() => [-122.406417, 37.785834], []); // Center of radar
   const radius = 0.005; // Radar radius (in degrees)
-  const angleRef = useRef(0); // Use ref to store angle
-  const animationIdRef = useRef(null); // Use ref to hold the animation frame ID
   const radarRef = useRef(null); // Use ref for ShapeSource
+  const animatedValue = useRef(new Animated.Value(0)).current;
 
-const radarBeam = useMemo(
-  () => createRadarBeam(center, radius, angleRef.current, 45),
-  [center, radius, angleRef.current], // Add angleRef.current to dependencies
-);
+  const staticCircle = useMemo(
+    () => createStaticCircle(center, radius),
+    [center, radius],
+  );
 
-const staticCircle = useMemo(
-  () => createStaticCircle(center, radius),
-  [center, radius],
-);
-
-useEffect(() => {
-  startRadarAnimation();
-  // const rotateRadar = () => {
-  //   angleRef.current = (angleRef.current + 0.09) % 360; // Increment angle
-
-  //   // Update radar beam shape directly
-  //   radarRef.current?.setNativeProps({
-  //     shape: createRadarBeam(center, radius, angleRef.current, 45), // Use angleRef.current directly
-  //   });
-
-  //   animationIdRef.current = requestAnimationFrame(rotateRadar); // Request next frame
-  // };
-
-  // rotateRadar(); // Start rotation
-
-  return () => {
-    cancelAnimationFrame(animationIdRef.current); // Clean up animation
-  };
-}, [center, radius]);  // Add dependencies for re-calculating radarBeam if center or radius change
-
-
-  const startRadarAnimation = () => {
-    const rotateRadar = () => {
-      angleRef.current = (angleRef.current + 1) % 360;
-      if (radarRef.current) {
-        console.log({angleRef: angleRef.current, radarRef: radarRef.current});
-        // console.log({cc: radarRef.current.setNativeProps});
-        radarRef.current.setNativeProps({
-          style: {
-            transform: [{rotate: `${angleRef.current}deg`}],
-          },
-        });
-      }
-
-      animationIdRef.current = requestAnimationFrame(rotateRadar);
+  useEffect(() => {
+    // Animation loop
+    const startRadarAnimation = () => {
+      Animated.loop(
+        Animated.timing(animatedValue, {
+          toValue: 360, // Rotate through 360 degrees
+          duration: 5000, // 5 seconds for a full rotation
+          easing: Easing.linear,
+          useNativeDriver: false, // Not using native driver since we are updating manually
+        }),
+      ).start();
     };
 
-    // rotateRadar();
-  };
+    startRadarAnimation(); // Start the animation loop
+
+    // Cleanup animation on unmount
+    return () => animatedValue.stopAnimation();
+  }, [animatedValue]);
+
+  useEffect(() => {
+    // Whenever the animated value changes, update the radar beam's shape
+    const listenerId = animatedValue.addListener(({value}) => {
+      const updatedRadarBeam = createRadarBeam(center, radius, value, 45); // Update radar beam shape
+
+      // Apply the updated shape to the radar
+      if (radarRef.current) {
+        radarRef.current.setNativeProps({
+          shape: updatedRadarBeam, // Update radar beam
+        });
+      }
+    });
+
+    // Clean up the listener on unmount
+    return () => {
+      animatedValue.removeListener(listenerId);
+    };
+  }, [center, radius, animatedValue]);
+
   return (
     <View style={styles.container}>
       <MapView
@@ -137,7 +138,10 @@ useEffect(() => {
           />
         </ShapeSource>
         {/* Animated Radar Beam Shape */}
-        <ShapeSource id="radarSource" shape={radarBeam} ref={radarRef}>
+        <ShapeSource
+          id="radarSource"
+          shape={createRadarBeam(center, radius, 0, 45)}
+          ref={radarRef}>
           <FillLayer
             id="radarBeam"
             style={{
