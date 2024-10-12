@@ -23,13 +23,8 @@ import Geolocation from '@react-native-community/geolocation';
 
 setAccessToken(PUB_MAPBOX_KEY);
 
-const createRadarBeam = (
-  center,
-  radius,
-  startAngle,
-  sweepAngle,
-  numPoints = 30,
-) => {
+// Utility function to create radar beam
+const createRadarBeam = (center, radius, startAngle, sweepAngle, numPoints = 10) => {
   const coordinates = [center]; // Start with center point
   const startRadians = (startAngle * Math.PI) / 180;
   const sweepRadians = (sweepAngle * Math.PI) / 180;
@@ -50,6 +45,7 @@ const createRadarBeam = (
   };
 };
 
+// Utility function to create static circle border
 const createStaticCircle = (center, radius, numPoints = 64) => {
   const coordinates = [];
   const latitude = center[1];
@@ -72,51 +68,44 @@ const createStaticCircle = (center, radius, numPoints = 64) => {
 const RadarMap = () => {
   const center = useMemo(() => [-122.406417, 37.785834], []); // Center of radar
   const radius = 0.005; // Radar radius (in degrees)
-  const radarRef = useRef(null); // Use ref for ShapeSource
-  const animatedValue = useRef(new Animated.Value(0)).current;
+  const radarRef = useRef(null); // Ref for ShapeSource
+  const angleRef = useRef(0); // Ref to track current angle
+  const animationIdRef = useRef(null); // To store the animation frame reference
+  const throttleUpdate = useRef(false); // Ref for throttling updates
 
-  const staticCircle = useMemo(
-    () => createStaticCircle(center, radius),
-    [center, radius],
+  // Create static radar beam (initial)
+  const radarBeam = useMemo(
+    () => createRadarBeam(center, radius, 0, 45, 10), // Reduced numPoints for efficiency
+    [center, radius]
   );
 
-  useEffect(() => {
-    // Animation loop
-    const startRadarAnimation = () => {
-      Animated.loop(
-        Animated.timing(animatedValue, {
-          toValue: 360, // Rotate through 360 degrees
-          duration: 5000, // 5 seconds for a full rotation
-          easing: Easing.linear,
-          useNativeDriver: false, // Not using native driver since we are updating manually
-        }),
-      ).start();
-    };
-
-    startRadarAnimation(); // Start the animation loop
-
-    // Cleanup animation on unmount
-    return () => animatedValue.stopAnimation();
-  }, [animatedValue]);
+  // Create static circle border
+  const staticCircle = useMemo(() => createStaticCircle(center, radius), [center, radius]);
 
   useEffect(() => {
-    // Whenever the animated value changes, update the radar beam's shape
-    const listenerId = animatedValue.addListener(({value}) => {
-      const updatedRadarBeam = createRadarBeam(center, radius, value, 45); // Update radar beam shape
+    const rotateRadar = () => {
+      angleRef.current = (angleRef.current + 1) % 360; // Update angle
+      if (!throttleUpdate.current) {
+        throttleUpdate.current = true;
 
-      // Apply the updated shape to the radar
-      if (radarRef.current) {
-        radarRef.current.setNativeProps({
-          shape: updatedRadarBeam, // Update radar beam
-        });
+        // Throttle radar beam updates to once every 100ms
+        setTimeout(() => {
+          const updatedRadarBeam = createRadarBeam(center, radius, angleRef.current, 45);
+          if (radarRef.current) {
+            radarRef.current.setNativeProps({ shape: updatedRadarBeam });
+          }
+          throttleUpdate.current = false; // Reset throttle flag
+        }, 100); // Update every 100ms
       }
-    });
-
-    // Clean up the listener on unmount
-    return () => {
-      animatedValue.removeListener(listenerId);
+      animationIdRef.current = requestAnimationFrame(rotateRadar); // Continue animation
     };
-  }, [center, radius, animatedValue]);
+
+    rotateRadar(); // Start the animation
+
+    return () => {
+      cancelAnimationFrame(animationIdRef.current); // Clean up animation on unmount
+    };
+  }, [center, radius]);
 
   return (
     <View style={styles.container}>
@@ -125,7 +114,8 @@ const RadarMap = () => {
         styleURL="mapbox://styles/mapbox/dark-v11"
         attributionControl={false}
         scaleBarEnabled={false}
-        logoEnabled={false}>
+        logoEnabled={false}
+      >
         <Camera zoomLevel={14} centerCoordinate={center} />
         {/* Static Circle Border Shape */}
         <ShapeSource id="circleBorderSource" shape={staticCircle}>
@@ -138,10 +128,7 @@ const RadarMap = () => {
           />
         </ShapeSource>
         {/* Animated Radar Beam Shape */}
-        <ShapeSource
-          id="radarSource"
-          shape={createRadarBeam(center, radius, 0, 45)}
-          ref={radarRef}>
+        <ShapeSource id="radarSource" shape={radarBeam} ref={radarRef}>
           <FillLayer
             id="radarBeam"
             style={{
@@ -154,6 +141,7 @@ const RadarMap = () => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
