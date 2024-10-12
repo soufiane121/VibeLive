@@ -24,7 +24,7 @@ import Geolocation from '@react-native-community/geolocation';
 setAccessToken(PUB_MAPBOX_KEY);
 
 // Utility function to create radar beam
-const createRadarBeam = (center, radius, startAngle, sweepAngle, numPoints = 10) => {
+const createRadarBeam = (center, radius, startAngle, sweepAngle, numPoints = 5) => {
   const coordinates = [center]; // Start with center point
   const startRadians = (startAngle * Math.PI) / 180;
   const sweepRadians = (sweepAngle * Math.PI) / 180;
@@ -84,7 +84,7 @@ const RadarMap = () => {
 
   useEffect(() => {
     const rotateRadar = () => {
-      angleRef.current = (angleRef.current + 1) % 360; // Update angle
+      angleRef.current = (angleRef.current + 0.2) % 360; // Update angle
       if (!throttleUpdate.current) {
         throttleUpdate.current = true;
 
@@ -114,8 +114,7 @@ const RadarMap = () => {
         styleURL="mapbox://styles/mapbox/dark-v11"
         attributionControl={false}
         scaleBarEnabled={false}
-        logoEnabled={false}
-      >
+        logoEnabled={false}>
         <Camera zoomLevel={14} centerCoordinate={center} />
         {/* Static Circle Border Shape */}
         <ShapeSource id="circleBorderSource" shape={staticCircle}>
@@ -128,6 +127,7 @@ const RadarMap = () => {
           />
         </ShapeSource>
         {/* Animated Radar Beam Shape */}
+        {/* <LocationPuck puckBearingEnabled puckBearing="course" /> */}
         <ShapeSource id="radarSource" shape={radarBeam} ref={radarRef}>
           <FillLayer
             id="radarBeam"
