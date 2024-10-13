@@ -1,10 +1,17 @@
 import React, {useEffect, useRef, useMemo, MutableRefObject} from 'react';
-import {setAccessToken, ShapeSource} from '@rnmapbox/maps';
-import {View, StyleSheet} from 'react-native';
+import {
+  setAccessToken,
+  ShapeSource,
+  setTelemetryEnabled,
+  Camera,
+} from '@rnmapbox/maps';
+import {View, StyleSheet, Text} from 'react-native';
 import {PUB_MAPBOX_KEY} from '@env';
 import Map from './Map';
 import {createRadarBeam, createStaticCircle} from './HelperFuncs';
 import useGetLocation from '../../CustomHooks/useGetLocation';
+import {featureCollection, point} from '@turf/helpers';
+import ResetLocationButton from './ResetLocationButton';
 
 setAccessToken(PUB_MAPBOX_KEY);
 
@@ -16,6 +23,16 @@ const MapContainer = () => {
   const angleRef = useRef(0); // Ref to track current angle
   const animationIdRef = useRef<number | null>(null); // To store the animation frame reference
   const throttleUpdate = useRef(false); // Ref for throttling updates
+  const cameraRef = useRef<Camera | null>(null);
+  const activies = [
+    [-80.856917, 35.225859],
+    [-80.85591, 35.221859],
+    [-80.85591, 35.223859],
+    [-80.85091, 35.223859],
+    [-80.85291, 35.226859],
+  ];
+
+  const coordinatesPoints = activies.map(ele => point(ele));
 
   // Create static radar beam (initial)
   const radarBeam = useMemo(
@@ -30,6 +47,7 @@ const MapContainer = () => {
   );
 
   useEffect(() => {
+    setTelemetryEnabled(false);
     const rotateRadar = () => {
       angleRef.current = (angleRef.current + 0.2) % 360;
       if (!throttleUpdate.current) {
@@ -53,23 +71,59 @@ const MapContainer = () => {
     };
 
     // rotateRadar(); // Start the animation
-
     return () => {
       cancelAnimationFrame(animationIdRef.current); // Clean up animation on unmount
     };
   }, [center, radius]);
 
+  const handleResetcurrentLocation = () => {
+    cameraRef.current?.setCamera({
+      centerCoordinate: coordinates,
+      zoomLevel: 14,
+      animationDuration: 1000,
+    });
+  };
+
   return (
     <View style={styles.container}>
-      <Map
-        coordinate={center}
-        radarBeam={radarBeam}
-        staticCircle={staticCircle}
-        radarRef={radarRef}
-      />
-      {/* <View style={styles.textContainer}>
-        <Text style={styles.text}>Hello there</Text>
+      {center.length > 0 && (
+        <Map
+          coordinate={center}
+          radarBeam={radarBeam}
+          staticCircle={staticCircle}
+          radarRef={radarRef}
+          activitiesShape={featureCollection(coordinatesPoints)}
+          cameraRef={cameraRef}
+        />
+      )}
+      {/* <View className="z-10 flex-col justify-end items-end absolute left-0 right-0 top-0 bottom-0">
+        <Text>Hello there</Text>
       </View> */}
+      <ResetLocationButton
+        onPress={handleResetcurrentLocation}
+        styles="
+        flex
+        z-10 
+        absolute 
+        bottom-0 
+        right-3 
+        justify-end 
+        items-end 
+        bg-slate-500 
+        w-18
+        h-18
+        opacity-70
+        rounded-full
+        opacity-8
+        p-2"
+        iconStyle={{
+          size: 19,
+          color: '#cbd5e1',
+          backgroundColor: 'transparent',
+          fontSize: 40,
+          width: 40,
+        }}
+      />
     </View>
   );
 };

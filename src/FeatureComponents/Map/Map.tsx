@@ -7,18 +7,32 @@ import {
   FillLayer,
   LocationPuck,
   setAccessToken,
+  SymbolLayer,
+  Image,
+  Images,
+  CircleLayer,
 } from '@rnmapbox/maps';
 import {StyleSheet} from 'react-native';
+import live from '../../../assests/live.png';
 
 type Props = {
   coordinate: number[];
   staticCircle: any;
   radarBeam: any;
   radarRef: any;
+  activitiesShape: any;
+  cameraRef: any;
 };
 
 const Map = (props: Props) => {
-  const {coordinate, staticCircle, radarBeam, radarRef} = props;
+  const {
+    coordinate,
+    staticCircle,
+    radarBeam,
+    radarRef,
+    activitiesShape,
+    cameraRef,
+  } = props;
 
   return (
     <>
@@ -27,9 +41,9 @@ const Map = (props: Props) => {
         styleURL="mapbox://styles/mapbox/dark-v11"
         scaleBarEnabled={false}
         logoEnabled={false}>
-        <Camera zoomLevel={14} centerCoordinate={coordinate} />
+        <Camera zoomLevel={14} centerCoordinate={coordinate} ref={cameraRef} />
         {/* Static Circle Border Shape */}
-        <ShapeSource id="circleBorderSource" shape={staticCircle}>
+        {/* <ShapeSource id="circleBorderSource" shape={staticCircle}>
           <LineLayer
             id="circleBorder"
             style={{
@@ -37,15 +51,50 @@ const Map = (props: Props) => {
               lineWidth: 2,
             }}
           />
-        </ShapeSource>
+        </ShapeSource> */}
         {/* <LocationPuck puckBearingEnabled puckBearing="course" /> */}
         {/* Animated Radar Beam Shape */}
         <ShapeSource id="radarSource" shape={radarBeam} ref={radarRef}>
           <FillLayer
             id="radarBeam"
             style={{
-              fillColor: 'rgba(255, 165, 0, 0.3)', // Radar beam color (orange, semi-transparent)
-              fillOpacity: 0.6,
+              fillColor: '#cbd5e1', // Radar beam color (orange, semi-transparent)
+              fillOpacity: 0.2,
+            }}
+          />
+        </ShapeSource>
+        <Images images={{live}} />
+
+        <ShapeSource
+          id="activities"
+          shape={activitiesShape}
+          cluster={true}
+          clusterRadius={50}
+          clusterMaxZoomLevel={14}>
+          <SymbolLayer
+            id="icon"
+            style={{
+              iconImage: 'live',
+              iconSize: 0.03,
+            }}
+          />
+          <CircleLayer
+            id="clusterCircle"
+            filter={['has', 'point_count']} // Only apply to clusters
+            style={{
+              circleColor: '#FF4F4F', // Color for cluster circle
+              circleRadius: [
+                'step',
+                ['get', 'point_count'],
+                20,
+                10,
+                30,
+                50,
+                40,
+                100,
+                50, // Adjust size based on the number of points in cluster
+              ],
+              circleOpacity: 0.6,
             }}
           />
         </ShapeSource>
@@ -60,7 +109,7 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
-    backgroundColor: "red"
+    backgroundColor: 'red',
   },
   textContainer: {
     zIndex: 1,
