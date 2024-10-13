@@ -12,6 +12,7 @@ import {createRadarBeam, createStaticCircle} from './HelperFuncs';
 import useGetLocation from '../../CustomHooks/useGetLocation';
 import {featureCollection, point} from '@turf/helpers';
 import ResetLocationButton from './ResetLocationButton';
+import { OnPressEvent } from '@rnmapbox/maps/lib/typescript/src/types/OnPressEvent';
 
 setAccessToken(PUB_MAPBOX_KEY);
 
@@ -32,7 +33,9 @@ const MapContainer = () => {
     [-80.85291, 35.226859],
   ];
 
-  const coordinatesPoints = activies.map(ele => point(ele));
+  const coordinatesPoints = activies.map((ele, idx) =>
+    point(ele, {}, {id: idx}),
+  );
 
   // Create static radar beam (initial)
   const radarBeam = useMemo(
@@ -84,6 +87,10 @@ const MapContainer = () => {
     });
   };
 
+  const handleMapIconClick = (e: OnPressEvent) => {
+    console.log({e});
+  };
+
   return (
     <View style={styles.container}>
       {center.length > 0 && (
@@ -94,6 +101,7 @@ const MapContainer = () => {
           radarRef={radarRef}
           activitiesShape={featureCollection(coordinatesPoints)}
           cameraRef={cameraRef}
+          handleMapIconClick={handleMapIconClick}
         />
       )}
       {/* <View className="z-10 flex-col justify-end items-end absolute left-0 right-0 top-0 bottom-0">

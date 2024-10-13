@@ -14,6 +14,7 @@ import {
 } from '@rnmapbox/maps';
 import {StyleSheet} from 'react-native';
 import live from '../../../assests/live.png';
+import { OnPressEvent } from '@rnmapbox/maps/lib/typescript/src/types/OnPressEvent';
 
 type Props = {
   coordinate: number[];
@@ -22,6 +23,7 @@ type Props = {
   radarRef: any;
   activitiesShape: any;
   cameraRef: any;
+  handleMapIconClick: (e: OnPressEvent)=> void
 };
 
 const Map = (props: Props) => {
@@ -32,6 +34,7 @@ const Map = (props: Props) => {
     radarRef,
     activitiesShape,
     cameraRef,
+    handleMapIconClick,
   } = props;
 
   return (
@@ -70,7 +73,8 @@ const Map = (props: Props) => {
           shape={activitiesShape}
           cluster={true}
           clusterRadius={50}
-          clusterMaxZoomLevel={14}>
+          clusterMaxZoomLevel={14}
+          onPress={handleMapIconClick}>
           <SymbolLayer
             id="icon"
             style={{
