@@ -1,14 +1,14 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import { NavigationContainer } from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import React from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import BottomNavigation from './NavigationsScreens/BottomTap/BottomNavigation.tsx';
+import {SafeAreaView} from 'react-native';
 
 const Main = () => {
   return (
-    <NavigationContainer>
+      <NavigationContainer>
+        <BottomNavigation />
+      </NavigationContainer>
+  );
+};
 
-    </NavigationContainer>
-  )
-}
-
-export default Main
+export default Main;

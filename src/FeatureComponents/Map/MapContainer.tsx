@@ -1,27 +1,22 @@
-import React, { useEffect, useRef, useMemo, MutableRefObject} from 'react';
-import {
-  setAccessToken,
-  ShapeSource,
-} from '@rnmapbox/maps';
-import {View, StyleSheet,} from 'react-native';
+import React, {useEffect, useRef, useMemo, MutableRefObject} from 'react';
+import {setAccessToken, ShapeSource} from '@rnmapbox/maps';
+import {View, StyleSheet} from 'react-native';
 import {PUB_MAPBOX_KEY} from '@env';
 import Map from './Map';
 import {createRadarBeam, createStaticCircle} from './HelperFuncs';
 import useGetLocation from '../../CustomHooks/useGetLocation';
 
-
 setAccessToken(PUB_MAPBOX_KEY);
 
-const RadarMap = () => {
-  const {coordinates} = useGetLocation()
+const MapContainer = () => {
+  const {coordinates} = useGetLocation();
   const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
   const angleRef = useRef(0); // Ref to track current angle
-  const animationIdRef = useRef<number|null>(null); // To store the animation frame reference
+  const animationIdRef = useRef<number | null>(null); // To store the animation frame reference
   const throttleUpdate = useRef(false); // Ref for throttling updates
 
-  console.log({coordinates})
   // Create static radar beam (initial)
   const radarBeam = useMemo(
     () => createRadarBeam(center, radius, 0, 45, 10), // Reduced numPoints for efficiency
@@ -36,7 +31,7 @@ const RadarMap = () => {
 
   useEffect(() => {
     const rotateRadar = () => {
-      angleRef.current = (angleRef.current + 0.2) % 360; // Update angle
+      angleRef.current = (angleRef.current + 0.2) % 360;
       if (!throttleUpdate.current) {
         throttleUpdate.current = true;
 
@@ -51,17 +46,17 @@ const RadarMap = () => {
           if (radarRef.current) {
             radarRef.current.setNativeProps({shape: updatedRadarBeam});
           }
-          throttleUpdate.current = false; // Reset throttle flag
-        }, 100); // Update every 100ms
+          throttleUpdate.current = false;
+        }, 100);
       }
       animationIdRef.current = requestAnimationFrame(rotateRadar); // Continue animation
     };
 
     // rotateRadar(); // Start the animation
 
-    // return () => {
-    //   cancelAnimationFrame(animationIdRef.current); // Clean up animation on unmount
-    // };
+    return () => {
+      cancelAnimationFrame(animationIdRef.current); // Clean up animation on unmount
+    };
   }, [center, radius]);
 
   return (
@@ -82,7 +77,7 @@ const RadarMap = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
   },
   map: {
     flex: 1,
@@ -107,4 +102,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RadarMap;
+export default MapContainer;

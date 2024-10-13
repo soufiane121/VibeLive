@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+    backgroundColor: "red"
   },
   textContainer: {
     zIndex: 1,

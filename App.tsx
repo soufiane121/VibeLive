@@ -5,25 +5,18 @@
  * @format
  */
 
-import React, {useState, useRef, useEffect} from 'react';
-import type {PropsWithChildren} from 'react';
-import {SafeAreaView, useColorScheme, Text, View, Image, Animated, Alert} from 'react-native';
-// import RadarMap from './src/FeatureComponents/Map/Map.container';
-// import RadarMap from './working';
-import useRequestLocationAuth from './UserGetUserLocation';
-import Geolocation from '@react-native-community/geolocation';
-import RadarMap from './src/FeatureComponents/Map/Map.container';
+import React from 'react';
+import {SafeAreaView, useColorScheme} from 'react-native';
+import Main from './src/Main';
 
 
-function App(): React.JSX.Element {
+function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
-
-
   return (
-    <SafeAreaView className='flex-1'>
-      <RadarMap/>
-    </SafeAreaView>
+    // <SafeAreaView className="flex-1 bg-slate-700">
+      <Main />
+    // </SafeAreaView>
   );
 }
 
