@@ -1,5 +1,5 @@
 import React from 'react';
-import {IconButton} from '../../UIComponents/Buttons';
+import {IconButton} from '../../UIComponents/IconButton';
 import {LocationIcon} from '../../UIComponents/Icons';
 import {GestureResponderEvent} from 'react-native';
 

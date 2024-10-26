@@ -1,12 +1,13 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
-import BottomNavigation from './NavigationsScreens/BottomTap/BottomNavigation.tsx';
-import {SafeAreaView} from 'react-native';
+import StackNavigation from './NavigationsScreens/StackNavigation/StackNavigation.tsx';
+
+
 
 const Main = () => {
   return (
-      <NavigationContainer>
-        <BottomNavigation />
+      <NavigationContainer >
+        <StackNavigation />
       </NavigationContainer>
   );
 };

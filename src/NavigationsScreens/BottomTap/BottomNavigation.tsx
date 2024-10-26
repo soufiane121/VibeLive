@@ -18,12 +18,11 @@ const BottomTap = createBottomTabNavigator();
 export default function BottomNavigation() {
   return (
     <BottomTap.Navigator
+      initialRouteName="Bottom"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
           backgroundColor: '#292929',
-          // opacity: 0.9,
-          // borderBlockColor: 'none',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -34,7 +33,6 @@ export default function BottomNavigation() {
           alignSelf: 'center',
           textAlignVertical: 'center',
           textAlign: 'center',
-          // marginTop: 10,
         },
       }}>
       <BottomTap.Screen

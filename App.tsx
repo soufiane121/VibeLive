@@ -5,18 +5,20 @@
  * @format
  */
 
+// import './gesture-handler';
 import React from 'react';
 import {SafeAreaView, useColorScheme} from 'react-native';
 import Main from './src/Main';
-
+import {Provider} from 'react-redux';
+import {store} from './redux/store';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
-    // <SafeAreaView className="flex-1 bg-slate-700">
+    <Provider store={store}>
       <Main />
-    // </SafeAreaView>
+    </Provider>
   );
 }
 
