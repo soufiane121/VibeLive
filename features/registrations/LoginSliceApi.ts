@@ -16,9 +16,10 @@ export const loginApi = createApi({
         url: 'users/login',
         body,
         method: 'POST',
+        credentials: 'include',
       }),
     }),
-  }),
+}),
 });
 
 // Export hooks for usage in functional components, which are

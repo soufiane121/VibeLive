@@ -15,23 +15,37 @@ import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/nat
 import LottieAnimation from '../../../UIComponents/LottieAnimation';
 import UsefetchLogin from '../../../CustomHooks/UsefetchLogin';
 import Button from '../../../UIComponents/Button';
+import {useLoginMutation} from '../../../../features/registrations/LoginSliceApi';
+import {getLocalData, setLocalData} from '../../../Utils/LocalStorageHelper';
 
 const LoginContainer = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [canFetch, setCanFetch] = useState<boolean>(false);
-  const {data, error, isLoading, isSuccess} = UsefetchLogin({
-    email,
-    password,
-    canFetch,
-  });
-  console.log({data, error, isLoading, isSuccess}, 'container');
+  const [verifyLogin, {isError, data, isLoading, isSuccess}] =
+    useLoginMutation();
   const navigation =
     useNavigation<NativeStackNavigationProp<PartialState<any>>>();
 
+  const handleLogin = async () => {
+    if (email && password) {
+      try {
+        const answer = await verifyLogin({password, email}).unwrap();
+        if (answer.data) {
+          await setLocalData({key: 'token', value: answer.data.email});
+          navigation.replace('Bottom');
+        }
+      } catch (error) {
+        console.log({error});
+      }
+    }
+  };
+
   useEffect(() => {
-    // navigation.replace('Bottom');
-  }, []);
+    (async () => {
+      const answer = await getLocalData({key: 'token'});
+      console.log({answer})
+    })();
+  }, [isSuccess]);
 
   return (
     <KeyboardAvoidingView
@@ -73,20 +87,13 @@ const LoginContainer = () => {
             value={password}
             onChangeText={text => setPassword(text)}
           />
-
           {/* Login Button */}
-          {/* <TouchableOpacity
-            className="bg-yellow-500 p-4 rounded-lg items-center"
-            onPress={() => {
-              setCanFetch(true);
-            }}>
-            <Text className="text-black font-bold text-lg">Login</Text>
-          </TouchableOpacity> */}
           <Button
             btnText="Login"
-            btnStyle="bg-yellow-500 p-4 rounded-lg items-center"
+            btnStyle="disabled:bg-slate-50 bg-yellow-500 p-4 rounded-lg items-center"
             textStyle="text-black font-bold text-lg"
-            onPress={() => setCanFetch(true)}
+            onPress={handleLogin}
+            disabled={isLoading}
           />
 
           {/* Register Link */}
