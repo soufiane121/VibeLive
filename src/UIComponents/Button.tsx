@@ -5,17 +5,19 @@ type Props = {
   btnStyle?: string;
   textStyle?: string;
   onPress: (e: GestureResponderEvent) => void;
-  disabled?: boolean
+  disabled?: boolean;
+  children?: React.JSX.Element;
 };
 
 const Button = (props: Props) => {
-  const {btnText, btnStyle, textStyle, onPress, disabled} = props;
+  const {btnText, btnStyle, textStyle, onPress, disabled, children} = props;
   return (
     <TouchableOpacity
       className={btnStyle}
       onPress={onPress}
       disabled={disabled}>
-      <Text className={textStyle}>{btnText}</Text>
+      {!disabled && <Text className={textStyle}>{btnText}</Text>}
+      {disabled && children}
     </TouchableOpacity>
   );
 };

@@ -13,10 +13,11 @@ import {
 import {useNavigation, PartialState} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import LottieAnimation from '../../../UIComponents/LottieAnimation';
-import UsefetchLogin from '../../../CustomHooks/UsefetchLogin';
+import UsefetchLogin from '../../../CustomHooks/useIsAuthenticated';
 import Button from '../../../UIComponents/Button';
-import {useLoginMutation} from '../../../../features/registrations/LoginSliceApi';
+import {useAutoLoginQuery, useLoginMutation} from '../../../../features/registrations/LoginSliceApi';
 import {getLocalData, setLocalData} from '../../../Utils/LocalStorageHelper';
+import LoadingAnimation from '../../../UIComponents/LoadingAnimation';
 
 const LoginContainer = () => {
   const [email, setEmail] = useState('');
@@ -25,6 +26,8 @@ const LoginContainer = () => {
     useLoginMutation();
   const navigation =
     useNavigation<NativeStackNavigationProp<PartialState<any>>>();
+  const {data: autoLoginData, error, isLoading: autoLoginIsLoading} = useAutoLoginQuery(null, {skip: false});
+    
 
   const handleLogin = async () => {
     if (email && password) {
@@ -39,8 +42,10 @@ const LoginContainer = () => {
       }
     }
   };
+  console.log({autoLoginData});
 
   useEffect(() => {
+    
     (async () => {
       const answer = await getLocalData({key: 'token'});
       console.log({answer})
@@ -94,6 +99,7 @@ const LoginContainer = () => {
             textStyle="text-black font-bold text-lg"
             onPress={handleLogin}
             disabled={isLoading}
+            children={<LoadingAnimation  />}
           />
 
           {/* Register Link */}
