@@ -26,7 +26,7 @@ const LoginContainer = () => {
     useLoginMutation();
   const navigation =
     useNavigation<NativeStackNavigationProp<PartialState<any>>>();
-  const {data: autoLoginData, error, isLoading: autoLoginIsLoading} = useAutoLoginQuery(null, {skip: false});
+
     
 
   const handleLogin = async () => {
@@ -42,15 +42,8 @@ const LoginContainer = () => {
       }
     }
   };
-  console.log({autoLoginData});
 
-  useEffect(() => {
-    
-    (async () => {
-      const answer = await getLocalData({key: 'token'});
-      console.log({answer})
-    })();
-  }, [isSuccess]);
+
 
   return (
     <KeyboardAvoidingView

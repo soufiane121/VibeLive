@@ -13,10 +13,13 @@ import useGetLocation from '../../CustomHooks/useGetLocation';
 import {featureCollection, point} from '@turf/helpers';
 import ResetLocationButton from './ResetLocationButton';
 import { OnPressEvent } from '@rnmapbox/maps/lib/typescript/src/types/OnPressEvent';
+import { useSelector } from 'react-redux';
+import { CurrentUserTypes } from '../../../features/registrations/CurrentUser';
 
 setAccessToken(PUB_MAPBOX_KEY);
 
 const MapContainer = () => {
+  // const {currentUser} = useSelector((state: CurrentUserTypes) => state.currentUser)
   const {coordinates} = useGetLocation();
   const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
   const radius = 0.005; // Radar radius (in degrees)

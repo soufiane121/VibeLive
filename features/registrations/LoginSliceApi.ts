@@ -1,6 +1,6 @@
 import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
 import {baseUrl} from '../../baseUrl';
-import {getLocalData} from '../../src/Utils/LocalStorageHelper';
+import {getLocalData, setLocalData} from '../../src/Utils/LocalStorageHelper';
 
 interface Props {
   email: string;
@@ -13,8 +13,8 @@ export const loginApi = createApi({
   tagTypes: ['Login'],
   baseQuery: fetchBaseQuery({
     baseUrl: baseUrl,
-    prepareHeaders:  async (header) => {
-    const token = await getLocalData({key: 'token'});
+    prepareHeaders: async header => {
+      const token = await getLocalData({key: 'token'});
       if (token) {
         header.set('Authorization', `${token}`);
       }
@@ -34,6 +34,12 @@ export const loginApi = createApi({
         url: 'users/auto-login',
         credentials: 'include',
       }),
+      transformResponse: async response => {
+        if (response?.data?.email) {
+          await setLocalData({key: 'isAuthenticated', value: 'true'});
+        }
+        return response;
+      },
     }),
   }),
 });

@@ -1,9 +1,11 @@
+import {CurrentUser} from './../features/registrations/CurrentUser';
 import {configureStore} from '@reduxjs/toolkit';
 import {loginSlice} from '../features/registrations/LoginSlice';
 import {loginApi} from '../features/registrations/LoginSliceApi';
 
 export const store = configureStore({
   reducer: {
+    currentUser: CurrentUser.reducer,
     // login: loginSlice,
     [loginApi.reducerPath]: loginApi.reducer,
   },
