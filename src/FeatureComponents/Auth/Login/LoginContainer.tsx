@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -13,10 +13,9 @@ import {
 import {useNavigation, PartialState} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import LottieAnimation from '../../../UIComponents/LottieAnimation';
-import UsefetchLogin from '../../../CustomHooks/useIsAuthenticated';
 import Button from '../../../UIComponents/Button';
-import {useAutoLoginQuery, useLoginMutation} from '../../../../features/registrations/LoginSliceApi';
-import {getLocalData, setLocalData} from '../../../Utils/LocalStorageHelper';
+import {useLoginMutation} from '../../../../features/registrations/LoginSliceApi';
+import {setLocalData} from '../../../Utils/LocalStorageHelper';
 import LoadingAnimation from '../../../UIComponents/LoadingAnimation';
 
 const LoginContainer = () => {
@@ -26,8 +25,6 @@ const LoginContainer = () => {
     useLoginMutation();
   const navigation =
     useNavigation<NativeStackNavigationProp<PartialState<any>>>();
-
-    
 
   const handleLogin = async () => {
     if (email && password) {
@@ -42,8 +39,6 @@ const LoginContainer = () => {
       }
     }
   };
-
-
 
   return (
     <KeyboardAvoidingView
@@ -92,7 +87,7 @@ const LoginContainer = () => {
             textStyle="text-black font-bold text-lg"
             onPress={handleLogin}
             disabled={isLoading}
-            children={<LoadingAnimation  />}
+            children={<LoadingAnimation />}
           />
 
           {/* Register Link */}

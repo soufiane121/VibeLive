@@ -8,13 +8,15 @@ interface Props {
 }
 
 // Define a service using a base URL and expected endpoints
-export const loginApi = createApi({
-  reducerPath: 'loginApi',
-  tagTypes: ['Login'],
+export const liveStream = createApi({
+  reducerPath: 'liveStream',
+  tagTypes: ['LiveStream'],
   baseQuery: fetchBaseQuery({
     baseUrl: baseUrl,
     prepareHeaders: async header => {
-      const token = await getLocalData({key: 'token'});
+      let token = await getLocalData({key: 'token'});
+      token =
+        'Bearer eyJhbGciOiJIUzI1NiJ9.YWFAZy5jb20.Ps3Ybd241XNaGgnWPfzkEzGGB3zsmlMhPd8KhbW5pRk';
       if (token) {
         header.set('Authorization', `${token}`);
       }
@@ -22,30 +24,16 @@ export const loginApi = createApi({
     },
   }),
   endpoints: builder => ({
-    login: builder.mutation({
-      query: (body: Props) => ({
-        url: 'users/login',
-        body,
-        method: 'POST',
-      }),
-    }),
-    autoLogin: builder.mutation({
+    startStreaming: builder.mutation({
       query: (body) => ({
-        url: 'users/auto-login',
-        credentials: 'include',
-        body,
-        method: "POST"
+        url: 'users/start-streaming',
+        method: 'POST',
+        body
       }),
-      transformResponse: async response => {
-        if (response?.data?.email) {
-          await setLocalData({key: 'isAuthenticated', value: 'true'});
-        }
-        return response;
-      },
     }),
   }),
 });
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const {useLoginMutation, useAutoLoginMutation} = loginApi;
+export const {useStartStreamingMutation} = liveStream;

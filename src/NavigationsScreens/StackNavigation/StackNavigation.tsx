@@ -2,22 +2,36 @@ import {useEffect} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import LoginContainer from '../../FeatureComponents/Auth/Login/LoginContainer';
 import BottomNavigation from '../BottomTap/BottomNavigation';
-import {useAutoLoginQuery} from '../../../features/registrations/LoginSliceApi';
+import {useAutoLoginMutation} from '../../../features/registrations/LoginSliceApi';
 import {
-  CurrentUserTypes,
   setCurrentUser,
 } from '../../../features/registrations/CurrentUser';
 import {useDispatch} from 'react-redux';
+import useGetLocation from '../../CustomHooks/useGetLocation';
+import {Alert} from 'react-native';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
-  const {data,  isSuccess} = useAutoLoginQuery('');
+  const {coordinates} = useGetLocation();
+  const [autoLoginFetch, {data, isSuccess}] = useAutoLoginMutation();
+
   const dispatch = useDispatch();
   useEffect(() => {
-    if (isSuccess) {
-      dispatch(setCurrentUser(data?.data ) );
+    if (!data) {
+      fetchAutoLogin();
     }
-  }, [isSuccess]);
+  }, []);
+
+  const fetchAutoLogin = async () => {
+    try {
+      const res = await autoLoginFetch({coordinates}).unwrap();
+      if (res.data._id) {
+        dispatch(setCurrentUser(data?.data));
+      }
+    } catch (error) {
+      // Alert.alert(error as string);
+    }
+  };
 
   return (
     <Stack.Navigator

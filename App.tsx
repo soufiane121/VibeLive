@@ -11,13 +11,17 @@ import {SafeAreaView, useColorScheme} from 'react-native';
 import Main from './src/Main';
 import {Provider} from 'react-redux';
 import {store} from './redux/store';
+import LiveStreamContainer from './src/LiveStream/LiveStreamContainer';
+import RadarMap from './radarMap';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
     <Provider store={store}>
-      <Main />
+      {/* <Main /> */}
+      {/* <LiveStreamContainer /> */}
+      <RadarMap  />
     </Provider>
   );
 }

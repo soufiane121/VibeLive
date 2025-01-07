@@ -1,9 +1,10 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import MapContainer from '../../FeatureComponents/Map/MapContainer';
-import {mapIcon} from '../../UIComponents/Icons';
+import {LiveStreamIcon, mapIcon} from '../../UIComponents/Icons';
 import {Text, View} from 'react-native';
 import tw from '../../../tw';
+import LiveStreamContainer from '../../LiveStream/LiveStreamContainer';
 
 function HomeScreen() {
   return (
@@ -16,6 +17,7 @@ function HomeScreen() {
 const BottomTap = createBottomTabNavigator();
 
 export default function BottomNavigation() {
+  // <LiveStreamContainer
   return (
     <BottomTap.Navigator
       initialRouteName="Bottom"
@@ -42,6 +44,18 @@ export default function BottomNavigation() {
           tabBarIcon: mapIcon,
           title: 'Map',
           // tabBarIconStyle: tw`primaryIconColor`,
+          tabBarActiveTintColor: '#faf8ff',
+          tabBarLabelStyle: {
+            fontSize: 14,
+          },
+        }}
+      />
+      <BottomTap.Screen
+        name="Live"
+        component={LiveStreamContainer}
+        options={{
+          tabBarIcon: LiveStreamIcon,
+          title: 'GO Live',
           tabBarActiveTintColor: '#faf8ff',
           tabBarLabelStyle: {
             fontSize: 14,
