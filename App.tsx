@@ -19,9 +19,9 @@ function App() {
 
   return (
     <Provider store={store}>
-      {/* <Main /> */}
+      <Main />
       {/* <LiveStreamContainer /> */}
-      <RadarMap  />
+      {/* <RadarMap  /> */}
     </Provider>
   );
 }

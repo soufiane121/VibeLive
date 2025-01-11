@@ -20,9 +20,41 @@ const createRadarBeam = (
   }
 
   coordinates.push(center); // Close the polygon
+  console.log({coordinates})
   return {
     type: 'Polygon',
     coordinates: [coordinates], // GeoJSON format
+  };
+};
+
+const newCreateRadarBeam = (
+  center: number[],
+  radius: number,
+  startAngle: number,
+  sweepAngle: number,
+  numPoints = 10,
+) => {
+  const coordinates = [center]; // Start with center point
+  const startRadians = (startAngle * Math.PI) / 180;
+  const sweepRadians = (sweepAngle * Math.PI) / 180;
+  const latitude = center[1];
+  const adjustedRadiusX = radius / Math.cos((latitude * Math.PI) / 180);
+
+  for (let i = 0; i <= numPoints; i++) {
+    const angle = startRadians + (i * sweepRadians) / numPoints;
+    const x = center[0] + adjustedRadiusX * Math.cos(angle);
+    const y = center[1] + radius * Math.sin(angle);
+    coordinates.push([x, y]);
+  }
+
+  coordinates.push(center); // Close the polygon
+
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates,
+    },
   };
 };
 
@@ -49,4 +81,4 @@ const createStaticCircle = (
     coordinates: [coordinates], // GeoJSON format
   };
 };
-export {createStaticCircle, createRadarBeam};
+export {createStaticCircle, createRadarBeam, newCreateRadarBeam};

@@ -9,23 +9,22 @@ import {
   setAccessToken,
   setTelemetryEnabled,
   FillLayer,
-  LocationPuck,
 } from '@rnmapbox/maps';
 import {View, StyleSheet, Animated, Easing} from 'react-native';
 import {point} from '@turf/helpers';
 import Supercluster from 'supercluster';
 import {debounce, throttle} from 'lodash';
 import {PUB_MAPBOX_KEY} from '@env';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import useGetLocation from './src/CustomHooks/useGetLocation';
 import {
   createRadarBeam,
   createStaticCircle,
   newCreateRadarBeam,
-} from './HelperFuncs';
-import ResetLocationButton from './ResetLocationButton';
+} from './src/FeatureComponents/Map/HelperFuncs';
+import ResetLocationButton from './src/FeatureComponents/Map/ResetLocationButton';
 
-const twIcon = require('../../../assests/tw.png');
-const inIcon = require('../../../assests/in.jpg');
+const twIcon = require('./assests/tw.png');
+const inIcon = require('./assests/in.jpg');
 
 setAccessToken(PUB_MAPBOX_KEY);
 
@@ -36,7 +35,7 @@ const generateFeatures = count => {
     isLive: index % 3 === 0,
     coordinates: [
       -80.718976 + Math.random() * 0.1,
-      35.15989 + Math.random() * 0.1,
+      35.159890 + Math.random() * 0.1,
     ],
   }));
 };
@@ -53,16 +52,16 @@ const LiveIcon = memo(
         key={`marker-${feature.id}`}
         id={`marker-${feature.id}`}
         shape={point(feature.coordinates)}
-        onPress={() => {
-          console.log('clicked on the icon');
-        }}>
+        onPress={()=> {console.log("clicked on the icon");
+        }}
+        >
         <CircleLayer
           ref={circleLayerRef} // Reference to directly update properties
           id={`pulse-${feature.id}`}
           style={{
-            circleRadius: 70, // Initial radius
+            circleRadius: 10, // Initial radius
             circleColor: 'rgba(255, 0, 0, 0.5)',
-            circleOpacity: 0.9, // Initial opacity
+            circleOpacity: 0.5, // Initial opacity
           }}
         />
         <SymbolLayer
@@ -77,12 +76,12 @@ const LiveIcon = memo(
   },
   (prevProps, nextProps) => prevProps.feature.id === nextProps.feature.id,
 );
-const USA_BOUNDS = [
-  [-125.0, 24.0], // Southwest corner [longitude, latitude]
-  [-66.9, 49.0], // Northeast corner [longitude, latitude]
-];
+  const USA_BOUNDS = [
+    [-125.0, 24.0], // Southwest corner [longitude, latitude]
+    [-66.9, 49.0], // Northeast corner [longitude, latitude]
+  ];
 
-const MapContainer = () => {
+const RadarMap = () => {
   const {coordinates} = useGetLocation();
   const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
   const radius = 0.005; // Radar radius (in degrees)
@@ -176,6 +175,19 @@ const MapContainer = () => {
     };
   }, [pulseAnimation]);
 
+  // Throttled region update handler
+  const handleRegionChange = useCallback(
+    throttle(async map => {
+      const region = await map?.getVisibleBounds();
+      const {ne, sw} = region;
+      const newBounds = [sw.lng, sw.lat, ne.lng, ne.lat];
+      setBounds(newBounds);
+
+      const zoom = await map.getZoom();
+      setZoomLevel(zoom);
+    }, 300),
+    [],
+  );
   useEffect(() => {
     setTelemetryEnabled(false);
     const rotateRadar = () => {
@@ -206,30 +218,49 @@ const MapContainer = () => {
     };
   }, [center, radius]);
 
-  // Throttled region update handler
-  const handleRegionChange = useCallback(
-    throttle(async map => {
-      const region = await map?.getVisibleBounds();
-      const {ne, sw} = region;
-      const newBounds = [sw.lng, sw.lat, ne.lng, ne.lat];
-      setBounds(newBounds);
-
-      const zoom = await map.getZoom();
-      setZoomLevel(zoom);
-    }, 300),
-    [],
-  );
-
   const radarBeam = useMemo(
     () => newCreateRadarBeam(center, radius, 0, 45, 10), // Reduced numPoints for efficiency
     [center, radius],
   );
 
-  const shouldRenderMarkers = zoomLevel > 10;
+  const staticCircle = useMemo(
+    () => createStaticCircle(center, radius),
+    [center, radius],
+  );
 
+  const shouldRenderMarkers = zoomLevel > 10;
+  useEffect(() => {
+    setTelemetryEnabled(false);
+    const rotateRadar = () => {
+      angleRef.current = (angleRef.current + 0.2) % 360;
+      if (!throttleUpdate.current) {
+        throttleUpdate.current = true;
+
+        // Throttle radar beam updates to once every 100ms
+        setTimeout(() => {
+          const updatedRadarBeam = newCreateRadarBeam(
+            center,
+            radius,
+            angleRef.current,
+            45,
+          );
+          if (radarRef.current) {
+            radarRef.current.setNativeProps({shape: updatedRadarBeam});
+          }
+          throttleUpdate.current = false;
+        }, 100);
+      }
+      animationIdRef.current = requestAnimationFrame(rotateRadar); // Continue animation
+    };
+
+    // rotateRadar(); // Start the animation
+    return () => {
+      cancelAnimationFrame(animationIdRef.current); // Clean up animation on unmount
+    };
+  }, [center, radius]);
 
   const handleResetcurrentLocation = () => {
-    console.log('test');
+    console.log('test')
     cameraRef.current?.setCamera({
       centerCoordinate: coordinates,
       zoomLevel: 14,
@@ -250,14 +281,13 @@ const MapContainer = () => {
             <Camera
               zoomLevel={zoomLevel}
               centerCoordinate={coordinates}
-              // maxBounds={USA_BOUNDS} // Restrict the map to USA bounds
-              // minZoomLevel={8} // Prevent zooming out too far
-              // maxZoomLevel={16}
+              maxBounds={USA_BOUNDS} // Restrict the map to USA bounds
+              minZoomLevel={8} // Prevent zooming out too far
+              maxZoomLevel={16}
               ref={cameraRef}
             />
             {/* still need to copy radar animation to here
              */}
-            <LocationPuck puckBearingEnabled puckBearing="course" />
             <ShapeSource id="radarSource" data={radarBeam} ref={radarRef}>
               <FillLayer
                 id="radarBeam"
@@ -278,11 +308,7 @@ const MapContainer = () => {
                   : `marker-${cluster.properties.id}`;
 
                 return isCluster ? (
-                  <ShapeSource
-                    key={id}
-                    id={id}
-                    shape={point(coordinates)}
-                    clusterRadius={50}>
+                  <ShapeSource key={id} id={id} shape={point(coordinates)}  clusterRadius={50}>
                     <SymbolLayer
                       id={`cluster-icon-${id}`}
                       style={{
@@ -344,4 +370,4 @@ const styles = StyleSheet.create({
   map: {flex: 1},
 });
 
-export default MapContainer;
+export default RadarMap;
