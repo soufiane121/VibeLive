@@ -2,12 +2,9 @@ import React, {useEffect, useState, useRef} from 'react';
 import {View, Button, StyleSheet, Platform} from 'react-native';
 import {
   Camera,
-  useCameraDevice,
   useCameraPermission,
 } from 'react-native-vision-camera';
-import {
-  FFmpegKit,
-} from 'react-native-ffmpeg';
+import {FFmpegKit} from 'react-native-ffmpeg';
 import {useStartStreamingMutation} from '../../features/LiveStream/LiveStream';
 import {
   NodeMediaClient,
@@ -17,12 +14,22 @@ import {
 import Video, {VideoRef} from 'react-native-video';
 import {io} from 'socket.io-client';
 import {baseUrl} from '../../baseUrl';
+import {useSelector} from 'react-redux';
+import useGetLocation from '../CustomHooks/useGetLocation';
 
 export default function LiveStreamContainer() {
+  const {
+    currenUser = {
+      _id: '67198fbdd4db839aaf8b382d',
+      email:
+        'Bearer eyJhbGciOiJIUzI1NiJ9.YWFAZy5jb20.Ps3Ybd241XNaGgnWPfzkEzGGB3zsmlMhPd8KhbW5pRk',
+    },
+  } = useSelector(state => state?.currentUser);
+  const {coordinates} = useGetLocation();
   const [fetchStartStream, {data, isLoading, isSuccess}] =
     useStartStreamingMutation();
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isHost, setIsHost] = useState(false)
+  const [isHost, setIsHost] = useState(false);
   const [streamKey, setStreamKey] = useState<string | null>(null);
   const [playbackId, setPlaybackId] = useState<string | null>(null);
   const [socketInstance, setSocketInstance] = useState<any>(null);
@@ -35,16 +42,17 @@ export default function LiveStreamContainer() {
     if (Platform.OS === 'ios') {
       NodeMediaClient.setLicense('');
     }
-    // createStream();
+    createStream();
   }, []);
+
+  console.log({currenUser});
 
   useEffect(() => {
     if (!isSuccess) {
       const socket = io(baseUrl + '/liveStream', {
         query: {
-          userId: '67198fbdd4db839aaf8b382d',
-          token:
-            'Bearer eyJhbGciOiJIUzI1NiJ9.YWFAZy5jb20.Ps3Ybd241XNaGgnWPfzkEzGGB3zsmlMhPd8KhbW5pRk',
+          userId: currenUser._id,
+          token: currenUser.email,
         },
       });
       setSocketInstance(socket);
@@ -82,19 +90,19 @@ export default function LiveStreamContainer() {
   // Start streaming using FFmpeg and the Vision Camera
   const startStreaming = async () => {
     const rtmpUrl = `rtmp://global-live.mux.com:5222/app/${streamKey}`;
-    const ffmpegCommand = `-f android_camera -i /dev/video0 -c:v libx264 -preset veryfast -tune zerolatency -b:v 1000k -c:a aac -ar 44100 -b:a 128k -f flv ${rtmpUrl}`;
+    const ffmpegCommand = `-f android_camera -i /dev/video0 -c:v libx264 -preset  veryfast -tune zerolatency -b:v 1000k -c:a aac -ar 44100 -b:a 128k -f flv ${rtmpUrl}`;
+    // -vf "transpose=1"
     try {
       const result = await FFmpegKit.execute(ffmpegCommand);
       console.log('FFmpeg Result:', result);
     } catch (error) {}
     if (rtmp.current) {
-      // const pp =  await rtmp.current.startStream();
       const pp = rtmp.current.start();
-      // console.log('teest', pp);
       setIsStreaming(true);
       socketInstance.emit('start-streaming', {
-        token:
-          'Bearer eyJhbGciOiJIUzI1NiJ9.YWFAZy5jb20.Ps3Ybd241XNaGgnWPfzkEzGGB3zsmlMhPd8KhbW5pRk',
+        token: currenUser.email,
+        streamId: playbackId,
+        coordinates,
       });
     }
   };
@@ -118,6 +126,7 @@ export default function LiveStreamContainer() {
       <NodePublisher
         ref={rtmp}
         style={{height: '50%', width: '100%'}}
+        // style={{height: '90%', width: '200%', marginTop: "120%", transform: [{rotate: '270deg'}]}}
         url={`rtmp://global-live.mux.com:5222/app/${streamKey}`}
         audioParam={{
           codecid: NodePublisher.NMC_CODEC_ID_AAC,
@@ -139,7 +148,8 @@ export default function LiveStreamContainer() {
         frontCamera={true}
         HWAccelEnable={true}
         denoiseEnable={false}
-        keyFrameInterval={1}
+        keyFrameInterval={2}
+        videoOrientation={NodePublisher.VIDEO_ORIENTATION_PORTRAIT}
       />
       <Video
         ref={videoRef}

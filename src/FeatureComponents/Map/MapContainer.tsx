@@ -1,4 +1,11 @@
-import React, {useEffect, useRef, memo, useMemo, useCallback} from 'react';
+import React, {
+  useEffect,
+  useRef,
+  memo,
+  useMemo,
+  useCallback,
+  useState,
+} from 'react';
 import {
   MapView,
   Camera,
@@ -23,6 +30,7 @@ import {
   newCreateRadarBeam,
 } from './HelperFuncs';
 import ResetLocationButton from './ResetLocationButton';
+import {useGetAllMapPointsMutation} from '../../../features/LiveStream/LiveStream';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -84,6 +92,9 @@ const USA_BOUNDS = [
 
 const MapContainer = () => {
   const {coordinates} = useGetLocation();
+  const [fetchMapFeatures, {data, isSuccess, isLoading}] =
+    useGetAllMapPointsMutation();
+  const [featuresPointsData, setFeaturesPointsData] = useState([]);
   const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
@@ -95,37 +106,40 @@ const MapContainer = () => {
   const [clusters, setClusters] = React.useState([]);
   const [bounds, setBounds] = React.useState([-80.9, 35.2, -81.8, 36.3]);
   const [zoomLevel, setZoomLevel] = React.useState(14);
-  console.log(coordinates);
+
+  useEffect(() => {
+    if (coordinates.length > 0) {
+      handleGetMapsPoints();
+    }
+  }, [coordinates.length]);
+
+  const handleGetMapsPoints = async () => {
+    try {
+      const {data} = await fetchMapFeatures({
+        coordinates,
+      }).unwrap();
+      if (data) {
+        setFeaturesPointsData(data.features);
+      }
+    } catch (error) {}
+  };
 
   const circleLayerRefs = useRef({}); // Store references to the CircleLayer components
 
   const supercluster = useMemo(() => {
     const cluster = new Supercluster({
-      radius: 75,
-      maxZoom: 20,
+      radius: 20,
+      maxZoom: 22,
     });
-
-    cluster.load(
-      sampleFeatures.map(feature => ({
-        type: 'Feature',
-        properties: {
-          cluster: false,
-          ...feature,
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: feature.coordinates,
-        },
-      })),
-    );
+    cluster.load(featuresPointsData);
 
     return cluster;
-  }, []);
+  }, [featuresPointsData]);
 
   // Recalculate clusters when bounds or zoomLevel changes
   useEffect(() => {
     const debouncedFetchClusters = debounce(() => {
-      if (bounds && zoomLevel) {
+      if (bounds && zoomLevel && featuresPointsData.length > 0) {
         const newClusters = supercluster.getClusters(bounds, zoomLevel);
         setClusters(newClusters);
       }
@@ -136,7 +150,7 @@ const MapContainer = () => {
     return () => {
       debouncedFetchClusters.cancel();
     };
-  }, [bounds, zoomLevel, supercluster]);
+  }, [bounds, zoomLevel, supercluster, featuresPointsData.length]);
 
   // Pulse animation for live markers without using listeners
   useEffect(() => {
@@ -227,7 +241,6 @@ const MapContainer = () => {
 
   const shouldRenderMarkers = zoomLevel > 10;
 
-
   const handleResetcurrentLocation = () => {
     console.log('test');
     cameraRef.current?.setCamera({
@@ -250,9 +263,9 @@ const MapContainer = () => {
             <Camera
               zoomLevel={zoomLevel}
               centerCoordinate={coordinates}
-              // maxBounds={USA_BOUNDS} // Restrict the map to USA bounds
-              // minZoomLevel={8} // Prevent zooming out too far
-              // maxZoomLevel={16}
+              maxBounds={USA_BOUNDS} // Restrict the map to USA bounds
+              minZoomLevel={8} // Prevent zooming out too far
+              maxZoomLevel={17}
               ref={cameraRef}
             />
             {/* still need to copy radar animation to here

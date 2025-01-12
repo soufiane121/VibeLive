@@ -25,10 +25,17 @@ export const liveStream = createApi({
   }),
   endpoints: builder => ({
     startStreaming: builder.mutation({
-      query: (body) => ({
+      query: body => ({
         url: 'users/start-streaming',
         method: 'POST',
-        body
+        body,
+      }),
+    }),
+    getAllMapPoints: builder.mutation({
+      query: body => ({
+        url: 'users/getAllPoints',
+        method: 'POST',
+        body,
       }),
     }),
   }),
@@ -36,4 +43,4 @@ export const liveStream = createApi({
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const {useStartStreamingMutation} = liveStream;
+export const {useStartStreamingMutation, useGetAllMapPointsMutation} = liveStream;
