@@ -31,6 +31,8 @@ import {
 } from './HelperFuncs';
 import ResetLocationButton from './ResetLocationButton';
 import {useGetAllMapPointsMutation} from '../../../features/LiveStream/LiveStream';
+import {useSelector} from 'react-redux';
+import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -106,6 +108,14 @@ const MapContainer = () => {
   const [clusters, setClusters] = React.useState([]);
   const [bounds, setBounds] = React.useState([-80.9, 35.2, -81.8, 36.3]);
   const [zoomLevel, setZoomLevel] = React.useState(14);
+  const {socket} = useSocketInstance();
+
+  useEffect(() => {
+    socket?.on('add-to-map', data => {
+      console.log({data});
+      setFeaturesPointsData(prevState => [...prevState, data.mapItem]);
+    });
+  }, [socket]);
 
   useEffect(() => {
     if (coordinates.length > 0) {
@@ -242,7 +252,6 @@ const MapContainer = () => {
   const shouldRenderMarkers = zoomLevel > 10;
 
   const handleResetcurrentLocation = () => {
-    console.log('test');
     cameraRef.current?.setCamera({
       centerCoordinate: coordinates,
       zoomLevel: 14,

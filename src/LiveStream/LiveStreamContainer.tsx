@@ -19,11 +19,7 @@ import useGetLocation from '../CustomHooks/useGetLocation';
 
 export default function LiveStreamContainer() {
   const {
-    currenUser = {
-      _id: '67198fbdd4db839aaf8b382d',
-      email:
-        'Bearer eyJhbGciOiJIUzI1NiJ9.YWFAZy5jb20.Ps3Ybd241XNaGgnWPfzkEzGGB3zsmlMhPd8KhbW5pRk',
-    },
+    currentUser
   } = useSelector(state => state?.currentUser);
   const {coordinates} = useGetLocation();
   const [fetchStartStream, {data, isLoading, isSuccess}] =
@@ -45,14 +41,14 @@ export default function LiveStreamContainer() {
     createStream();
   }, []);
 
-  console.log({currenUser});
+  console.log({currentUser});
 
   useEffect(() => {
     if (!isSuccess) {
       const socket = io(baseUrl + '/liveStream', {
         query: {
-          userId: currenUser._id,
-          token: currenUser.email,
+          userId: currentUser._id,
+          token: currentUser.email,
         },
       });
       setSocketInstance(socket);

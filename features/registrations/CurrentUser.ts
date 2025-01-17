@@ -27,10 +27,11 @@ const initialState: CurrentUserInterface = {
       type: 'Point',
       coordinates: [],
     },
-    _id: '',
+    _id: '6785be04ba7c6e6a3d926941',
     firstName: '',
     lastName: '',
-    email: '',
+    email:
+      'BBearer eyJhbGciOiJIUzI1NiJ9.d3d3d0BnLmNvbQ._tMoNNpJoWTvh1yRhRbrs7pWU7DebcYAMcPF7QKKYa4',
     userName: '',
     password: '',
     createdAt: '',
@@ -42,7 +43,7 @@ export const CurrentUser = createSlice({
   initialState,
   reducers: {
     setCurrentUser: (state, action: PayloadAction<CurrentUserTypes>) => {
-      state.currentUser = action.payload!;
+      state.currentUser = action.payload;
     },
   },
 });
