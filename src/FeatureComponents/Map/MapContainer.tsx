@@ -78,7 +78,7 @@ const LiveIcon = memo(
         <SymbolLayer
           id={`icon-${feature.id}`}
           style={{
-            iconImage: 'tw',
+            iconImage: feature.imageUrl || "tw",
             iconSize: 0.1,
           }}
         />
@@ -111,9 +111,10 @@ const MapContainer = () => {
   const {socket} = useSocketInstance();
 
   useEffect(() => {
+    // add new marker to map
     socket?.on('add-to-map', data => {
       console.log({data});
-      setFeaturesPointsData(prevState => [...prevState, data.mapItem]);
+      setFeaturesPointsData(prevState => [...prevState, data?.data?.mapItem]);
     });
   }, [socket]);
 
@@ -122,6 +123,17 @@ const MapContainer = () => {
       handleGetMapsPoints();
     }
   }, [coordinates.length]);
+
+  // Register dynamic images using URLs
+  const images = useMemo(() => {
+    const imgUrl =
+      'https://fastly.picsum.photos/id/218/200/200.jpg?hmac=pIx-HTJBJRheNaHmhgqsQRX8JbTGvag_zic9NTNWFJU';
+    const imageRegistry = {} as any;
+    featuresPointsData.forEach(feature => {
+      imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};
+    });
+    return imageRegistry;
+  }, [featuresPointsData]);
 
   const handleGetMapsPoints = async () => {
     try {
@@ -258,7 +270,6 @@ const MapContainer = () => {
       animationDuration: 2000,
     });
   };
-
   return (
     <View style={styles.container}>
       {coordinates.length > 0 && (
@@ -289,11 +300,19 @@ const MapContainer = () => {
                 }}
               />
             </ShapeSource>
-            <Images images={{tw: twIcon, in: inIcon}} />
+            <Images
+              images={
+                !images.hasOwnProperty('undefined')
+                  ? images
+                  : {tw: twIcon, in: inIcon}
+              }
+              // images={{tw: twIcon, in: inIcon}}
+            />
 
             {shouldRenderMarkers &&
               clusters.map(cluster => {
                 const isCluster = cluster.properties.cluster;
+                const imageUrl = cluster?.properties?.imageUrl || 'in';
                 const coordinates = cluster.geometry.coordinates;
                 const id = isCluster
                   ? `cluster-${cluster.properties.cluster_id}`
@@ -308,7 +327,7 @@ const MapContainer = () => {
                     <SymbolLayer
                       id={`cluster-icon-${id}`}
                       style={{
-                        iconImage: 'in',
+                        iconImage: imageUrl || 'in',
                         iconSize: 0.1,
                       }}
                     />
@@ -320,6 +339,7 @@ const MapContainer = () => {
                       id: cluster.properties.id,
                       isLive: !isCluster,
                       coordinates,
+                      imageUrl: cluster?.properties?.imageUrl,
                     }}
                     circleLayerRef={ref => {
                       circleLayerRefs.current[
