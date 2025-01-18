@@ -113,7 +113,7 @@ const MapContainer = () => {
   useEffect(() => {
     // add new marker to map
     socket?.on('add-to-map', data => {
-      console.log({data});
+      console.log({data}, 'add-to-map');
       setFeaturesPointsData(prevState => [...prevState, data?.data?.mapItem]);
     });
   }, [socket]);
@@ -127,7 +127,7 @@ const MapContainer = () => {
   // Register dynamic images using URLs
   const images = useMemo(() => {
     const imgUrl =
-      'https://fastly.picsum.photos/id/218/200/200.jpg?hmac=pIx-HTJBJRheNaHmhgqsQRX8JbTGvag_zic9NTNWFJU';
+      'https://fastly.picsum.photos/id/218/20/20.jpg?hmac=pIx-HTJBJRheNaHmhgqsQRX8JbTGvag_zic9NTNWFJU';
     const imageRegistry = {} as any;
     featuresPointsData.forEach(feature => {
       imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};

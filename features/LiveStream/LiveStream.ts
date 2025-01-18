@@ -15,8 +15,6 @@ export const liveStream = createApi({
     baseUrl: baseUrl,
     prepareHeaders: async header => {
       let token = await getLocalData({key: 'token'});
-      token =
-        'Bearer eyJhbGciOiJIUzI1NiJ9.YWFAZy5jb20.Ps3Ybd241XNaGgnWPfzkEzGGB3zsmlMhPd8KhbW5pRk';
       if (token) {
         header.set('Authorization', `${token}`);
       }

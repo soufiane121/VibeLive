@@ -1,4 +1,3 @@
-import {WritableDraft} from './../../node_modules/immer/src/types/types-external';
 // import { CurrentUser } from './CurrentUser';
 import {createSlice} from '@reduxjs/toolkit';
 import type {PayloadAction} from '@reduxjs/toolkit';
@@ -27,12 +26,10 @@ const initialState: CurrentUserInterface = {
       type: 'Point',
       coordinates: [],
     },
-    _id: '6785be04ba7c6e6a3d926941',
+    _id:"",
     firstName: '',
     lastName: '',
-    email:
-      'BBearer eyJhbGciOiJIUzI1NiJ9.d3d3d0BnLmNvbQ._tMoNNpJoWTvh1yRhRbrs7pWU7DebcYAMcPF7QKKYa4',
-    userName: '',
+    email: "",userName: '',
     password: '',
     createdAt: '',
   },
@@ -43,7 +40,7 @@ export const CurrentUser = createSlice({
   initialState,
   reducers: {
     setCurrentUser: (state, action: PayloadAction<CurrentUserTypes>) => {
-      state.currentUser = action.payload;
+       state.currentUser = action.payload;
     },
   },
 });

@@ -8,14 +8,14 @@ import {
 } from '../../../features/registrations/CurrentUser';
 import {useDispatch} from 'react-redux';
 import useGetLocation from '../../CustomHooks/useGetLocation';
-import {Alert} from 'react-native';
+import { getLocalData } from '../../Utils/LocalStorageHelper';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
+  const dispatch = useDispatch();
   const {coordinates} = useGetLocation();
   const [autoLoginFetch, {data, isSuccess}] = useAutoLoginMutation();
 
-  const dispatch = useDispatch();
   useEffect(() => {
     if (!data) {
       fetchAutoLogin();
@@ -24,9 +24,9 @@ const StackNavigation = () => {
 
   const fetchAutoLogin = async () => {
     try {
-      const res = await autoLoginFetch({coordinates}).unwrap();
+      const res = await autoLoginFetch({coordinates}).unwrap();     
       if (res.data._id) {
-        dispatch(setCurrentUser(data?.data));
+        dispatch(setCurrentUser(res.data));
       }
     } catch (error) {
       // Alert.alert(error as string);
@@ -41,7 +41,7 @@ const StackNavigation = () => {
         headerShown: false,
       }}>
       {!isSuccess && data?.['_id'] && (
-        <Stack.Screen name="Login" component={LoginContainer} />
+      <Stack.Screen name="Login" component={LoginContainer} />
       )}
       <Stack.Screen name="Bottom" component={BottomNavigation} />
     </Stack.Navigator>

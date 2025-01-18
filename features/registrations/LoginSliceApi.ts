@@ -16,7 +16,10 @@ export const loginApi = createApi({
     prepareHeaders: async header => {
       const token = await getLocalData({key: 'token'});
       if (token) {
-        header.set('Authorization', `${token}`);
+        header.set(
+          'Authorization',
+          `${token}`,
+        );
       }
       return header;
     },
@@ -39,6 +42,7 @@ export const loginApi = createApi({
       transformResponse: async response => {
         if (response?.data?.email) {
           await setLocalData({key: 'isAuthenticated', value: 'true'});
+          await setLocalData({key: "token", value: response?.data?.email})
         }
         return response;
       },

@@ -53,6 +53,7 @@ const requestLocationPermission = async () => {
 const useGetLocation = (): useGetLocationTypes => {
   const [coordinates, setCoordinates] = useState<number[]>([
     // -80.853607, 35.225845,
+    -80.773202, 35.216109
   ]);
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [errors, setErrors] = useState<GeolocationError[] | null>(null);
