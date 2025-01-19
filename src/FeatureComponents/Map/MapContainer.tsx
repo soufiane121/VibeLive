@@ -63,8 +63,9 @@ const LiveIcon = memo(
         key={`marker-${feature.id}`}
         id={`marker-${feature.id}`}
         shape={point(feature.coordinates)}
-        onPress={() => {
-          console.log('clicked on the icon');
+        {...feature}
+        onPress={(e) => {
+          console.log('clicked on the icon', {e: feature.properties});
         }}>
         <CircleLayer
           ref={circleLayerRef} // Reference to directly update properties
@@ -322,6 +323,7 @@ const MapContainer = () => {
                   <ShapeSource
                     key={id}
                     id={id}
+                    {...cluster.properties}
                     shape={point(coordinates)}
                     clusterRadius={50}>
                     <SymbolLayer
@@ -340,6 +342,7 @@ const MapContainer = () => {
                       isLive: !isCluster,
                       coordinates,
                       imageUrl: cluster?.properties?.imageUrl,
+                      properties: {...cluster?.properties},
                     }}
                     circleLayerRef={ref => {
                       circleLayerRefs.current[
