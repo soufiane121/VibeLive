@@ -33,6 +33,8 @@ import ResetLocationButton from './ResetLocationButton';
 import {useGetAllMapPointsMutation} from '../../../features/LiveStream/LiveStream';
 import {useSelector} from 'react-redux';
 import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
+import {PartialState, useNavigation} from '@react-navigation/native';
+import { NativeStackNavigationProp } from 'react-native-screens/lib/typescript/native-stack/types';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -56,6 +58,7 @@ const sampleFeatures = generateFeatures(10);
 // Memoized marker component to avoid unnecessary re-renders
 const LiveIcon = memo(
   ({feature, circleLayerRef}) => {
+    const {navigate} = useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     if (!feature.isLive) return null;
 
     return (
@@ -64,7 +67,10 @@ const LiveIcon = memo(
         id={`marker-${feature.id}`}
         shape={point(feature.coordinates)}
         {...feature}
-        onPress={(e) => {
+        onPress={e => {
+          navigate('StreamPlayer', {
+            properties: {...feature.properties},
+          });
           console.log('clicked on the icon', {e: feature.properties});
         }}>
         <CircleLayer
@@ -79,7 +85,7 @@ const LiveIcon = memo(
         <SymbolLayer
           id={`icon-${feature.id}`}
           style={{
-            iconImage: feature.imageUrl || "tw",
+            iconImage: feature.imageUrl || 'tw',
             iconSize: 0.1,
           }}
         />
@@ -110,6 +116,7 @@ const MapContainer = () => {
   const [bounds, setBounds] = React.useState([-80.9, 35.2, -81.8, 36.3]);
   const [zoomLevel, setZoomLevel] = React.useState(14);
   const {socket} = useSocketInstance();
+
 
   useEffect(() => {
     // add new marker to map

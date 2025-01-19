@@ -9,6 +9,7 @@ import {
 import {useDispatch} from 'react-redux';
 import useGetLocation from '../../CustomHooks/useGetLocation';
 import { getLocalData } from '../../Utils/LocalStorageHelper';
+import StreamPlayer from '../../WatchStream/StreamPlayer';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -41,9 +42,10 @@ const StackNavigation = () => {
         headerShown: false,
       }}>
       {!isSuccess && data?.['_id'] && (
-      <Stack.Screen name="Login" component={LoginContainer} />
+        <Stack.Screen name="Login" component={LoginContainer} />
       )}
       <Stack.Screen name="Bottom" component={BottomNavigation} />
+      <Stack.Screen name="StreamPlayer" component={StreamPlayer} />
     </Stack.Navigator>
   );
 };
