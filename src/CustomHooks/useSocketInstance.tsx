@@ -15,6 +15,7 @@ export const useSocketInstance = () => {
   const socketRef = useRef<Socket | null>(null); // Persistent reference to socket instance
   const [isConnected, setIsConnected] = useState(false); // Track connection status
 
+
   useEffect(() => {
     if (!currentUser) {
       console.warn('User data not available. Skipping socket initialization.');
