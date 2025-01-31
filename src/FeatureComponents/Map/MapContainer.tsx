@@ -31,10 +31,11 @@ import {
 } from './HelperFuncs';
 import ResetLocationButton from './ResetLocationButton';
 import {useGetAllMapPointsMutation} from '../../../features/LiveStream/LiveStream';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
 import {PartialState, useNavigation} from '@react-navigation/native';
-import { NativeStackNavigationProp } from 'react-native-screens/lib/typescript/native-stack/types';
+import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
+import { setCurrentUser } from '../../../features/registrations/CurrentUser';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -58,7 +59,8 @@ const sampleFeatures = generateFeatures(10);
 // Memoized marker component to avoid unnecessary re-renders
 const LiveIcon = memo(
   ({feature, circleLayerRef}) => {
-    const {navigate} = useNavigation<NativeStackNavigationProp<PartialState<any>>>();
+    const {navigate} =
+      useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     if (!feature.isLive) return null;
 
     return (
@@ -69,6 +71,8 @@ const LiveIcon = memo(
         {...feature}
         onPress={e => {
           if (feature.properties?.liveDetails?.isLive) {
+            console.log({feature: feature.properties});
+
             navigate('StreamPlayer', {
               properties: {...feature.properties},
             });
@@ -117,14 +121,23 @@ const MapContainer = () => {
   const [clusters, setClusters] = React.useState([]);
   const [bounds, setBounds] = React.useState([-80.9, 35.2, -81.8, 36.3]);
   const [zoomLevel, setZoomLevel] = React.useState(14);
-  const {socket} = useSocketInstance();
-
+  const {socket, isConnected} = useSocketInstance();
+  const dispatch = useDispatch()
+  setCurrentUser
 
   useEffect(() => {
+    // socket?.emit('get-updated-user', {}, (resp)=>{
+    //   console.log({resp: resp.data.streamsDetails});
+    //   dispatch(setCurrentUser(resp.data))
+    // });
+
     // add new marker to map
     socket?.on('add-to-map', data => {
-      console.log({data}, 'add-to-map');
+      console.log({data}, 'add-to-map---------------------');
       setFeaturesPointsData(prevState => [...prevState, data?.data?.mapItem]);
+    });
+    socket?.on('update-current-user', data => {
+      console.log('socket new user', {data});
     });
   }, [socket]);
 
@@ -139,17 +152,23 @@ const MapContainer = () => {
     const imgUrl =
       'https://fastly.picsum.photos/id/218/20/20.jpg?hmac=pIx-HTJBJRheNaHmhgqsQRX8JbTGvag_zic9NTNWFJU';
     const imageRegistry = {} as any;
-    featuresPointsData.forEach(feature => {
-      imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};
-    });
+    if (featuresPointsData.length > 0) {
+      featuresPointsData?.forEach(feature => {
+        imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};
+      });
+    }
     return imageRegistry;
   }, [featuresPointsData]);
 
   const handleGetMapsPoints = async () => {
+    console.log('get all');
+
     try {
       const {data} = await fetchMapFeatures({
         coordinates,
       }).unwrap();
+      console.log({allData: data}, '---------');
+
       if (data) {
         setFeaturesPointsData(data.features);
       }

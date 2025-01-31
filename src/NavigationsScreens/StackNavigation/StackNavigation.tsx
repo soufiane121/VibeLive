@@ -8,7 +8,6 @@ import {
 } from '../../../features/registrations/CurrentUser';
 import {useDispatch} from 'react-redux';
 import useGetLocation from '../../CustomHooks/useGetLocation';
-import { getLocalData } from '../../Utils/LocalStorageHelper';
 import StreamPlayer from '../../WatchStream/StreamPlayer';
 const Stack = createNativeStackNavigator();
 
@@ -21,11 +20,11 @@ const StackNavigation = () => {
     if (!data) {
       fetchAutoLogin();
     }
-  }, []);
+  }, [data]);
 
   const fetchAutoLogin = async () => {
     try {
-      const res = await autoLoginFetch({coordinates}).unwrap();     
+      const res = await autoLoginFetch({coordinates}).unwrap(); 
       if (res.data._id) {
         dispatch(setCurrentUser(res.data));
       }
@@ -44,7 +43,7 @@ const StackNavigation = () => {
       {!isSuccess && data?.['_id'] && (
         <Stack.Screen name="Login" component={LoginContainer} />
       )}
-      <Stack.Screen name="Bottom" component={BottomNavigation} />
+      {/* <Stack.Screen name="Bottom" component={BottomNavigation} /> */}
       <Stack.Screen name="StreamPlayer" component={StreamPlayer} />
     </Stack.Navigator>
   );
