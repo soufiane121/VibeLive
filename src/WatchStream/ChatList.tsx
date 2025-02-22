@@ -15,6 +15,7 @@ import {
 import Video from 'react-native-video';
 import {SendIcon} from '../UIComponents/Icons';
 import {useSocketInstance} from '../CustomHooks/useSocketInstance';
+import FloatingActionButton from '../FloatingAction/FloatingButton';
 
 const MAX_VISIBLE_MESSAGES = 10;
 const NON_FADED_COUNT = 4; // Keep last 3 messages fully visible
@@ -170,7 +171,8 @@ const ChatList = (props: Props) => {
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.reactionButton}>
-          <Text style={styles.reactionIcon}>❤️</Text>
+          {/* <Text style={styles.reactionIcon}>❤️</Text> */}
+          <FloatingActionButton />
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </View>

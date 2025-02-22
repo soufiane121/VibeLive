@@ -2,6 +2,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome6';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Feather from 'react-native-vector-icons/Feather';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const mapIcon = props => {
   return <Icon name="map" {...props} size={20} />;
@@ -27,6 +28,10 @@ const SendIcon = (props)=> {
   return <Feather name="send" {...props} />;
 }
 
+const HappyFaceEmojiIcon = (props)=> {
+  return <MaterialIcons name="emoji-emotions" {...props} />;
+}
+
 export {
   mapIcon,
   LocationIcon,
@@ -34,4 +39,5 @@ export {
   EyeViewsIcon,
   CloseIcon,
   SendIcon,
+  HappyFaceEmojiIcon,
 };
