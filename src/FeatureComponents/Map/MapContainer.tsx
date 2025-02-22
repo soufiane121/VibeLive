@@ -71,7 +71,7 @@ const LiveIcon = memo(
         {...feature}
         onPress={e => {
           if (feature.properties?.liveDetails?.isLive) {
-            console.log({feature: feature.properties});
+            // console.log({feature: feature.properties});
 
             navigate('StreamPlayer', {
               properties: {...feature.properties},
@@ -123,7 +123,7 @@ const MapContainer = () => {
   const [zoomLevel, setZoomLevel] = React.useState(14);
   const {socket, isConnected} = useSocketInstance();
   const dispatch = useDispatch()
-  setCurrentUser
+  // setCurrentUser
 
   useEffect(() => {
     // socket?.emit('get-updated-user', {}, (resp)=>{

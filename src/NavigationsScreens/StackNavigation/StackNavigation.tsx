@@ -43,7 +43,7 @@ const StackNavigation = () => {
       {!isSuccess && data?.['_id'] && (
         <Stack.Screen name="Login" component={LoginContainer} />
       )}
-      {/* <Stack.Screen name="Bottom" component={BottomNavigation} /> */}
+      <Stack.Screen name="Bottom" component={BottomNavigation} />
       <Stack.Screen name="StreamPlayer" component={StreamPlayer} />
     </Stack.Navigator>
   );

@@ -10,17 +10,45 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import Video from 'react-native-video';
-import { SendIcon } from '../UIComponents/Icons';
+import {SendIcon} from '../UIComponents/Icons';
+import {useSocketInstance} from '../CustomHooks/useSocketInstance';
 
 const MAX_VISIBLE_MESSAGES = 10;
-const NON_FADED_COUNT = 3; // Keep last 3 messages fully visible
+const NON_FADED_COUNT = 4; // Keep last 3 messages fully visible
 
-const ChatList = () => {
+interface Props {
+  streamId: string;
+  userId: string;
+  liveDetails: Object;
+}
+const ChatList = (props: Props) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef(null);
+  const {socket, isConnected, offEvent, emitEvent, listenEvent} =
+    useSocketInstance();
+
+  console.log({isConnected});
+
+  const fadeMessagesHelper = (prevMessages, newMessage) => {
+    const updatedMessages = [...prevMessages, newMessage];
+
+    // Apply fading to older messages (except last 3)
+    if (updatedMessages.length > NON_FADED_COUNT) {
+      for (let i = 0; i < updatedMessages.length - NON_FADED_COUNT; i++) {
+        Animated.timing(updatedMessages[i].fadeAnim, {
+          toValue: 0.3, // Fade to 30% opacity
+          duration: 2000,
+          useNativeDriver: true,
+        }).start();
+      }
+    }
+
+    return updatedMessages;
+  };
 
   const sendMessage = () => {
     if (inputText.trim()) {
@@ -28,29 +56,25 @@ const ChatList = () => {
 
       const newMessage = {
         id: Date.now().toString(),
-        user: 'You',
         avatar: 'https://via.placeholder.com/40',
         message: inputText,
         fadeAnim,
       };
 
-      setMessages(prevMessages => {
-        const updatedMessages = [...prevMessages, newMessage];
-
-        // Apply fading to older messages (except last 3)
-        if (updatedMessages.length > NON_FADED_COUNT) {
-          for (let i = 0; i < updatedMessages.length - NON_FADED_COUNT; i++) {
-            Animated.timing(updatedMessages[i].fadeAnim, {
-              toValue: 0.3, // Fade to 30% opacity
-              duration: 2000,
-              useNativeDriver: true,
-            }).start();
-          }
-        }
-
-        return updatedMessages;
+      emitEvent('send-message', {
+        roomName: props?.streamId,
+        streamerId: props.userId,
+        newMessage,
       });
 
+      // socket?.emit('send-message', {
+      //   roomName: props?.streamId,
+      //   streamerId: props.userId,
+      //   newMessage
+      // });
+      setMessages(prevMessages => {
+        return fadeMessagesHelper(prevMessages, newMessage);
+      });
       setInputText('');
     }
   };
@@ -59,14 +83,46 @@ const ChatList = () => {
     flatListRef.current?.scrollToEnd({animated: true});
   }, [messages]);
 
+  useEffect(() => {
+    if (socket) {
+      socket.on('get-chat', data => {
+        console.log({data: data.data.newMessage}, 'get-chat ');
+        if (data?.data.newMessage?.hasOwnProperty('id')) {
+          setMessages(prevMessages => {
+            return fadeMessagesHelper(prevMessages, data?.data.newMessage);
+          });
+        }
+      });
+    }
+    return (
+      // socket?.off("get-chat-messages")
+      // socket?.off("get-chat-messages")
+      // adding off event for get-chat will stop listening to the event, NOT WORKING WITH IT
+      offEvent('get-chat-messages')
+    );
+  }, [socket]);
+
+  useEffect(() => {
+    if (socket) {
+      emitEvent('join-chat-room', {
+        roomName: props?.streamId,
+      });
+    }
+
+    return () => {
+      offEvent('join-chat-room');
+    };
+  }, [socket]);
+
   const renderItem = ({item}) => {
     return (
       <Animated.View
-        style={[styles.messageContainer, {opacity: item.fadeAnim}]}>
-        <Image source={{uri: item.avatar}} style={styles.avatar} />
+        style={[styles.messageContainer, {opacity: item?.fadeAnim}]}
+        key={item?.id + JSON.stringify(new Date())}>
+        <Image source={{uri: item?.avatar}} style={styles.avatar} />
         <View style={styles.messageContent}>
-          <Text style={styles.userName}>{item.user}</Text>
-          <Text style={styles.messageText}>{item.message}</Text>
+          <Text style={styles.userName}>{item?.user}</Text>
+          <Text style={styles.messageText}>{item?.message}</Text>
         </View>
       </Animated.View>
     );
@@ -88,7 +144,7 @@ const ChatList = () => {
         <FlatList
           ref={flatListRef}
           data={messages.slice(-MAX_VISIBLE_MESSAGES)}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item?.id}
           renderItem={renderItem}
           //   inverted // New messages appear at the bottom
           showsVerticalScrollIndicator={false}
@@ -106,6 +162,7 @@ const ChatList = () => {
             placeholderTextColor="#ddd"
             value={inputText}
             onChangeText={setInputText}
+            onPress={Keyboard.dismiss}
           />
           <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
             {/* <Text style={styles.sendText}>➤</Text> */}
@@ -178,7 +235,7 @@ const styles = StyleSheet.create({
     // borderTopWidth: 1,
     // borderTopColor: '#333',
     padding: 10,
-    marginBottom: 5
+    marginBottom: 5,
     // backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   input: {

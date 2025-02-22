@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {useSelector} from 'react-redux';
 import {io, Socket} from 'socket.io-client';
 import {baseUrl} from '../../baseUrl';
@@ -9,19 +9,16 @@ interface UseSocketOptions {
 }
 
 export const useSocketInstance = () => {
-  const {
-    currentUser 
-  } = useSelector(state => state?.currentUser);
+  const {currentUser} = useSelector(state => state?.currentUser);
   const socketRef = useRef<Socket | null>(null); // Persistent reference to socket instance
   const [isConnected, setIsConnected] = useState(false); // Track connection status
-
 
   useEffect(() => {
     if (!currentUser) {
       console.warn('User data not available. Skipping socket initialization.');
       return;
     }
-    if (!isConnected) {
+    if (!socketRef.current) {
       // Create the Socket.IO instance
       const socket = io(baseUrl + '/liveStream', {
         query: {
@@ -52,22 +49,22 @@ export const useSocketInstance = () => {
     };
   }, [currentUser]);
 
-  console.log("from costum hook")
+  console.log('from costum hook');
   // Send events to the server
-  const emitEvent = (eventName: string, data: any) => {
+  const emitEvent = useCallback((eventName: string, data: any) => {
     if (socketRef.current) {
       socketRef.current.emit(eventName, data);
     } else {
       console.error('Socket not connected. Cannot emit event:', eventName);
     }
-  };
+  }, []);
 
   // Listen to events from the server
-  const listenEvent = (eventName: string, callback: (data: any) => void) => {
+  const listenEvent = useCallback((eventName: string, callback: (data: any) => void) => {
     if (socketRef.current) {
       socketRef.current.on(eventName, callback);
     }
-  };
+  }, []);
 
   // Unsubscribe from a specific event
   const offEvent = (eventName: string) => {

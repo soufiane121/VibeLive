@@ -1,5 +1,5 @@
 import {Image, SafeAreaView, StyleSheet, Text, View} from 'react-native';
-import {useNavigationState} from '@react-navigation/native';
+import {useNavigation, useNavigationState} from '@react-navigation/native';
 import {MAPBOX_ENV_KEY} from '@env';
 import Video from 'react-native-video'; // import Video from react-native-video like your normally would
 import muxReactNativeVideo from '@mux/mux-data-react-native-video';
@@ -9,33 +9,39 @@ import {useEffect, useState} from 'react';
 import {CloseIcon, EyeViewsIcon} from '../UIComponents/Icons';
 import {formatToKSymbol} from '../Utils/helperFuncs';
 import ChatList from './ChatList';
-const live = require('../../assests/live.png');
 
 type Props = {
-  streamId: string;
+  streamId?: string;
 };
 
 const StreamPlayer = (props: Props) => {
-  // const {
-  //   properties: {streamId, userId, liveDetails},
-  // } = useNavigationState(state => state.routes[1]?.params) || {};
+  const {
+    properties: {streamId, userId, liveDetails},
+  } = useNavigationState(state => state.routes[1]?.params) || {};
   const {socket, isConnected} = useSocketInstance();
   const {currentUser} = useSelector(state => state?.currentUser);
-  const [liveCount, setLiveCount] = useState<number>(0);
+  const [liveCount, setLiveCount] = useState<number>(9099);
   const MuxVideo = muxReactNativeVideo(Video);
+    const {navigate, goBack} = useNavigation();
 
+  
   useEffect(() => {
-    if (isConnected) {
-      // socket?.emit('start-watching-live', {
-      //   streamUserId: userId,
-      //   viewerUserId: currentUser._id,
-      // });
-      // socket?.on('stream-counts', data => {
-      //   console.log({data: data.data.liveDetails}, 'streamCount');
-      //   setLiveCount(+data.data.liveDetails);
-      // });
+    if (socket) {
+      socket?.emit('start-watching-live', {
+        streamUserId: userId,
+        viewerUserId: currentUser._id,
+      }, ({data}) => {
+        setLiveCount(+data?.liveDetails?.liveViewrsCount);
+      }
+      );
+      socket?.on('stream-counts', data => {
+        console.log({data: data.data.liveDetails}, 'streamCount');
+        setLiveCount(+data.data.liveDetails.liveViewrsCount);
+      });
     }
-  }, [socket, isConnected]);
+  }, [socket]);
+
+  
 
   return (
     <>
@@ -43,32 +49,39 @@ const StreamPlayer = (props: Props) => {
       <View style={styles.headerContainer}>
         <View style={styles.userInfoContainer}>
           <Image
-            src="https://images.unsplash.com/photo-1472457897821-70d3819a0e24?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            src={`https://images.unsplash.com/photo-1472457897821-70d3819a0e24?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`}
             style={styles.avatar}
           />
           <Text style={styles.userName}>User Name</Text>
         </View>
         <View style={styles.liveInfoContainer}>
-          <View style={{display: 'flex', flexDirection: 'row', width: '50%', alignItems: 'center', gap: 3}}>
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              width: '50%',
+              alignItems: 'center',
+              gap: 3,
+            }}>
             <EyeViewsIcon style={styles.eyeIcon} />
-            <Text style={styles.countNumber}>{formatToKSymbol(9000)}</Text>
+            <Text style={styles.countNumber}>{formatToKSymbol(liveCount)}</Text>
           </View>
           <Text style={styles.live}>Live</Text>
           {/* <Image source={live} style={styles.liveLogo} /> */}
         </View>
-        <CloseIcon style={styles.close} />
+        <CloseIcon style={styles.close} onPress={()=> {goBack()}}/>
       </View>
       <MuxVideo
         style={{height: '100%', width: '100%'}}
         source={{
-          uri: `https://stream.mux.com/urXvLG5vPSdI7VtkCBc8x8DrWj01y02ugmRTCaca7rhDM.m3u8`,
+          uri: `https://stream.mux.com/${streamId}.m3u8`,
         }}
         fullscreen={true}
         paused={false}
         // resizeMode="contain"
         poster={{
           source: {
-            uri: `https://image.mux.com/urXvLG5vPSdI7VtkCBc8x8DrWj01y02ugmRTCaca7rhDM/thumbnail.png?height=121&time=25&width=214&fit_mode=preserve`,
+            uri: `https://image.mux.com/${streamId}/thumbnail.png?height=121&time=25&width=214&fit_mode=preserve`,
           },
           // resizeMode: 'cover',
           // ...
@@ -86,7 +99,7 @@ const StreamPlayer = (props: Props) => {
           },
         }}
       />
-      <ChatList />
+      <ChatList streamId={streamId} userId={userId} liveDetails={liveDetails} />
       {/* </SafeAreaView> */}
     </>
   );
@@ -127,17 +140,22 @@ const styles = StyleSheet.create({
     color: '#CFD6DF',
     fontSize: 15,
     marginLeft: '3%',
-    fontFamily: "800"
+    fontFamily: '800',
   },
   liveInfoContainer: {
     borderWidth: 2,
-    width: '29%',
+    minWidth: '30%',
+    maxWidth: '37%',
+    width: '32%',
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#5F676F',
-    borderRadius: 50,
+    borderRadius: 40,
     flexDirection: 'row',
-    gap: '2%',
+    // gap: '2%',
+    paddingHorizontal: 4,
+
     borderColor: 'transparent',
   },
   eyeIcon: {
@@ -149,14 +167,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#CFD6DF',
+    marginRight: '5%',
   },
   live: {
     backgroundColor: 'red',
     color: 'white',
-    width: '30%',
+    width: '35%',
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
+    // paddingHorizontal: 4,
+    borderRadius: 50,
+    marginLeft: '3%',
+    // height: "9%"
   },
   liveLogo: {
     width: '40%',
