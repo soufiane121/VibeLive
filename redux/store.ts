@@ -3,10 +3,13 @@ import {configureStore} from '@reduxjs/toolkit';
 import {loginSlice} from '../features/registrations/LoginSlice';
 import {loginApi} from '../features/registrations/LoginSliceApi';
 import {liveStream} from '../features/LiveStream/LiveStream';
+import {LiveStreamSlice} from '../features/LiveStream/LiveStreamSlice';
+
 
 export const store = configureStore({
   reducer: {
     currentUser: CurrentUser.reducer,
+    liveStreamSlice: LiveStreamSlice.reducer,
     // login: loginSlice,
     [loginApi.reducerPath]: loginApi.reducer,
     [liveStream.reducerPath]: liveStream.reducer,

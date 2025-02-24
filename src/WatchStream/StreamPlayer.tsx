@@ -9,6 +9,7 @@ import {useEffect, useState} from 'react';
 import {CloseIcon, EyeViewsIcon} from '../UIComponents/Icons';
 import {formatToKSymbol} from '../Utils/helperFuncs';
 import ChatList from './ChatList';
+import FloatingEmojiReactions from '../FloatingAction/EmojiAnimation';
 
 type Props = {
   streamId?: string;
@@ -99,6 +100,7 @@ const StreamPlayer = (props: Props) => {
           },
         }}
       />
+      <FloatingEmojiReactions />
       <ChatList streamId={streamId} userId={userId} liveDetails={liveDetails} />
       {/* </SafeAreaView> */}
     </>

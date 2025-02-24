@@ -16,6 +16,8 @@ import Video from 'react-native-video';
 import {SendIcon} from '../UIComponents/Icons';
 import {useSocketInstance} from '../CustomHooks/useSocketInstance';
 import FloatingActionButton from '../FloatingAction/FloatingButton';
+import {useDispatch} from 'react-redux';
+import {addReaction} from '../../features/LiveStream/LiveStreamSlice';
 
 const MAX_VISIBLE_MESSAGES = 10;
 const NON_FADED_COUNT = 4; // Keep last 3 messages fully visible
@@ -29,10 +31,8 @@ const ChatList = (props: Props) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef(null);
-  const {socket, isConnected, offEvent, emitEvent, listenEvent} =
-    useSocketInstance();
-
-  console.log({isConnected});
+  const {socket, offEvent, emitEvent} = useSocketInstance();
+  const dispatch = useDispatch();
 
   const fadeMessagesHelper = (prevMessages, newMessage) => {
     const updatedMessages = [...prevMessages, newMessage];
@@ -84,6 +84,22 @@ const ChatList = (props: Props) => {
     flatListRef.current?.scrollToEnd({animated: true});
   }, [messages]);
 
+  const sendReactions = (reactEmogi: string) => {
+    let isThrottled = false;
+    if (!isThrottled) {
+      dispatch(addReaction(reactEmogi));
+      emitEvent('reaction-to-stream', {
+        reactEmogi,
+        roomName: props?.streamId,
+      });
+      isThrottled = true;
+
+      setTimeout(() => {
+        isThrottled = false;
+      }, 5000);
+    }
+  };
+
   useEffect(() => {
     if (socket) {
       socket.on('get-chat', data => {
@@ -94,13 +110,16 @@ const ChatList = (props: Props) => {
           });
         }
       });
+      socket.on('get-reaction', data => {
+        dispatch(addReaction(data?.data.reactEmogi));
+      });
     }
-    return (
-      // socket?.off("get-chat-messages")
-      // socket?.off("get-chat-messages")
-      // adding off event for get-chat will stop listening to the event, NOT WORKING WITH IT
-      offEvent('get-chat-messages')
-    );
+    // return (
+    // socket?.off("get-chat-messages")
+    // socket?.off("get-chat-messages")
+    // adding off event for get-chat will stop listening to the event, NOT WORKING WITH IT
+    // offEvent('get-chat-messages')
+    // );
   }, [socket]);
 
   useEffect(() => {
@@ -172,7 +191,7 @@ const ChatList = (props: Props) => {
         </View>
         <TouchableOpacity style={styles.reactionButton}>
           {/* <Text style={styles.reactionIcon}>❤️</Text> */}
-          <FloatingActionButton />
+          <FloatingActionButton sendReactions={sendReactions} />
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </View>

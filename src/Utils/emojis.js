@@ -11,5 +11,5 @@ export const emojis = {
   like: heart,
   music: music,
   dislike: dislike,
-  angery: angery,
+  boring: angery,
 };

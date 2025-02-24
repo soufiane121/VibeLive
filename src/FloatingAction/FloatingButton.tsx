@@ -1,21 +1,25 @@
 // Floating Action Button Example in React Native
 // Main button shows other action buttons in a half-circle when clicked
 
-import React, {useState, Suspense} from 'react';
-import {View, TouchableOpacity, Text, Image, StyleSheet} from 'react-native';
+import React, {useState} from 'react';
+import {View, TouchableOpacity, Image, StyleSheet} from 'react-native';
 import {emojis} from '../Utils/emojis';
 import {HappyFaceEmojiIcon} from '../UIComponents/Icons';
 // import {Ionicons} from '@expo/vector-icons';
 
-export default function FloatingActionButton() {
+interface Props {
+  sendReactions: (reaction: string) => void;
+}
+
+const FloatingActionButton: React.FC<Props> = ({sendReactions}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const buttons = [
     {label: 'Like', emoji: emojis.like},
-    {label: 'Cheers', emoji: emojis.beer},
+    {label: 'Beer', emoji: emojis.beer},
     {label: 'Hot', emoji: emojis.hot},
     {label: 'Music', emoji: emojis.music},
-    {label: 'Boring', emoji: emojis.angery},
+    {label: 'Boring', emoji: emojis.boring},
     {label: 'Dislike', emoji: emojis.dislike},
   ];
 
@@ -25,32 +29,28 @@ export default function FloatingActionButton() {
       <TouchableOpacity
         style={styles.containr}
         onPress={() => setIsOpen(!isOpen)}>
-        <HappyFaceEmojiIcon size={30} style={styles.parentIcon}/>
+        <HappyFaceEmojiIcon size={30} style={styles.parentIcon} />
       </TouchableOpacity>
 
       {/* Action Buttons - Half Circle Around Main Button */}
       {isOpen && (
-        <View
-          style={styles.actionIconsWrapper}>
+        <View style={styles.actionIconsWrapper}>
           {buttons.map((btn, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.actionIconsContainer}>
+            <TouchableOpacity key={index} style={styles.actionIconsContainer} onPress={() => sendReactions(btn.label)}>   
               <Image source={btn.emoji} style={styles.img} />
-              {/* <Text style={{color: '#fff'}}>{btn.label}</Text> */}
             </TouchableOpacity>
           ))}
         </View>
       )}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   containr: {
     borderRadius: 30,
     width: 60,
-    height:70,
+    height: 70,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -66,7 +66,6 @@ const styles = StyleSheet.create({
   actionIconsContainer: {
     alignItems: 'center',
     borderRadius: 30,
-    // padding: 10,
     width: 40,
     height: 40,
     justifyContent: 'center',
@@ -76,3 +75,5 @@ const styles = StyleSheet.create({
     height: 25,
   },
 });
+
+export default FloatingActionButton;
