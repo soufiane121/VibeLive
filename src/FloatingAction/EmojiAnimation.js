@@ -4,7 +4,7 @@ import {emojis as EMOJIS} from '../Utils/emojis';
 import {useDispatch, useSelector} from 'react-redux';
 import { clearReactions } from '../../features/LiveStream/LiveStreamSlice';
 
-const FloatingEmoji = ({emoji, onComplete}) => {
+export const FloatingEmoji = ({emoji, onComplete}) => {   
   const positionY = useRef(new Animated.Value(0)).current;
   const positionX = useRef(new Animated.Value(0)).current; // For horizontal movement
   const opacity = useRef(new Animated.Value(1)).current;
@@ -53,15 +53,14 @@ const FloatingEmoji = ({emoji, onComplete}) => {
 
 const FloatingEmojiReactions = () => {
   const [emojis, setEmojis] = React.useState([]);
-  const {emoji: emojiSelected} = useSelector(state => state?.liveStreamSlice);
+  const {liveStreamData: {emoji: emojiSelected, id}} = useSelector(state => state?.liveStreamSlice);
   const dispatch = useDispatch();
-  
 
   useEffect(() => {
-    if (EMOJIS[emojiSelected.toLowerCase()]) {
+    if (EMOJIS[emojiSelected?.toLowerCase()]) {
       setEmojis(prev => [
         ...prev,
-        {id: Date.now(), emoji: EMOJIS[emojiSelected.toLowerCase()]},
+        {id: Date.now(), emoji: EMOJIS[emojiSelected?.toLowerCase()]},
       ]);
       dispatch(clearReactions(''));
     }

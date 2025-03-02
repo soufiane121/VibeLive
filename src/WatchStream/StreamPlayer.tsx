@@ -17,15 +17,14 @@ type Props = {
 
 const StreamPlayer = (props: Props) => {
   const {
-    properties: {streamId, userId, liveDetails},
+    properties: {streamId, userId, liveDetails, coordinates},
   } = useNavigationState(state => state.routes[1]?.params) || {};
   const {socket, isConnected} = useSocketInstance();
   const {currentUser} = useSelector(state => state?.currentUser);
   const [liveCount, setLiveCount] = useState<number>(9099);
   const MuxVideo = muxReactNativeVideo(Video);
-    const {navigate, goBack} = useNavigation();
+  const {navigate, goBack} = useNavigation();
 
-  
   useEffect(() => {
     if (socket) {
       socket?.emit('start-watching-live', {
@@ -41,7 +40,6 @@ const StreamPlayer = (props: Props) => {
       });
     }
   }, [socket]);
-
   
 
   return (
@@ -70,7 +68,12 @@ const StreamPlayer = (props: Props) => {
           <Text style={styles.live}>Live</Text>
           {/* <Image source={live} style={styles.liveLogo} /> */}
         </View>
-        <CloseIcon style={styles.close} onPress={()=> {goBack()}}/>
+        <CloseIcon
+          style={styles.close}
+          onPress={() => {
+            goBack();
+          }}
+        />
       </View>
       <MuxVideo
         style={{height: '100%', width: '100%'}}
@@ -101,7 +104,12 @@ const StreamPlayer = (props: Props) => {
         }}
       />
       <FloatingEmojiReactions />
-      <ChatList streamId={streamId} userId={userId} liveDetails={liveDetails} />
+      <ChatList
+        streamId={streamId}
+        userId={userId}
+        liveDetails={liveDetails}
+        coordinates={coordinates}
+      />
       {/* </SafeAreaView> */}
     </>
   );

@@ -26,6 +26,7 @@ interface Props {
   streamId: string;
   userId: string;
   liveDetails: Object;
+  coordinates: string[]
 }
 const ChatList = (props: Props) => {
   const [messages, setMessages] = useState([]);
@@ -87,10 +88,15 @@ const ChatList = (props: Props) => {
   const sendReactions = (reactEmogi: string) => {
     let isThrottled = false;
     if (!isThrottled) {
-      dispatch(addReaction(reactEmogi));
+      dispatch(
+        addReaction({id: props?.streamId, emoji: reactEmogi}),
+      );
       emitEvent('reaction-to-stream', {
-        reactEmogi,
         roomName: props?.streamId,
+        streamerId: props.userId,
+        id: props?.streamId,
+        reactEmogi,
+        coordinates: props.coordinates,
       });
       isThrottled = true;
 
@@ -111,7 +117,8 @@ const ChatList = (props: Props) => {
         }
       });
       socket.on('get-reaction', data => {
-        dispatch(addReaction(data?.data.reactEmogi));
+        const {id, reactEmogi} = data?.data;
+        dispatch(addReaction({id: id, emoji: reactEmogi}));
       });
     }
     // return (

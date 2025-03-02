@@ -17,8 +17,9 @@ import {
   setTelemetryEnabled,
   FillLayer,
   LocationPuck,
+  MarkerView,
 } from '@rnmapbox/maps';
-import {View, StyleSheet, Animated, Easing} from 'react-native';
+import {View, StyleSheet, Animated, Easing, Text} from 'react-native';
 import {point} from '@turf/helpers';
 import Supercluster from 'supercluster';
 import {debounce, throttle} from 'lodash';
@@ -35,7 +36,14 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
 import {PartialState, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
-import { setCurrentUser } from '../../../features/registrations/CurrentUser';
+import {setCurrentUser} from '../../../features/registrations/CurrentUser';
+// import {FloatingEmoji} from '../../FloatingAction/EmojiAnimation';
+import {
+  addReaction,
+  clearReactions,
+} from '../../../features/LiveStream/LiveStreamSlice';
+import {emojis as EMOJIS} from '../../Utils/emojis';
+import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -54,8 +62,6 @@ const generateFeatures = count => {
   }));
 };
 
-const sampleFeatures = generateFeatures(10);
-
 // Memoized marker component to avoid unnecessary re-renders
 const LiveIcon = memo(
   ({feature, circleLayerRef}) => {
@@ -71,13 +77,10 @@ const LiveIcon = memo(
         {...feature}
         onPress={e => {
           if (feature.properties?.liveDetails?.isLive) {
-            // console.log({feature: feature.properties});
-
             navigate('StreamPlayer', {
               properties: {...feature.properties},
             });
           }
-          console.log('clicked on the icon', {e: e.features});
         }}>
         <CircleLayer
           ref={circleLayerRef} // Reference to directly update properties
@@ -105,6 +108,9 @@ const USA_BOUNDS = [
   [-66.9, 49.0], // Northeast corner [longitude, latitude]
 ];
 
+interface EmojisState {
+  [key: string]: [{emoji: string; id: string}];
+}
 const MapContainer = () => {
   const {coordinates} = useGetLocation();
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
@@ -120,10 +126,10 @@ const MapContainer = () => {
   const pulseAnimation = useRef(new Animated.Value(0)).current;
   const [clusters, setClusters] = React.useState([]);
   const [bounds, setBounds] = React.useState([-80.9, 35.2, -81.8, 36.3]);
-  const [zoomLevel, setZoomLevel] = React.useState(14);
+  const [zoomLevel, setZoomLevel] = useState(14);
   const {socket, isConnected} = useSocketInstance();
-  const dispatch = useDispatch()
-  // setCurrentUser
+  const [emojis, setEmojis] = useState<EmojisState>({});
+  const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     // socket?.emit('get-updated-user', {}, (resp)=>{
@@ -138,6 +144,13 @@ const MapContainer = () => {
     });
     socket?.on('update-current-user', data => {
       console.log('socket new user', {data});
+    });
+    socket?.on('add-reaction-to-map', data => {
+      const {id, reactEmogi} = data?.data;
+      setEmojis(prevState => ({
+        ...prevState,
+        [id]: [...(prevState[id] || []), {id: Date.now(), emoji: reactEmogi}],
+      }));
     });
   }, [socket]);
 
@@ -161,8 +174,6 @@ const MapContainer = () => {
   }, [featuresPointsData]);
 
   const handleGetMapsPoints = async () => {
-    console.log('get all');
-
     try {
       const {data} = await fetchMapFeatures({
         coordinates,
@@ -234,7 +245,7 @@ const MapContainer = () => {
       });
     });
 
-    animatePulse();
+    // animatePulse(); to start live circle animation
 
     return () => {
       pulseAnimation.stopAnimation();
@@ -274,7 +285,8 @@ const MapContainer = () => {
   // Throttled region update handler
   const handleRegionChange = useCallback(
     throttle(async map => {
-      const region = await map?.getVisibleBounds();
+      // const region = await map?.getVisibleBounds();
+      const region = await map?.getBounds()();
       const {ne, sw} = region;
       const newBounds = [sw.lng, sw.lat, ne.lng, ne.lat];
       setBounds(newBounds);
@@ -304,6 +316,7 @@ const MapContainer = () => {
       {coordinates.length > 0 && (
         <>
           <MapView
+            ref={mapRef}
             style={styles.map}
             onCameraChanged={handleRegionChange}
             styleURL="mapbox://styles/mapbox/dark-v11"
@@ -344,7 +357,7 @@ const MapContainer = () => {
                 const imageUrl = cluster?.properties?.imageUrl || 'in';
                 const coordinates = cluster.geometry.coordinates;
                 const id = isCluster
-                  ? `cluster-${cluster.properties.cluster_id}`
+                  ? `cluster-${cluster.properties.id}`
                   : `marker-${cluster.properties.id}`;
 
                 return !isCluster ? (
@@ -363,21 +376,55 @@ const MapContainer = () => {
                     />
                   </ShapeSource>
                 ) : (
-                  <LiveIcon
-                    key={id}
-                    feature={{
-                      id: cluster.properties.id,
-                      isLive: isCluster,
-                      coordinates,
-                      imageUrl: cluster?.properties?.imageUrl,
-                      properties: {...cluster?.properties},
-                    }}
-                    circleLayerRef={ref => {
-                      circleLayerRefs.current[
-                        `pulse-${cluster.properties.id}`
-                      ] = ref;
-                    }}
-                  />
+                  <>
+                    <LiveIcon
+                      key={id}
+                      feature={{
+                        id: cluster.properties.id,
+                        isLive: isCluster,
+                        coordinates: cluster.properties.coordinates, // Ensure this is an array [longitude, latitude]
+                        imageUrl: cluster?.properties?.imageUrl,
+                        properties: {
+                          ...cluster?.properties,
+                        },
+                      }}
+                      circleLayerRef={ref => {
+                        circleLayerRefs.current[
+                          `pulse-${cluster.properties.id}`
+                        ] = ref;
+                      }}
+                    />
+
+                    {emojis[cluster?.properties?.streamId] && (
+                      <MarkerView coordinate={cluster?.properties?.coordinates}>
+                        <>
+                          {emojis[cluster?.properties?.streamId]?.map(
+                            (emoji, idx) => {
+                              return (
+                                <FloatingEmoji
+                                  key={idx}
+                                  coordinates={cluster?.properties?.coordinates} // Ensure correct coordinates are passed here
+                                  mapRef={mapRef} // Ensure mapRef is passed here correctly
+                                  emoji={
+                                    EMOJIS[emoji.emoji.toLocaleLowerCase()]
+                                  }
+                                  onComplete={() => {
+                                    setEmojis(prevState => ({
+                                      ...prevState,
+                                      [cluster?.properties?.streamId]:
+                                        prevState[
+                                          cluster?.properties?.streamId
+                                        ]?.filter(e => e.id !== emoji.id),
+                                    }));
+                                  }}
+                                />
+                              );
+                            },
+                          )}
+                        </>
+                      </MarkerView>
+                    )}
+                  </>
                 );
               })}
           </MapView>

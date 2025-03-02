@@ -25,6 +25,11 @@ export const useSocketInstance = () => {
           userId: currentUser._id,
           token: currentUser.email,
         },
+        transports: ['websocket', 'polling'],
+        reconnection: true, // Enables reconnection
+        reconnectionAttempts: 5, // Max attempts before giving up
+        reconnectionDelay: 2000, // Time (ms) between attempts
+        timeout: 10000,
       });
       socketRef.current = socket;
 
@@ -49,7 +54,6 @@ export const useSocketInstance = () => {
     };
   }, [currentUser]);
 
-  console.log('from costum hook');
   // Send events to the server
   const emitEvent = useCallback((eventName: string, data: any) => {
     if (socketRef.current) {
