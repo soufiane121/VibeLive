@@ -5,6 +5,7 @@ import {LiveStreamIcon, mapIcon} from '../../UIComponents/Icons';
 import {Text, View} from 'react-native';
 import tw from '../../../tw';
 import LiveStreamContainer from '../../LiveStream/LiveStreamContainer';
+import SwitcherContainer from '../../LiveStream/SwitcherContainer';
 
 function HomeScreen() {
   return (
@@ -52,7 +53,8 @@ export default function BottomNavigation() {
       />
       <BottomTap.Screen
         name="Live"
-        component={LiveStreamContainer}
+        // component={LiveStreamContainer}
+        component={SwitcherContainer}
         options={{
           tabBarIcon: LiveStreamIcon,
           title: 'GO Live',

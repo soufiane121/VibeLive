@@ -68,6 +68,7 @@ const LiveIcon = memo(
     const {navigate} =
       useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     if (!feature.isLive) return null;
+console.log({feature}, 'feature in live icon');
 
     return (
       <ShapeSource
@@ -76,8 +77,12 @@ const LiveIcon = memo(
         shape={point(feature.coordinates)}
         {...feature}
         onPress={e => {
-          if (feature.properties?.liveDetails?.isLive) {
+          if (feature.properties?.liveDetails?.isLive && !feature.hasNestedMarkers) {
             navigate('StreamPlayer', {
+              properties: {...feature.properties},
+            });
+          } else {
+            navigate('carrouselSwiper', {
               properties: {...feature.properties},
             });
           }
@@ -178,8 +183,6 @@ const MapContainer = () => {
       const {data} = await fetchMapFeatures({
         coordinates,
       }).unwrap();
-      console.log({allData: data}, '---------');
-
       if (data) {
         setFeaturesPointsData(data.features);
       }
@@ -359,6 +362,10 @@ const MapContainer = () => {
                 const id = isCluster
                   ? `cluster-${cluster.properties.id}`
                   : `marker-${cluster.properties.id}`;
+                const hasNestedMarkers =
+                  cluster?.hasOwnProperty('groupedFeatures');
+                  console.log({cluster});
+
 
                 return !isCluster ? (
                   <ShapeSource
@@ -387,6 +394,7 @@ const MapContainer = () => {
                         properties: {
                           ...cluster?.properties,
                         },
+                        hasNestedMarkers: hasNestedMarkers,
                       }}
                       circleLayerRef={ref => {
                         circleLayerRefs.current[

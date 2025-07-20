@@ -5,8 +5,7 @@ import {MarkerView} from '@rnmapbox/maps';
 export const FloatingEmoji = ({emoji, coordinates, mapRef, onComplete}) => {
   const positionY = useRef(new Animated.Value(0)).current;
   const positionX = useRef(new Animated.Value(0)).current; // For horizontal movement
-  const opacity = useRef(new Animated.Value(1)).current;
-console.log({emoji});
+  const opacity = useRef(new Animated.Value(1)).current; 
 
   useEffect(() => {
     const randomStartX = Math.random() * -10 + 10; // Random start position

@@ -13,6 +13,9 @@ import FloatingEmojiReactions from '../FloatingAction/EmojiAnimation';
 
 type Props = {
   streamId?: string;
+  userId?: string;
+  liveDetails?: any;
+  coordinates?: any;
 };
 
 const StreamPlayer = (props: Props) => {
@@ -105,10 +108,10 @@ const StreamPlayer = (props: Props) => {
       />
       <FloatingEmojiReactions />
       <ChatList
-        streamId={streamId}
-        userId={userId}
-        liveDetails={liveDetails}
-        coordinates={coordinates}
+        streamId={streamId || props?.streamId}
+        userId={userId || props?.userId}
+        liveDetails={liveDetails || props?.liveDetails}
+        coordinates={coordinates || props?.coordinates}
       />
       {/* </SafeAreaView> */}
     </>

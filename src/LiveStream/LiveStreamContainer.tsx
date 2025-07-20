@@ -17,7 +17,11 @@ import {baseUrl} from '../../baseUrl';
 import {useSelector} from 'react-redux';
 import useGetLocation from '../CustomHooks/useGetLocation';
 
-export default function LiveStreamContainer() {
+interface LiveStreamContainerProps {
+  streamEventType?: string;
+}
+export default function LiveStreamContainer(props: LiveStreamContainerProps) {
+  const {streamEventType} = props;
   const {
     currentUser
   } = useSelector(state => state?.currentUser);
@@ -99,6 +103,7 @@ export default function LiveStreamContainer() {
         token: currenUser.email,
         streamId: playbackId,
         coordinates,
+        streamEventType: streamEventType || 'default',
       });
     }
   };

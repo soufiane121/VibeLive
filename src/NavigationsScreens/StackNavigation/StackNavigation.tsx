@@ -9,6 +9,7 @@ import {
 import {useDispatch} from 'react-redux';
 import useGetLocation from '../../CustomHooks/useGetLocation';
 import StreamPlayer from '../../WatchStream/StreamPlayer';
+import CarrouselContainer from '../../Carrousel/CarrouselContainer';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -45,6 +46,10 @@ const StackNavigation = () => {
       )}
       <Stack.Screen name="Bottom" component={BottomNavigation} />
       <Stack.Screen name="StreamPlayer" component={StreamPlayer} />
+      <Stack.Screen
+        name="carrouselSwiper"
+        component={CarrouselContainer}
+      />
     </Stack.Navigator>
   );
 };
