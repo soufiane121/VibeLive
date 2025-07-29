@@ -3,13 +3,12 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import LoginContainer from '../../FeatureComponents/Auth/Login/LoginContainer';
 import BottomNavigation from '../BottomTap/BottomNavigation';
 import {useAutoLoginMutation} from '../../../features/registrations/LoginSliceApi';
-import {
-  setCurrentUser,
-} from '../../../features/registrations/CurrentUser';
+import {setCurrentUser} from '../../../features/registrations/CurrentUser';
 import {useDispatch} from 'react-redux';
 import useGetLocation from '../../CustomHooks/useGetLocation';
 import StreamPlayer from '../../WatchStream/StreamPlayer';
 import CarrouselContainer from '../../Carrousel/CarrouselContainer';
+import SignUpContainer from '../../FeatureComponents/Auth/SignUp/SignUpContainer';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -25,7 +24,8 @@ const StackNavigation = () => {
 
   const fetchAutoLogin = async () => {
     try {
-      const res = await autoLoginFetch({coordinates}).unwrap(); 
+      const res = await autoLoginFetch({coordinates}).unwrap();
+
       if (res.data._id) {
         dispatch(setCurrentUser(res.data));
       }
@@ -41,15 +41,19 @@ const StackNavigation = () => {
         headerBackVisible: false,
         headerShown: false,
       }}>
-      {!isSuccess && data?.['_id'] && (
-        <Stack.Screen name="Login" component={LoginContainer} />
+      {!isSuccess && !data?.['_id'] && (
+        <>
+          <Stack.Screen name="Login" component={LoginContainer} />
+          <Stack.Screen
+            name="sign-up"
+            component={SignUpContainer}
+            options={{headerShown: false}}
+          />
+        </>
       )}
       <Stack.Screen name="Bottom" component={BottomNavigation} />
       <Stack.Screen name="StreamPlayer" component={StreamPlayer} />
-      <Stack.Screen
-        name="carrouselSwiper"
-        component={CarrouselContainer}
-      />
+      <Stack.Screen name="carrouselSwiper" component={CarrouselContainer} />
     </Stack.Navigator>
   );
 };

@@ -29,6 +29,13 @@ export const liveStream = createApi({
         body,
       }),
     }),
+    addFollow: builder.mutation({
+      query: body => ({
+        url: 'users/add-follow',
+        method: 'POST',
+        body,
+      }),
+    }),
     getAllMapPoints: builder.mutation({
       query: body => ({
         url: 'users/getAllPoints',
@@ -41,4 +48,4 @@ export const liveStream = createApi({
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const {useStartStreamingMutation, useGetAllMapPointsMutation} = liveStream;
+export const {useStartStreamingMutation, useGetAllMapPointsMutation, useAddFollowMutation} = liveStream;

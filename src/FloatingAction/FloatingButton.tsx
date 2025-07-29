@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   parentIcon: {
-    color: '#fffff',
+    color: 'rgba(230, 232, 235, 0.6)',
   },
   actionIconsWrapper: {
     position: 'absolute',

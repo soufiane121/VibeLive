@@ -4,13 +4,15 @@ interface LiveStreamState {
     liveStreamData: {
         id: string;
         emoji: string;  
+        followerId?: string;
     };
 }
 
 const initialState: LiveStreamState = {
     liveStreamData: {
         id: '',
-        emoji: ''
+        emoji: '',
+        followerId: ''
     }
 };
 
@@ -24,6 +26,9 @@ export const LiveStreamSlice = createSlice({
     clearReactions: state => {
       state.liveStreamData = {emoji: '', id: ''};
     },
+    addFollow: (state, action: PayloadAction<{id: string, emoji: string}>) => {
+      state.liveStreamData = action.payload;
+    }
   },
 });
 

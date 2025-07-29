@@ -19,9 +19,10 @@ import useGetLocation from '../CustomHooks/useGetLocation';
 
 interface LiveStreamContainerProps {
   streamEventType?: string;
+  streamTitle?: string;
 }
 export default function LiveStreamContainer(props: LiveStreamContainerProps) {
-  const {streamEventType} = props;
+  const {streamEventType, streamTitle} = props;
   const {
     currentUser
   } = useSelector(state => state?.currentUser);
@@ -45,7 +46,6 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     createStream();
   }, []);
 
-  console.log({currentUser});
 
   useEffect(() => {
     if (!isSuccess) {
@@ -104,6 +104,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         streamId: playbackId,
         coordinates,
         streamEventType: streamEventType || 'default',
+        streamTitle: streamTitle,
       });
     }
   };

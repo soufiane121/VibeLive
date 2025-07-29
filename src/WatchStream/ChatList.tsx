@@ -296,7 +296,9 @@ const styles = StyleSheet.create({
   },
   reactionButton: {
     marginLeft: 10,
-    backgroundColor: '#ff4757',
+    // backgroundColor: '#ff4757',
+    backgroundColor: 'rgba(95,103,111, 0.5)',
+
     borderRadius: 20,
     width: 40,
     height: 40,
@@ -305,7 +307,8 @@ const styles = StyleSheet.create({
   },
   reactionIcon: {
     fontSize: 20,
-    color: '#fff',
+    // color: '#fff',
+    color: '#CFD6DF',
   },
 });
 

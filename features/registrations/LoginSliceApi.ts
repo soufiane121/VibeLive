@@ -47,9 +47,23 @@ export const loginApi = createApi({
         return response;
       },
     }),
+    signUp: builder.mutation({
+      query: (body) => ({
+        url: 'users/sign-up',
+        body,
+        method: "POST"
+      }),
+      transformResponse: async response => {
+        if (response?.data?.email) {
+          await setLocalData({key: 'isAuthenticated', value: 'true'});
+          await setLocalData({key: "token", value: response?.data?.email})
+        }
+        return response;
+      },
+    }),
   }),
 });
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const {useLoginMutation, useAutoLoginMutation} = loginApi;
+export const {useLoginMutation, useAutoLoginMutation, useSignUpMutation} = loginApi;

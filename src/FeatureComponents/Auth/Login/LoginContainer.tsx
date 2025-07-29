@@ -17,6 +17,8 @@ import Button from '../../../UIComponents/Button';
 import {useLoginMutation} from '../../../../features/registrations/LoginSliceApi';
 import {setLocalData} from '../../../Utils/LocalStorageHelper';
 import LoadingAnimation from '../../../UIComponents/LoadingAnimation';
+import { useDispatch } from 'react-redux';
+import { setCurrentUser } from '../../../../features/registrations/CurrentUser';
 
 const LoginContainer = () => {
   const [email, setEmail] = useState('');
@@ -25,6 +27,7 @@ const LoginContainer = () => {
     useLoginMutation();
   const navigation =
     useNavigation<NativeStackNavigationProp<PartialState<any>>>();
+    const dispatch = useDispatch()
 
   const handleLogin = async () => {
     if (email && password) {
@@ -32,6 +35,8 @@ const LoginContainer = () => {
         const answer = await verifyLogin({password, email}).unwrap();
         if (answer.data) {
           await setLocalData({key: 'token', value: answer.data.email});
+          dispatch(setCurrentUser(answer.data));
+          
           navigation.replace('Bottom');
         }
       } catch (error) {
@@ -91,7 +96,9 @@ const LoginContainer = () => {
           />
 
           {/* Register Link */}
-          <TouchableOpacity className="mt-6">
+          <TouchableOpacity
+            className="mt-6"
+            onPress={() => navigation.navigate('sign-up')}>
             <Text className="text-gray-500 text-center">
               Don't have an account?{' '}
               <Text className="text-yellow-500">Sign Up</Text>

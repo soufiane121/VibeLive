@@ -1,5 +1,5 @@
-import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native';
-import React from 'react';
+import {View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput} from 'react-native';
+import React, { useState } from 'react';
 
 const eventsList = [
   {key: 'nightlife', label: 'Nightlife & Parties', emoji: '🎉'},
@@ -15,17 +15,37 @@ const eventsList = [
 
 interface EventSelectionsProps {
   onCompleteSelection: (value: string) => void;
+  onTitleChange?: (title: string) => void;
 }
 
-const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
+const EventSelections = ({onCompleteSelection, onTitleChange}: EventSelectionsProps) => {
+  const [title, setTitle] = useState('');
+
+  const handleTitleChange = (text: string) => {
+    if (text.length <= 60) {
+      setTitle(text);
+      onTitleChange && onTitleChange(text);
+    }
+  };
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      className="flex-1 bg-gray-900 justify-center px-8">
+      <TextInput
+        style={styles.titleInput}
+        placeholder="Give your stream a vibe, party? chill? wild?"
+        placeholderTextColor="#ccc"
+        value={title}
+        onChangeText={handleTitleChange}
+        maxLength={60}
+      />
       <FlatList
         contentContainerStyle={{
-          padding: 10,
+          // padding: 10,
           flexDirection: 'row',
           flexWrap: 'wrap',
-          gap: 10,
+          gap: 25,
+          marginRight: 10,
           justifyContent: 'center',
           alignItems: 'center',
         }}
@@ -37,10 +57,11 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           <TouchableOpacity
             style={{
               padding: 6,
-              backgroundColor: '#393E46',
+              gap: 10,
+              backgroundColor: 'rgba(57,62,70,0.5)',
               borderRadius: 50,
               borderWidth: 1,
-              borderColor: '#affff',
+              borderColor: '#CFD6DF',
             }}
             onPress={() => onCompleteSelection(item.key)}>
             <Text style={styles.text}>
@@ -59,12 +80,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#393E46',
+    // backgroundColor: '#393E46',
     height: '100%',
   },
   text: {
     fontSize: 18,
+    color: '#CFD6DF',
     // fontWeight: 'bold',
+  },
+  titleInput: {
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: 20,
+    // marginBottom: 10,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(57,62,70,0.3)', // transparent background
+    color: '#CFD6DF',
+    fontSize: 16,
+    borderWidth: 1,
+    marginBottom: 35,
+    // borderColor: '#888',
   },
 });
 
