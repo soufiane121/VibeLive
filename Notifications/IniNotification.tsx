@@ -1,5 +1,4 @@
 import messaging from '@react-native-firebase/messaging';
-import AsyncStorage from '@react-native-community/async-storage';
 import {OneSignal, LogLevel} from 'react-native-onesignal';
 import {PermissionsAndroid} from 'react-native';
 
@@ -29,7 +28,7 @@ const fetchToken = async () => {
 
 const initOneSignal = async () => {
   //OneSignal Init Code
-  OneSignal?.Debug?.setLogLevel(LogLevel.DEBUG);
+  OneSignal?.Debug?.setLogLevel(LogLevel.Debug);
   OneSignal.initialize('YOUR_APP_ID');
   //END OneSignal Init Code
 
