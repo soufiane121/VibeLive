@@ -14,13 +14,17 @@ import {MAPBOX_ENV_KEY} from '@env';
 import Video from 'react-native-video'; // import Video from react-native-video like your normally would
 import muxReactNativeVideo from '@mux/mux-data-react-native-video';
 import {useSocketInstance} from '../CustomHooks/useSocketInstance';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {useEffect, useState} from 'react';
 import {CloseIcon, EyeViewsIcon} from '../UIComponents/Icons';
 import {formatToKSymbol} from '../Utils/helperFuncs';
 import ChatList from './ChatList';
 import FloatingEmojiReactions from '../FloatingAction/EmojiAnimation';
-import { useAddFollowMutation } from '../../features/LiveStream/LiveStream';
+import {
+  useAddFollowMutation,
+  useRemoveFollowMutation,
+} from '../../features/LiveStream/LiveStream';
+import { setCurrentUser } from '../../features/registrations/CurrentUser';
 
 type Props = {
   streamId?: string;
@@ -33,7 +37,9 @@ const StreamPlayer = (props: Props) => {
   const {
     properties: {streamId, userId, liveDetails, coordinates},
   } = useNavigationState(state => state.routes[1]?.params) || {};
+  const dispatch = useDispatch();
   const [addFollow] = useAddFollowMutation();
+  const [removeFollow] = useRemoveFollowMutation();
   const {socket, isConnected} = useSocketInstance();
   const {currentUser} = useSelector(state => state?.currentUser);
   const amIfollowing = currentUser?.following?.includes(userId);
@@ -41,13 +47,12 @@ const StreamPlayer = (props: Props) => {
   const MuxVideo = muxReactNativeVideo(Video);
   const {navigate, goBack} = useNavigation();
   const [areYouFollowing, setAreYouFollowing] = useState(amIfollowing);
-
   const [titleAnim] = useState(new Animated.Value(0));
   const titleContainerWidth = 100; // Adjust as needed
   const titleTextWidth = 260; // Adjust as needed for longest expected title
 
   console.log({userId, currentUser});
-  
+
   useEffect(() => {
     titleAnim.setValue(titleContainerWidth);
     Animated.loop(
@@ -79,16 +84,33 @@ const StreamPlayer = (props: Props) => {
     }
   }, [socket]);
 
-  const handleFollow = async () => {
+  const handleFollowAndUnfollow = async (e: any) => {
+    console.log({e});
+
     try {
-     const res = await addFollow({
-       followingId: currentUser._id,
-       followerId: userId,
-     });
-      console.log({res}, 'Follow Response');
-      
+      if (areYouFollowing) {
+        const resp = await removeFollow({
+          followingId: currentUser._id,
+          followerId: userId,
+        }).unwrap();
+        if (resp?.status === 200) {
+          console.log({resp: resp}, 'Unfollow Response');
+          setAreYouFollowing(false);
+          dispatch(setCurrentUser(resp.data));
+        }
+      } else {
+        const res = await addFollow({
+          followingId: currentUser._id,
+          followerId: userId,
+        }).unwrap();
+        if (res?.status === 200) {
+          setAreYouFollowing(true);
+          dispatch(setCurrentUser(res.data));
+          console.log({res: res.data}, 'Follow Response');
+        }
+      }
     } catch (error) {
-      console.error("Error adding follow:", error);
+      console.error('Error adding follow:', error);
     }
   };
 
@@ -103,12 +125,16 @@ const StreamPlayer = (props: Props) => {
               style={styles.avatar}
             />
             <Text style={styles.userName}>User Name</Text>
-            <TouchableWithoutFeedback onPress={() => handleFollow()}>
+            <TouchableWithoutFeedback onPress={e => handleFollowAndUnfollow(e)}>
               <View style={styles.followContainer}>
                 {areYouFollowing ? (
-                  <Text style={styles.followText}>- Unfollow</Text>
+                  <Text style={styles.followText} key={'unfollow'}>
+                    Unfollow
+                  </Text>
                 ) : (
-                  <Text style={styles.followText}>+ Follow</Text>
+                  <Text style={styles.followText} key={'follow'}>
+                    +Follow
+                  </Text>
                 )}
               </View>
             </TouchableWithoutFeedback>

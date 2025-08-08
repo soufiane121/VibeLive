@@ -1,4 +1,12 @@
 # OSX
+
+
+# Dependencies
+package-lock.json
+
+# Project specific folders
+archived_ffmpeg/
+
 #
 .DS_Store
 

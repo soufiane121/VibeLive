@@ -77,3 +77,68 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+# VibeLive
+
+## Firebase Notifications Setup
+
+To enable push notifications in VibeLive, follow these steps:
+
+1. **Firebase Project Setup**
+   - Go to [Firebase Console](https://console.firebase.google.com/).
+   - Create a new project or use your existing one.
+   - Add your iOS app to the Firebase project and download the `GoogleService-Info.plist` file.
+   - Place `GoogleService-Info.plist` in your Xcode project's root (usually under `ios/`).
+
+2. **Install Dependencies**
+   - In your project root, run:
+     ```sh
+     npm install @react-native-firebase/app @react-native-firebase/messaging
+     cd ios && pod install && cd ..
+     ```
+
+3. **iOS Permissions & Configuration**
+   - Open your Xcode project.
+   - Enable Push Notifications and Background Modes (Remote notifications) in your app's capabilities.
+   - Make sure your `AppDelegate.m` is configured for Firebase Messaging.
+   - Add the following to your `Info.plist`:
+     ```xml
+     <key>FirebaseAppDelegateProxyEnabled</key>
+     <false/>
+     <key>UIBackgroundModes</key>
+     <array>
+       <string>fetch</string>
+       <string>remote-notification</string>
+     </array>
+     ```
+   - Request notification permissions in your app code (see below).
+
+4. **Request Permission in App Code**
+   - Only iOS permission handling is implemented and tested.
+   - Example (in your main App component):
+     ```js
+     import messaging from '@react-native-firebase/messaging';
+     import { Platform } from 'react-native';
+
+     useEffect(() => {
+       if (Platform.OS === 'ios') {
+         messaging().requestPermission().then(authStatus => {
+           // Handle permission status
+         });
+       }
+     }, []);
+     ```
+
+5. **Testing**
+   - Only iOS notification permissions and delivery have been actively developed and tested.
+   - Android support is not guaranteed at this time.
+
+---
+
+**Note:**  
+- Make sure your Apple Developer account and APNs certificates are set up for push notifications.
+- For more details, see the [React Native Firebase Messaging docs](https://rnfirebase.io/messaging/usage).
+
+
+- to add postinstall inside script package json add this line
+-   // "postinstall": "node scripts/restore-local-libs.js"
+- and install react-native-ffmpeg
