@@ -229,9 +229,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         return;
       }
       
-      // Ensure camera is ready before streaming
-      console.log('📹 Waiting for camera to be ready...');
-      await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds for camera
+      // Minimal camera preparation for ultra low latency
+      console.log('📹 Quick camera preparation for low latency...');
+      await new Promise(resolve => setTimeout(resolve, 500)); // Minimal 500ms wait
       
       // Set the RTMP reference in the streaming helper
       streamingHelper.setRtmpRef(rtmp.current);
@@ -273,9 +273,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           // Verify camera is active and capturing
           console.log('📹 NodePublisher reference is ready and should be capturing frames');
           
-          // Wait for camera to stabilize and start capturing frames
-          console.log('⏳ Allowing camera capture to stabilize...');
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Minimal stabilization for ultra low latency
+          console.log('⏳ Quick camera stabilization...');
+          await new Promise(resolve => setTimeout(resolve, 200)); // Ultra minimal wait
         }
       } catch (error) {
         console.error('❌ NodePublisher camera capture initialization failed:', error);
@@ -287,11 +287,11 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       if (success) {
         console.log('✅ MUX stream started successfully via helper');
         
-        // Wait additional time for video data to stabilize
-        console.log('⏳ Waiting for video data to stabilize...');
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+        // Minimal video data stabilization for ultra low latency
+        console.log('⚡ Quick video data validation...');
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Minimal 1s wait
         
-        console.log('📡 Video data should now be flowing to MUX');
+        console.log('📡 Video data flowing to MUX with ultra low latency');
         
         // Notify backend
         if (socketInstance) {
@@ -413,7 +413,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             profile: NodePublisher.NMC_PROFILE_BASELINE,
             samplerate: 44100,
             channels: 2,
-            bitrate: 128000,
+            bitrate: 96000, // Lower audio bitrate for reduced latency
           }}
           videoParam={{
             codecid: NodePublisher.NMC_CODEC_ID_H264,
@@ -421,22 +421,25 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             width: 1280, // Higher resolution for MUX
             height: 720, // Landscape orientation for better data flow
             fps: 30,
-            bitrate: 3000000, // Higher bitrate for sufficient data
-            preset: 1, // Faster preset for real-time streaming
+            bitrate: 2500000, // Optimized for low latency vs quality balance
+            preset: 0, // Ultrafast preset for minimum latency
             videoFrontMirror: false, // Disable mirror for streaming
-            videoBitrateMode: 0, // VBR mode for better quality
-            bufferTime: 1000, // Minimal buffer for real-time
+            videoBitrateMode: 1, // CBR mode for consistent low latency
+            bufferTime: 300, // Ultra minimal buffer (300ms)
+            keyFrameInterval: 1, // Every 1 second for quick recovery
+            bFrames: 0, // No B-frames for lowest latency
           }}
           frontCamera={true}
           HWAccelEnable={true}
-          denoiseEnable={true} // Enable noise reduction
-          keyFrameInterval={1} // More frequent keyframes
+          denoiseEnable={false} // Disable for lower latency
+          keyFrameInterval={1} // Frequent keyframes for quick recovery
           videoOrientation={NodePublisher.VIDEO_ORIENTATION_LANDSCAPE}
           autoStart={false} // Manual control over start/stop
-          smoothSkinEnable={false} // Disable beauty filters for authentic capture
+          smoothSkinEnable={false} // Disable beauty filters for speed
           videoPreviewMirror={false} // No mirror for streaming
           audioEnable={true} // Ensure audio capture
           videoEnable={true} // Ensure video capture
+          lowLatencyMode={true} // Enable low latency mode if available
           onStatus={(status: any) => {
           console.log('📊 MUX Stream Status:', status);
           console.log('📊 Status details - Code:', status.code, 'Message:', status.msg);

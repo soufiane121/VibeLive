@@ -58,9 +58,9 @@ class RTMPStreamingHelper {
       const result = this.rtmpRef.start();
       console.log('NodeMediaClient start result:', result);
       
-      // Wait for connection to establish
-      console.log('⏳ Waiting for RTMP connection to establish...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Minimal connection establishment wait for ultra low latency
+      console.log('⚡ Quick RTMP connection establishment...');
+      await new Promise(resolve => setTimeout(resolve, 300)); // Ultra minimal wait
       
       this.isStreaming = true;
       this.streamStartTime = Date.now();
