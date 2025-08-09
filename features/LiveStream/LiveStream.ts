@@ -24,7 +24,7 @@ export const liveStream = createApi({
   endpoints: builder => ({
     startStreaming: builder.mutation({
       query: body => ({
-        url: 'users/start-streaming',
+        url: '/users/start-streaming',
         method: 'POST',
         body,
       }),

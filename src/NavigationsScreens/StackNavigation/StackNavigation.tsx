@@ -23,14 +23,16 @@ const StackNavigation = () => {
   }, [data]);
 
   const fetchAutoLogin = async () => {
+    
     try {
-      const res = await autoLoginFetch({coordinates}).unwrap();
-
-      if (res.data._id) {
-        dispatch(setCurrentUser(res.data));
+      console.log('fetchAutoLogin');
+      const res = await autoLoginFetch({coordinates});
+      if (res?.data?._id) {
+        dispatch(setCurrentUser(res?.data));
       }
     } catch (error) {
       // Alert.alert(error as string);
+      
     }
   };
 

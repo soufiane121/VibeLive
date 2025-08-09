@@ -22,7 +22,7 @@ const SwitcherContainer = () => {
       {!showStartLive ? (
         <EventSelections onCompleteSelection={handleCompleteSelection} onTitleChange={handleChangeTitle} />
       ) : (
-        <LiveStreamContainer streamEventType={selectedEventType} streamTitle={title} />
+        <LiveStreamContainer streamEventType={selectedEventType || 'default'   } streamTitle={title || 'default'} />
       )}
     </SafeAreaView>
   );
