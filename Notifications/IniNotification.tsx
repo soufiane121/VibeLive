@@ -52,10 +52,10 @@ const initOneSignal = async (): Promise<void> => {
     console.log('OneSignal initialized successfully');
     
     // Setup notification handlers
-    setupNotificationHandlers();
+    // setupNotificationHandlers();
     
     // Request permission for notifications
-    await requestNotificationPermission();
+    // await requestNotificationPermission();
     
   } catch (error) {
     console.error('Error initializing OneSignal:', error);
