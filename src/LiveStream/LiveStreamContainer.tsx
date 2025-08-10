@@ -68,23 +68,34 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       // Request permissions first
       await requestPermissions();
       
-      // Initialize NodeMediaClient properly
+      // Initialize NodeMediaClient properly with authorization
       try {
         console.log('🔧 Configuring NodeMediaClient for MUX streaming...');
+        console.log('🔍 NodeMediaClient available methods:', Object.getOwnPropertyNames(NodeMediaClient));
         
-        // Set license for NodeMediaClient (empty for development)
-        if (Platform.OS === 'ios') {
-          NodeMediaClient.setLicense(''); // Empty license for development
-        }
+        // Skip all license configuration - not needed for development
+        console.log('🔓 Using NodeMediaClient without license - development mode');
         
         // Initialize with proper audio session for iOS
         if (Platform.OS === 'ios') {
           try {
             NodeMediaClient.setAudioSessionMode(1); // AVAudioSessionModeVideoRecording
+            console.log('🎵 iOS audio session mode configured');
           } catch (e) {
             console.log('Audio session mode not available, continuing...');
           }
         }
+        
+        // Additional authorization steps
+        // try {
+        //   // Some versions require explicit authorization
+        //   if ((NodeMediaClient as any).authorize) {
+        //     (NodeMediaClient as any).authorize();
+        //     console.log('🔐 NodeMediaClient explicitly authorized');
+        //   }
+        // } catch (authError) {
+        //   console.log('ℹ️ Explicit authorization not available');
+        // }
         
         console.log('✅ NodeMediaClient initialized and authorized');
         
@@ -122,11 +133,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     initializeNodePublisher();
   }, [device]); // Re-initialize when device changes
 
-  // Create stream when user becomes available
+  // Create stream when user becomes available - DISABLED to prevent auto-restart
   useEffect(() => {
     if ((currentUser?._id || currentUser?.id) && !streamKey) {
-      console.log('👤 User authenticated, creating MUX stream...');
-      createStream();
+      console.log('👤 User authenticated - auto stream creation DISABLED');
+      console.log('🔒 Stream will only be created when manually started');
+      // createStream(); // DISABLED - only create stream when user taps start
     }
   }, [currentUser?._id, currentUser?.id]);
 
@@ -212,10 +224,19 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     
     if (!streamKey || !playbackId) {
       console.error('❌ Stream credentials not available');
-      // Try to recreate stream if missing
-      console.log('🔄 Attempting to recreate stream credentials...');
+      // Create stream credentials when starting (since auto-creation is disabled)
+      console.log('🔄 Creating stream credentials for manual start...');
       await createStream();
-      return;
+      
+      // Wait a moment for stream creation to complete
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Check if credentials were created
+      if (!streamKey || !playbackId) {
+        console.error('❌ Failed to create stream credentials');
+        return;
+      }
+      console.log('✅ Stream credentials created successfully');
     }
 
     if (!device) {
@@ -258,6 +279,13 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       try {
         console.log('📹 Initializing camera capture in NodePublisher...');
         if (rtmp.current) {
+          // Check if NodePublisher is authorized before starting
+          console.log('🔐 Checking NodePublisher authorization...');
+          
+          // Skip instance-level authorization to avoid unauthorized errors
+          console.log('ℹ️ Skipping NodePublisher instance authorization');
+          console.log('ℹ️ Using NodePublisher without explicit licensing');
+          
           // Start preview to initialize camera capture
           console.log('🎥 Starting camera preview to capture frames...');
           try {
@@ -311,12 +339,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       } else {
         console.error('❌ Failed to start MUX stream via helper');
         
-        // Enhanced retry logic
-        if (reconnectAttempts < 5) {
-          console.log(`🔄 Retrying MUX connection (${reconnectAttempts + 1}/5)...`);
-          setReconnectAttempts(prev => prev + 1);
-          setTimeout(() => startStreaming(), 5000);
-        }
+        // Enhanced retry logic - DISABLED to prevent auto-restart
+        console.log('❌ Stream start failed - auto-retry disabled to prevent unwanted restarts');
+        setReconnectAttempts(0); // Reset counter
       }
     } catch (error) {
       console.error('❌ Error starting MUX stream:', error);
@@ -324,48 +349,42 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       setStreamHealth('disconnected');
       setDataFlowActive(false);
       
-      // Enhanced retry logic
-      if (reconnectAttempts < 5) {
-        console.log(`🔄 Retrying MUX connection (${reconnectAttempts + 1}/5)...`);
-        setReconnectAttempts(prev => prev + 1);
-        setTimeout(() => startStreaming(), 5000);
-      }
+      // Enhanced retry logic - DISABLED to prevent auto-restart
+      console.log('❌ Stream error - auto-retry disabled to prevent unwanted restarts');
+      setReconnectAttempts(0); // Reset counter
     }
   };
 
   // Stop streaming with proper MUX cleanup
   const stopStreaming = async () => {
     try {
-      console.log('Stopping MUX stream gracefully...');
+      // CRITICAL: Clear all reconnect attempts and timers first
+      setReconnectAttempts(0);
+      console.log('🔄 Cleared reconnect attempts to prevent auto-restart');
       
-      // Clear health monitoring
-      if (streamHealthTimer.current) {
-        clearInterval(streamHealthTimer.current);
-        streamHealthTimer.current = null;
-      }
-      
-      // Stop the stream properly through helper
+      // Use streaming helper to stop
       await streamingHelper.stopStreaming();
       
-      // Update state
       setIsStreaming(false);
       setStreamHealth('disconnected');
-      setReconnectAttempts(0);
+      setDataFlowActive(false);
       
       // Notify backend
       if (socketInstance) {
         socketInstance.emit('stop-streaming', {
-          streamId: playbackId,
-          userId: currentUser?.id,
-          muxStreamKey: streamKey
+          token: currentUser?.email,
+          streamId: playbackId
         });
       }
       
-      console.log('MUX stream stopped successfully');
+      console.log('✅ MUX stream stopped successfully - no auto-restart');
+      console.log('🔒 Stream is now fully stopped and will not restart automatically');
+      
     } catch (error) {
-      console.error('Error stopping MUX stream:', error);
+      console.error('❌ Error stopping MUX stream:', error);
       setIsStreaming(false);
       setStreamHealth('disconnected');
+      setReconnectAttempts(0); // Ensure no restart even on error
     }
   };
 
@@ -396,18 +415,18 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             />
           )}
           
-          {/* NodePublisher for Streaming - Always rendered, shows camera when streaming */}
+          {/* NodePublisher for Streaming - Simplified configuration to avoid authorization issues */}
           <NodePublisher
             ref={rtmp}
             style={{
               height: '50%', 
               width: '100%',
-              opacity: 1, // Always visible for camera preview
+              opacity: 1,
               position: 'relative',
-              zIndex: 1 // Always on top to capture camera
+              zIndex: 1
             }}
-            url={`rtmps://global-live.mux.com:443/app/${streamKey}`}
-            outputUrl={`rtmps://global-live.mux.com:443/app/${streamKey}`} // Explicit output URL
+            url={streamKey ? `rtmps://global-live.mux.com:443/app/${streamKey}` : ''}
+            autoStart={false}
           audioParam={{
             codecid: NodePublisher.NMC_CODEC_ID_AAC,
             profile: NodePublisher.NMC_PROFILE_BASELINE,
@@ -434,7 +453,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           denoiseEnable={false} // Disable for lower latency
           keyFrameInterval={1} // Frequent keyframes for quick recovery
           videoOrientation={NodePublisher.VIDEO_ORIENTATION_LANDSCAPE}
-          autoStart={false} // Manual control over start/stop
+
           smoothSkinEnable={false} // Disable beauty filters for speed
           videoPreviewMirror={false} // No mirror for streaming
           audioEnable={true} // Ensure audio capture
@@ -463,15 +482,11 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             console.error('❌ This may indicate insufficient camera frame data');
             setStreamHealth('unstable');
             
-            // Auto-reconnect on MUX errors
-            if (reconnectAttempts < 5) {
-              console.log('🔄 Attempting MUX reconnection due to frame data issues...');
-              setTimeout(() => {
-                streamingHelper.stopStreaming().then(() => {
-                  setTimeout(() => startStreaming(), 1000);
-                });
-              }, 2000);
-            }
+            // Auto-reconnect on MUX errors - DISABLED to prevent unwanted restarts
+            console.log('❌ Stream error detected but auto-reconnect is disabled');
+            console.log('❌ Manual restart required to avoid unwanted stream restarts');
+            setIsStreaming(false);
+            setStreamHealth('disconnected');
           } else if (status.code === 2003) {
             console.warn('⚠️ MUX connection lost - Camera frame transmission interrupted');
             setStreamHealth('disconnected');

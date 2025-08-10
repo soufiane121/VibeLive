@@ -135,8 +135,8 @@ class RTMPStreamingHelper {
       });
 
       if (!this.isStreaming) {
-        console.warn('⚠️ Stream connection lost, attempting reconnect...');
-        // Could implement auto-reconnect logic here
+        console.warn('⚠️ Stream connection lost - auto-reconnect DISABLED');
+        // Auto-reconnect disabled to prevent unwanted stream restarts
       }
     }, 5000); // Check every 5 seconds
   }

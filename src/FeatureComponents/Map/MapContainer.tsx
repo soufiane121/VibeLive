@@ -50,18 +50,6 @@ const inIcon = require('../../../assests/in.jpg');
 
 setAccessToken(PUB_MAPBOX_KEY);
 
-// Generate 10,000+ random markers
-const generateFeatures = count => {
-  return Array.from({length: count}, (_, index) => ({
-    id: `${index + 1}`,
-    isLive: index % 3 === 0,
-    coordinates: [
-      -80.718976 + Math.random() * 0.1,
-      35.15989 + Math.random() * 0.1,
-    ],
-  }));
-};
-
 // Memoized marker component to avoid unnecessary re-renders
 const LiveIcon = memo(
   ({feature, circleLayerRef}) => {
