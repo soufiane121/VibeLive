@@ -13,7 +13,7 @@ import {Provider} from 'react-redux';
 import {store} from './redux/store';
 import LiveStreamContainer from './src/LiveStream/LiveStreamContainer';
 import RadarMap from './radarMap-not_in-use';
-import { initOneSignal } from './Notifications/IniNotification';
+import { initOneSignal } from './notifications/IniNotification';
 import { AnalyticsProvider } from './src/Providers/AnalyticsProvider';
 
 function App() {

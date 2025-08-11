@@ -25,14 +25,13 @@ const StackNavigation = () => {
   const fetchAutoLogin = async () => {
     
     try {
-      console.log('fetchAutoLogin');
-      const res = await autoLoginFetch({coordinates});
+      const res = await autoLoginFetch({coordinates}).unwrap();
+      console.log('fetchAutoLogin -------------------------------------', {res});
       if (res?.data?._id) {
         dispatch(setCurrentUser(res?.data));
       }
     } catch (error) {
       // Alert.alert(error as string);
-      
     }
   };
 
@@ -43,7 +42,7 @@ const StackNavigation = () => {
         headerBackVisible: false,
         headerShown: false,
       }}>
-      {!isSuccess && !data?.['_id'] && (
+      {!isSuccess && data?.['_id'] && (
         <>
           <Stack.Screen name="Login" component={LoginContainer} />
           <Stack.Screen

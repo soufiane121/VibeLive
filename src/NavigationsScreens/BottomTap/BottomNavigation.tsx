@@ -1,11 +1,18 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import MapContainer from '../../FeatureComponents/Map/MapContainer';
-import {LiveStreamIcon, mapIcon} from '../../UIComponents/Icons';
+import {
+  LiveStreamIcon,
+  mapIcon,
+  ProfileIcon,
+  SettingsIcon,
+} from '../../UIComponents/Icons';
 import {Text, View} from 'react-native';
 import tw from '../../../tw';
 import LiveStreamContainer from '../../LiveStream/LiveStreamContainer';
 import SwitcherContainer from '../../LiveStream/SwitcherContainer';
+import Settings from '../../Settings/Settings';
+import Profile from '../../Account/Profile';
 
 function HomeScreen() {
   return (
@@ -65,10 +72,23 @@ export default function BottomNavigation() {
         }}
       />
       <BottomTap.Screen
-        name="Home"
-        component={HomeScreen}
+        name="Profile"
+        component={Profile}
         options={{
-          title: 'Home',
+          tabBarIcon: ProfileIcon,
+          title: 'Profile',
+          tabBarActiveTintColor: '#faf8ff',
+          tabBarLabelStyle: {
+            fontSize: 14,
+          },
+        }}
+      />
+      <BottomTap.Screen
+        name="Settings"
+        component={Settings}
+        options={{
+          tabBarIcon: SettingsIcon,
+          title: 'Settings',
           tabBarActiveTintColor: '#faf8ff',
           tabBarLabelStyle: {
             fontSize: 14,

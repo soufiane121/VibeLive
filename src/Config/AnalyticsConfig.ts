@@ -8,6 +8,8 @@
  * Toggle the USE_MOCK_ANALYTICS flag to switch between implementations
  */
 
+import { baseUrl } from "../../baseUrl";
+
 // =============================================================================
 // ANALYTICS SERVICE CONFIGURATION
 // =============================================================================
@@ -49,7 +51,7 @@ export const ANALYTICS_CONFIG = {
   
   // Backend Configuration
   backend: {
-    baseUrl: '', // Set your backend URL here
+    baseUrl: baseUrl, // Backend URL from baseUrl.js
     endpoints: {
       trackEvent: '/analytics/track-event',
       trackBatch: '/analytics/track-events-batch',
