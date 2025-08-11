@@ -67,7 +67,7 @@ PODS:
   - hermes-engine/Pre-built (0.75.4)
   - Logboard (2.2.4)
   - lottie-ios (4.5.0)
-  - lottie-react-native (7.1.0):
+  - lottie-react-native (7.3.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -89,15 +89,15 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - MapboxCommon (23.11.4)
-  - MapboxCoreMaps (10.19.2):
-    - MapboxCommon (~> 23.11)
-  - MapboxMaps (10.19.4):
-    - MapboxCommon (= 23.11.4)
-    - MapboxCoreMaps (= 10.19.2)
-    - MapboxMobileEvents (= 2.0.0)
+  - MapboxCommon (23.10.1)
+  - MapboxCoreMaps (10.18.0):
+    - MapboxCommon (~> 23.10)
+  - MapboxMaps (10.18.2):
+    - MapboxCommon (= 23.10.1)
+    - MapboxCoreMaps (= 10.18.0)
+    - MapboxMobileEvents (= 1.0.10)
     - Turf (= 2.8.0)
-  - MapboxMobileEvents (2.0.0)
+  - MapboxMobileEvents (1.0.10)
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
     - nanopb/encode (= 3.30910.0)
@@ -1402,6 +1402,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-netinfo (11.4.1):
+    - React-Core
   - react-native-nodemediaclient (0.3.5):
     - DoubleConversion
     - glog
@@ -1432,7 +1434,7 @@ PODS:
     - React-Core
   - react-native-safe-area-context (4.14.1):
     - React-Core
-  - react-native-video (6.8.2):
+  - react-native-video (6.16.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1445,7 +1447,7 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-video/Video (= 6.8.2)
+    - react-native-video/Video (= 6.16.1)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1454,7 +1456,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video/Video (6.8.2):
+  - react-native-video/Video (6.16.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1735,7 +1737,7 @@ PODS:
     - React-logger (= 0.75.4)
     - React-perflogger (= 0.75.4)
     - React-utils (= 0.75.4)
-  - RNCAsyncStorage (2.1.0):
+  - RNCAsyncStorage (2.2.0):
     - React-Core
   - RNCMaskedView (0.3.2):
     - DoubleConversion
@@ -1758,6 +1760,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNDeviceInfo (14.0.4):
+    - React-Core
   - RNFBApp (22.4.0):
     - Firebase/CoreOnly (= 11.15.0)
     - React-Core
@@ -1766,7 +1770,7 @@ PODS:
     - FirebaseCoreExtension
     - React-Core
     - RNFBApp
-  - RNGestureHandler (2.21.2):
+  - RNGestureHandler (2.28.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1787,18 +1791,18 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - rnmapbox-maps (10.1.33):
-    - MapboxMaps (~> 10.19.0)
+  - rnmapbox-maps (10.1.31):
+    - MapboxMaps (~> 10.18.2)
     - React
     - React-Core
-    - rnmapbox-maps/DynamicLibrary (= 10.1.33)
+    - rnmapbox-maps/DynamicLibrary (= 10.1.31)
     - Turf
-  - rnmapbox-maps/DynamicLibrary (10.1.33):
-    - MapboxMaps (~> 10.19.0)
+  - rnmapbox-maps/DynamicLibrary (10.1.31):
+    - MapboxMaps (~> 10.18.2)
     - React
     - React-Core
     - Turf
-  - RNScreens (3.35.0):
+  - RNScreens (3.37.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1820,7 +1824,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNVectorIcons (10.2.0):
+  - RNVectorIcons (10.3.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1843,11 +1847,11 @@ PODS:
     - Yoga
   - SocketRocket (0.7.0)
   - Turf (2.8.0)
-  - VisionCamera (4.6.3):
-    - VisionCamera/Core (= 4.6.3)
-    - VisionCamera/React (= 4.6.3)
-  - VisionCamera/Core (4.6.3)
-  - VisionCamera/React (4.6.3):
+  - VisionCamera (4.7.1):
+    - VisionCamera/Core (= 4.7.1)
+    - VisionCamera/React (= 4.7.1)
+  - VisionCamera/Core (4.7.1)
+  - VisionCamera/React (4.7.1):
     - React-Core
   - Yoga (0.0.0)
 
@@ -1893,6 +1897,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
+  - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-nodemediaclient (from `../node_modules/react-native-nodemediaclient`)
   - react-native-onesignal (from `../node_modules/react-native-onesignal`)
   - react-native-rtmp-publisher (from `../node_modules/react-native-rtmp-publisher`)
@@ -1926,6 +1931,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
+  - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
@@ -2037,6 +2043,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-geolocation:
     :path: "../node_modules/@react-native-community/geolocation"
+  react-native-netinfo:
+    :path: "../node_modules/@react-native-community/netinfo"
   react-native-nodemediaclient:
     :path: "../node_modules/react-native-nodemediaclient"
   react-native-onesignal:
@@ -2103,6 +2111,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCMaskedView:
     :path: "../node_modules/@react-native-masked-view/masked-view"
+  RNDeviceInfo:
+    :path: "../node_modules/react-native-device-info"
   RNFBApp:
     :path: "../node_modules/@react-native-firebase/app"
   RNFBMessaging:
@@ -2139,11 +2149,11 @@ SPEC CHECKSUMS:
   hermes-engine: ea92f60f37dba025e293cbe4b4a548fd26b610a0
   Logboard: 660364cbd45aa42fd79637f0cdfba3c950c613d8
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
-  lottie-react-native: 624686dae25ea015a3c683c6577221d61ea72a08
-  MapboxCommon: cc47fafe3fe5408ca49240aa80fa64f27f275711
-  MapboxCoreMaps: 35685edba03e44468aed57c3dfd7f8795edafda8
-  MapboxMaps: f87023cf0d72b180b40ea0b6fb4b2d7db6b73b71
-  MapboxMobileEvents: d044b9edbe0ec7df60f6c2c9634fe9a7f449266b
+  lottie-react-native: 612c068e5ee0c4f4c67ada2fe46d51f0bbfcf0bf
+  MapboxCommon: 0ff437e44988da6856e280d00ffb266564ed0487
+  MapboxCoreMaps: f1bd9405f5b9d3e343f2fe4138775299699a22fb
+  MapboxMaps: e76b14f52c54c40b76ddecd04f40448e6f35a864
+  MapboxMobileEvents: de50b3a4de180dd129c326e09cd12c8adaaa46d6
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   NodeMediaClient: 0174ed9bf88db94f7d429b263125f9fb71873d2d
   OneSignalXCFramework: 7112f3e89563e41ebc23fe807788f11985ac541c
@@ -2178,11 +2188,12 @@ SPEC CHECKSUMS:
   React-Mapbuffer: b2642edd9be75d51ead8cda109c986665eae09cf
   React-microtasksnativemodule: 94f7e35c4984282f04f946fb1be1d008aff4bdf0
   react-native-geolocation: 4e579df11fd10f90eae937e6040d71523fc6addc
+  react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
   react-native-nodemediaclient: 65f005d022d6fdc77d0d93e9b9394ac1f0482f62
   react-native-onesignal: 0829ce2a504db26dd80eaf14d4e0211ea626fe62
   react-native-rtmp-publisher: e78c306da289ea67cf11caa3005d698156fb077c
   react-native-safe-area-context: 758e894ca5a9bd1868d2a9cfbca7326a2b6bf9dc
-  react-native-video: 5f20ef13c22175b2d7a5cbcabdbd0066f08b5fa1
+  react-native-video: 5d847768a2307fb809034c8a92c7f47b0ad7b21f
   React-nativeconfig: 31072ab0146e643594f6959c7f970a04b6c9ddd0
   React-NativeModulesApple: 356d0eb7e3b79603e9d611cd3bac658a998c71db
   React-perflogger: 59e1a3182dca2cee7b9f1f7aab204018d46d1914
@@ -2209,17 +2220,18 @@ SPEC CHECKSUMS:
   React-utils: 0dbea1179726ad65a1b13470a3f3c73da98f4496
   ReactCodegen: f961bc28110632dd4c8e8d95c1a80f5344022cd2
   ReactCommon: 23eed247b5c8e57b59a823ce209353883da61dd2
-  RNCAsyncStorage: c91d753ede6dc21862c4922cd13f98f7cfde578e
+  RNCAsyncStorage: b44e8a4e798c3e1f56bffccd0f591f674fb9198f
   RNCMaskedView: 972c098900ec45a5684a6785a7af405e8b0fc1e1
+  RNDeviceInfo: d863506092aef7e7af3a1c350c913d867d795047
   RNFBApp: 90cf0209fb8f0460ab069a7de857d7ec851c8476
   RNFBMessaging: 37dd861b8600ec2ae9a06ba42ae4285cb707a731
-  RNGestureHandler: fc04a2ca677e1d661d94716ef96a441aa98d6c68
-  rnmapbox-maps: 643bc08a87659b4f20e4c2ab93b14563a71578d3
-  RNScreens: 4a5446dc4d922b2375df14c3a3f30bfc7719f6b1
-  RNVectorIcons: 55221459225ae0fe7a5ab6b029378c79f1a82d8f
+  RNGestureHandler: f15c35ef64e8985a5e1e69fc16ccde3ffe8d8aa7
+  rnmapbox-maps: f6efaeb1eddbff2aaafe27a1ff0ba01992e82398
+  RNScreens: 929d5858d322a2ae0cb272511f992c0acec69208
+  RNVectorIcons: d629dbc9c0c9ec0fcb6aea868d4d66c5a34e9312
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Turf: aa2ede4298009639d10db36aba1a7ebaad072a5e
-  VisionCamera: 030bcbf22791d698926e7c0e3b804126165e62e3
+  VisionCamera: 9a8f98ae344fe5d148f84bb45829f9e4caab9d2f
   Yoga: a9ef4f5c2cd79ad812110525ef61048be6a582a4
 
 PODFILE CHECKSUM: 4e26aa898bc8139ed719e54fcbe17a2b1b2ffd5e

@@ -14,6 +14,7 @@ import {store} from './redux/store';
 import LiveStreamContainer from './src/LiveStream/LiveStreamContainer';
 import RadarMap from './radarMap-not_in-use';
 import { initOneSignal } from './Notifications/IniNotification';
+import { AnalyticsProvider } from './src/Providers/AnalyticsProvider';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -28,9 +29,11 @@ function App() {
 
   return (
     <Provider store={store}>
-      <Main />
-      {/* <LiveStreamContainer /> */}
-      {/* <RadarMap  /> */}
+      <AnalyticsProvider>
+        <Main />
+        {/* <LiveStreamContainer /> */}
+        {/* <RadarMap  /> */}
+      </AnalyticsProvider>
     </Provider>
   );
 }

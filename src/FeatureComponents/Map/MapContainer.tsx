@@ -44,6 +44,7 @@ import {
 } from '../../../features/LiveStream/LiveStreamSlice';
 import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
+import { useAnalytics } from '../../Hooks/useAnalytics';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -52,7 +53,7 @@ setAccessToken(PUB_MAPBOX_KEY);
 
 // Memoized marker component to avoid unnecessary re-renders
 const LiveIcon = memo(
-  ({feature, circleLayerRef}) => {
+  ({feature, circleLayerRef, trackMapInteraction}) => {
     const {navigate} =
       useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     if (!feature.isLive) return null;
@@ -65,6 +66,21 @@ console.log({feature}, 'feature in live icon');
         shape={point(feature.coordinates)}
         {...feature}
         onPress={e => {
+          // Track marker click analytics
+          trackMapInteraction('marker_clicked', {
+            markerId: feature.id,
+            markerCoordinates: feature.coordinates,
+            markerType: feature.properties?.liveDetails?.isLive ? 'live_stream' : 'marker',
+            streamId: feature.properties?.streamId,
+            streamerId: feature.properties?.userId,
+            streamCategory: feature.properties?.category || feature.properties?.liveDetails?.category || 'unknown',
+            streamTitle: feature.properties?.title || feature.properties?.liveDetails?.title || '',
+            isLive: feature.properties?.liveDetails?.isLive || false,
+            viewerCount: feature.properties?.liveDetails?.viewerCount || 0,
+            isBoosted: feature.properties?.isBoosted || false,
+            timestamp: new Date().toISOString()
+          });
+
           if (feature.properties?.liveDetails?.isLive && !feature.hasNestedMarkers) {
             navigate('StreamPlayer', {
               properties: {...feature.properties},
@@ -117,6 +133,10 @@ const MapContainer = () => {
   const throttleUpdate = useRef(false); // Ref for throttling updates
   const cameraRef = useRef<Camera | null>(null);
   const pulseAnimation = useRef(new Animated.Value(0)).current;
+  
+  // Analytics integration - using powerful useAnalytics for all tracking
+  const { trackEvent, trackMapInteraction } = useAnalytics({ screenName: 'MapContainer', trackScreenView: true });
+  
   const [clusters, setClusters] = React.useState([]);
   const [bounds, setBounds] = React.useState([-80.9, 35.2, -81.8, 36.3]);
   const [zoomLevel, setZoomLevel] = useState(14);
@@ -283,9 +303,28 @@ const MapContainer = () => {
       setBounds(newBounds);
 
       const zoom = await map.getZoom();
+      const previousZoom = zoomLevel;
       setZoomLevel(zoom);
+
+      // Track map movement analytics
+      trackMapInteraction('map_moved', {
+        bounds: newBounds,
+        center: [(sw.lng + ne.lng) / 2, (sw.lat + ne.lat) / 2],
+        timestamp: new Date().toISOString()
+      });
+
+      // Track zoom change analytics if zoom level changed significantly
+      if (Math.abs(zoom - previousZoom) > 0.5) {
+        trackMapInteraction('map_zoomed', {
+          previousZoom,
+          newZoom: zoom,
+          zoomDelta: zoom - previousZoom,
+          bounds: newBounds,
+          timestamp: new Date().toISOString()
+        });
+      }
     }, 300),
-    [],
+    [zoomLevel, trackMapInteraction],
   );
 
   const radarBeam = useMemo(
@@ -389,6 +428,7 @@ const MapContainer = () => {
                           `pulse-${cluster.properties.id}`
                         ] = ref;
                       }}
+                      trackMapInteraction={trackMapInteraction}
                     />
 
                     {emojis[cluster?.properties?.streamId] && (
