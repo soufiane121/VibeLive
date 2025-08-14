@@ -11,8 +11,7 @@ import {
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { ChevronBackIcon } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
 
 interface ActivityItem {
@@ -61,7 +60,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = React.useState<'Activity' | 'Lives' | 'Highlights'>('Activity');
 
   React.useEffect(() => {
-    trackEvent('screen_view', {
+    trackEvent('profile_viewed', {
       screen_name: 'Profile',
       user_id: currentUser?._id,
     });
@@ -104,7 +103,7 @@ const Profile = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="chevron-back" size={24} color="#fff" />
+          <ChevronBackIcon size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 

@@ -145,7 +145,7 @@ const EventSelections = ({onCompleteSelection, onTitleChange}: EventSelectionsPr
       }
       
       // Track screen focus for analytics
-      trackEvent('go_live_screen_focused', {
+      trackEvent('go_live_started', {
         timestamp: new Date().toISOString(),
       });
     }, [onTitleChange])

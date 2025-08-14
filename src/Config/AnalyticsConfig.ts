@@ -16,7 +16,7 @@ import { baseUrl } from "../../baseUrl";
 
 /**
  * Set to true to use Mock Analytics Service (recommended for development)
- * Set to false to use Full Analytics Service (recommended for production)
+ * Set to false to use Full Analytics Service with native dependencies and real backend calls
  */
 export const USE_MOCK_ANALYTICS = false;
 

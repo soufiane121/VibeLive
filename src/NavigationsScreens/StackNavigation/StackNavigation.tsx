@@ -9,6 +9,13 @@ import useGetLocation from '../../CustomHooks/useGetLocation';
 import StreamPlayer from '../../WatchStream/StreamPlayer';
 import CarrouselContainer from '../../Carrousel/CarrouselContainer';
 import SignUpContainer from '../../FeatureComponents/Auth/SignUp/SignUpContainer';
+// Settings Screens
+import NotificationSettings from '../../Settings/NotificationSettings';
+import PrivacySettings from '../../Settings/PrivacySettings';
+import StreamingPreferences from '../../Settings/StreamingPreferences';
+import BlockedUsers from '../../Settings/BlockedUsers';
+import PasswordSettings from '../../Settings/PasswordSettings';
+import EmailSettings from '../../Settings/EmailSettings';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -55,6 +62,13 @@ const StackNavigation = () => {
       <Stack.Screen name="Bottom" component={BottomNavigation} />
       <Stack.Screen name="StreamPlayer" component={StreamPlayer} />
       <Stack.Screen name="carrouselSwiper" component={CarrouselContainer} />
+      {/* Settings Screens */}
+      <Stack.Screen name="NotificationSettings" component={NotificationSettings} />
+      <Stack.Screen name="PrivacySettings" component={PrivacySettings} />
+      <Stack.Screen name="StreamingPreferences" component={StreamingPreferences} />
+      <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
+      <Stack.Screen name="PasswordSettings" component={PasswordSettings} />
+      <Stack.Screen name="EmailSettings" component={EmailSettings} />
     </Stack.Navigator>
   );
 };

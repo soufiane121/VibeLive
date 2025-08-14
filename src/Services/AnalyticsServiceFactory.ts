@@ -7,16 +7,7 @@
 
 import { USE_MOCK_ANALYTICS, getEnvironmentConfig, getServiceInfo } from '../Config/AnalyticsConfig';
 import MockAnalyticsService from './AnalyticsService'; // Mock version
-
-// Conditionally import FullAnalyticsService only if not using mock
-let FullAnalyticsService: any = null;
-if (!USE_MOCK_ANALYTICS) {
-  try {
-    FullAnalyticsService = require('./FullAnalyticsService').default;
-  } catch (error) {
-    console.warn('⚠️ FullAnalyticsService could not be loaded, will use Mock service');
-  }
-}
+import RTKAnalyticsService from './RTKAnalyticsService'; // RTK Query version
 
 // Common Analytics Interface
 export interface IAnalyticsService {
@@ -44,7 +35,7 @@ export type AnalyticsServiceInstance = IAnalyticsService;
  */
 class AnalyticsServiceFactory {
   private static instance: AnalyticsServiceInstance | null = null;
-  private static serviceType: 'mock' | 'full' | null = null;
+  private static serviceType: 'mock' | 'full' | 'rtk' | null = null;
 
   /**
    * Get the analytics service instance
@@ -61,22 +52,15 @@ class AnalyticsServiceFactory {
       if (USE_MOCK_ANALYTICS) {
         console.log('📊 Creating Mock Analytics Service...');
         this.instance = MockAnalyticsService.getInstance();
+        this.serviceType = 'mock';
       } else {
-        console.log('📊 Creating Full Analytics Service...');
+        console.log('📊 Creating RTK Analytics Service...');
         try {
-          if (FullAnalyticsService) {
-            this.instance = FullAnalyticsService.getInstance();
-          } else {
-            throw new Error('FullAnalyticsService not available');
-          }
+          this.instance = RTKAnalyticsService.getInstance();
+          this.serviceType = 'rtk';
+          console.log('📊 RTK Analytics Service created successfully');
         } catch (error) {
-          console.error('❌ Failed to create Full Analytics Service, falling back to Mock:', error);
-          console.warn('⚠️ Make sure all native dependencies are installed:');
-          console.warn('  - @react-native-community/netinfo');
-          console.warn('  - react-native-device-info');
-          console.warn('  - @react-native-community/geolocation');
-          console.warn('  - @react-native-async-storage/async-storage');
-          console.warn('  - uuid');
+          console.error('❌ Failed to create RTK Analytics Service, falling back to Mock:', error);
           
           // Fallback to mock service
           this.instance = MockAnalyticsService.getInstance();
@@ -103,7 +87,7 @@ class AnalyticsServiceFactory {
   /**
    * Get current service type
    */
-  public static getServiceType(): 'mock' | 'full' | null {
+  public static getServiceType(): 'mock' | 'full' | 'rtk' | null {
     return this.serviceType;
   }
 

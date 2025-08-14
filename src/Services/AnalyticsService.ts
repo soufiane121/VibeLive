@@ -231,7 +231,7 @@ class AnalyticsService {
 
   // Track screen views
   public async trackScreenView(screenName: string, duration?: number): Promise<void> {
-    await this.trackEvent('screen_viewed', {
+    await this.trackEvent('app_opened', {
       screenName,
       duration,
       timestamp: new Date().toISOString()

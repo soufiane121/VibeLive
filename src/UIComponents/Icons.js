@@ -4,6 +4,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import Feather from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialDesignIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const mapIcon = props => {
   return <Icon name="map" {...props} size={20} />;
@@ -40,6 +41,75 @@ const ProfileIcon = (props)=> {
   return <MaterialDesignIcons name="account-outline" {...props} />;
 }
 
+// Settings Screen Icons
+const ChevronBackIcon = (props) => {
+  return <Ionicons name="chevron-back" {...props} />;
+}
+
+const ChevronForwardIcon = (props) => {
+  return <Ionicons name="chevron-forward" {...props} />;
+}
+
+const MailIcon = (props) => {
+  return <Ionicons name="mail" {...props} />;
+}
+
+const MailOutlineIcon = (props) => {
+  return <Ionicons name="mail-outline" {...props} />;
+}
+
+const NotificationsIcon = (props) => {
+  return <Ionicons name="notifications" {...props} />;
+}
+
+const ShieldCheckmarkIcon = (props) => {
+  return <Ionicons name="shield-checkmark" {...props} />;
+}
+
+const PersonIcon = (props) => {
+  return <Ionicons name="person" {...props} />;
+}
+
+const CheckmarkIcon = (props) => {
+  return <Ionicons name="checkmark" {...props} />;
+}
+
+const BanIcon = (props) => {
+  return <Ionicons name="ban" {...props} />;
+}
+
+const InformationCircleIcon = (props) => {
+  return <Ionicons name="information-circle" {...props} />;
+}
+
+const BulbIcon = (props) => {
+  return <Ionicons name="bulb" {...props} />;
+}
+
+const VideocamIcon = (props) => {
+  return <Ionicons name="videocam" {...props} />;
+}
+
+const RecordingIcon = (props) => {
+  return <Ionicons name="recording" {...props} />;
+}
+
+const PasswordIcons = ({name, ...rest}) => {
+  return <Ionicons name={name} {...rest} />
+}
+
+const RadioIcon = (props) => {
+  return <Ionicons name="radio" {...props} />;
+}
+
+const PersonAddIcon = (props) => {
+  return <Ionicons name="person-add" {...props} />;
+}
+
+const ChatbubbleIcon = (props) => {
+  return <Ionicons name="chatbubble" {...props} />;
+}
+
 export {
   mapIcon,
   LocationIcon,
@@ -50,4 +120,22 @@ export {
   HappyFaceEmojiIcon,
   SettingsIcon,
   ProfileIcon,
+  // Settings Screen Icons
+  ChevronBackIcon,
+  ChevronForwardIcon,
+  MailIcon,
+  MailOutlineIcon,
+  NotificationsIcon,
+  ShieldCheckmarkIcon,
+  PersonIcon,
+  CheckmarkIcon,
+  BanIcon,
+  InformationCircleIcon,
+  BulbIcon,
+  VideocamIcon,
+  RecordingIcon,
+  PasswordIcons,
+  RadioIcon,
+  PersonAddIcon,
+  ChatbubbleIcon,
 };
