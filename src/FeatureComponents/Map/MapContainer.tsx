@@ -38,13 +38,11 @@ import {PartialState, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
 // import {FloatingEmoji} from '../../FloatingAction/EmojiAnimation';
-import {
-  addReaction,
-  clearReactions,
-} from '../../../features/LiveStream/LiveStreamSlice';
-import {emojis as EMOJIS} from '../../Utils/emojis';
-import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
-import { useAnalytics } from '../../Hooks/useAnalytics';
+
+import LiveStreamCarouselDrawer from './LiveStreamCarouselDrawer';
+import {LiveStream, MapFeature} from '../../types/types';
+import FloatingAdButton from '../../Ads/Components/FloatingAdButton';
+import useAnalytics from '../../Hooks/useAnalytics';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -67,18 +65,26 @@ console.log({feature}, 'feature in live icon');
         {...feature}
         onPress={e => {
           // Track marker click analytics
-          trackMapInteraction('marker_clicked', {
+          trackMapInteraction('map_marker_clicked', {
             markerId: feature.id,
             markerCoordinates: feature.coordinates,
-            markerType: feature.properties?.liveDetails?.isLive ? 'live_stream' : 'marker',
+            markerType: feature.properties?.liveDetails?.isLive
+              ? 'live_stream'
+              : 'marker',
             streamId: feature.properties?.streamId,
             streamerId: feature.properties?.userId,
-            streamCategory: feature.properties?.category || feature.properties?.liveDetails?.category || 'unknown',
-            streamTitle: feature.properties?.title || feature.properties?.liveDetails?.title || '',
+            streamCategory:
+              feature.properties?.category ||
+              feature.properties?.liveDetails?.category ||
+              'unknown',
+            streamTitle:
+              feature.properties?.title ||
+              feature.properties?.liveDetails?.title ||
+              '',
             isLive: feature.properties?.liveDetails?.isLive || false,
             viewerCount: feature.properties?.liveDetails?.viewerCount || 0,
             isBoosted: feature.properties?.isBoosted || false,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
 
           if (feature.properties?.liveDetails?.isLive && !feature.hasNestedMarkers) {

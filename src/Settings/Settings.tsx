@@ -30,7 +30,7 @@ const Settings = () => {
   const { currentUser } = useSelector((state: any) => state?.currentUser);
 
   React.useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent('settings_screen_opened', {
       screen_name: 'Settings',
       user_id: currentUser?._id,
     });

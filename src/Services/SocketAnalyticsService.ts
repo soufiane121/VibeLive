@@ -176,7 +176,7 @@ class SocketAnalyticsService {
     }
 
     // Also track locally
-    this.analytics.trackMapInteraction('marker_clicked', markerData);
+    this.analytics.trackMapInteraction('map_marker_clicked', markerData);
   }
 
   // Track stream leaving

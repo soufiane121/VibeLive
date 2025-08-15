@@ -16,6 +16,16 @@ import StreamingPreferences from '../../Settings/StreamingPreferences';
 import BlockedUsers from '../../Settings/BlockedUsers';
 import PasswordSettings from '../../Settings/PasswordSettings';
 import EmailSettings from '../../Settings/EmailSettings';
+// Ad Creation Screens
+import CreateAdFlow from '../../Ads/CreateAd/CreateAdFlow';
+import AdTypeSelection from '../../Ads/CreateAd/AdTypeSelection';
+import AdMediaUpload from '../../Ads/CreateAd/AdMediaUpload';
+import AdTargeting from '../../Ads/CreateAd/AdTargeting';
+import AdPricing from '../../Ads/CreateAd/AdPricing';
+import AdPreview from '../../Ads/CreateAd/AdPreview';
+import AdPayment from '../../Ads/CreateAd/AdPayment';
+import AdSuccess from '../../Ads/CreateAd/AdSuccess';
+import AdDashboard from '../../Ads/AdDashboard/AdDashboard';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -69,6 +79,16 @@ const StackNavigation = () => {
       <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
       <Stack.Screen name="PasswordSettings" component={PasswordSettings} />
       <Stack.Screen name="EmailSettings" component={EmailSettings} />
+      {/* Ad Creation Screens */}
+      <Stack.Screen name="CreateAdFlow" component={CreateAdFlow} />
+      <Stack.Screen name="AdTypeSelection" component={AdTypeSelection} />
+      <Stack.Screen name="AdMediaUpload" component={AdMediaUpload} />
+      <Stack.Screen name="AdTargeting" component={AdTargeting} />
+      <Stack.Screen name="AdPricing" component={AdPricing} />
+      <Stack.Screen name="AdPreview" component={AdPreview} />
+      <Stack.Screen name="AdPayment" component={AdPayment} />
+      <Stack.Screen name="AdSuccess" component={AdSuccess} />
+      <Stack.Screen name="AdDashboard" component={AdDashboard} />
     </Stack.Navigator>
   );
 };

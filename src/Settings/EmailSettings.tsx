@@ -34,7 +34,7 @@ const EmailSettings = () => {
   const [verificationSent, setVerificationSent] = useState(false);
 
   React.useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent('email_settings_opened', {
       screen_name: 'EmailSettings',
       user_id: currentUser?._id,
     });

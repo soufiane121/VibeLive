@@ -68,7 +68,7 @@ const PrivacySettings = () => {
   const [updatePrivacySettings, {isLoading: updateLoading}] = useUpdatePrivacySettingsMutation();
 
   useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent('privacy_settings_opened', {
       screen_name: 'PrivacySettings',
       user_id: currentUser?._id,
     });

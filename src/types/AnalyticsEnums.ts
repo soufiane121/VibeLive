@@ -48,6 +48,27 @@ export enum AnalyticsEventType {
   STREAM_STARTED = 'stream_started',
   STREAM_ENDED = 'stream_ended',
   
+  // Settings screen events
+  SETTINGS_SCREEN_OPENED = 'settings_screen_opened',
+  PASSWORD_SETTINGS_OPENED = 'password_settings_opened',
+  EMAIL_SETTINGS_OPENED = 'email_settings_opened',
+  NOTIFICATION_SETTINGS_OPENED = 'notification_settings_opened',
+  PRIVACY_SETTINGS_OPENED = 'privacy_settings_opened',
+  STREAMING_PREFERENCES_OPENED = 'streaming_preferences_opened',
+  BLOCKED_USERS_OPENED = 'blocked_users_opened',
+  PROFILE_SCREEN_OPENED = 'profile_screen_opened',
+  
+  // Settings actions
+  PASSWORD_CHANGED = 'password_changed',
+  TWO_FACTOR_TOGGLED = 'two_factor_toggled',
+  EMAIL_CHANGED = 'email_changed',
+  EMAIL_VERIFIED = 'email_verified',
+  NOTIFICATION_SETTING_CHANGED = 'notification_setting_changed',
+  PRIVACY_SETTING_CHANGED = 'privacy_setting_changed',
+  STREAMING_PREFERENCE_CHANGED = 'streaming_preference_changed',
+  USER_BLOCKED = 'user_blocked',
+  USER_UNBLOCKED = 'user_unblocked',
+  
   // Boost events
   BOOST_INTRO_VIEWED = 'boost_intro_viewed',
   BOOST_TIER_SELECTED = 'boost_tier_selected',

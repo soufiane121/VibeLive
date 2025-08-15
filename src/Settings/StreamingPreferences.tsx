@@ -68,6 +68,13 @@ const StreamingPreferences = () => {
   const {data: userSettings, isLoading: settingsLoading} = useGetUserSettingsQuery();
   const [updateStreamingPreferences, {isLoading: updateLoading}] = useUpdateStreamingPreferencesMutation();
 
+  useEffect(() => {
+    trackEvent('streaming_preferences_opened', {
+      screen_name: 'StreamingPreferences',
+      user_id: currentUser?._id,
+    });
+  }, []);
+
   const categories = [
     { label: 'Music', value: 'music', icon: 'musical-notes' },
     { label: 'Gaming', value: 'gaming', icon: 'game-controller' },

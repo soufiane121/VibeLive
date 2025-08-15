@@ -12,7 +12,7 @@ import RTKAnalyticsService from './RTKAnalyticsService'; // RTK Query version
 // Common Analytics Interface
 export interface IAnalyticsService {
   trackEvent(eventType: string, eventData?: Record<string, any>, eventCategory?: string): Promise<void>;
-  trackMapInteraction(interactionType: 'marker_clicked' | 'map_moved' | 'map_zoomed', data: Record<string, any>): Promise<void>;
+  trackMapInteraction(interactionType: 'map_marker_clicked' | 'map_moved' | 'map_zoomed', data: Record<string, any>): Promise<void>;
   trackStreamInteraction(action: 'join' | 'leave' | 'watch' | 'preview', streamData: Record<string, any>): Promise<void>;
   trackSocialInteraction(interactionType: 'message_sent' | 'reaction_sent' | 'user_followed', data: Record<string, any>): Promise<void>;
   trackBoostEvent(eventType: 'boost_intro_viewed' | 'boost_tier_selected' | 'boost_purchased' | 'boost_activated' | 'boost_skipped', data: Record<string, any>): Promise<void>;

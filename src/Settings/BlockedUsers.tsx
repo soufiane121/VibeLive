@@ -33,7 +33,7 @@ const BlockedUsers = () => {
   const blockedUsers = blockedUsersData?.blockedUsers || [];
 
   useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent('blocked_users_opened', {
       screen_name: 'BlockedUsers',
       user_id: currentUser?._id,
     });

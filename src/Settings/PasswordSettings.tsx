@@ -35,7 +35,7 @@ const PasswordSettings = () => {
   const [toggleTwoFactor, {isLoading: toggleTwoFactorLoading}] = useToggleTwoFactorMutation();
 
   React.useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent('password_settings_opened', {
       screen_name: 'PasswordSettings',
       user_id: currentUser?._id,
     });

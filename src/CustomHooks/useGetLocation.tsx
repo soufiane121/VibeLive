@@ -6,7 +6,7 @@ import Geolocation, {
 } from '@react-native-community/geolocation';
 
 export function useGetCurrentLocation() {
-  const [position, setPosition] = useState<{} | null>(null);
+  const [position, setPosition] = useState<GeolocationCoordinates | null>(null);
 
   const getCurrentPosition = async () => {
     const test = Geolocation.requestAuthorization();
@@ -27,11 +27,21 @@ export function useGetCurrentLocation() {
   return position;
 }
 
-type useGetLocationTypes = {
+export interface useGetLocationTypes {
   hasPermission?: boolean;
   coordinates: number[];
   requestLocationPermission?: () => Promise<boolean>;
-};
+}
+
+export interface GeolocationCoordinates {
+  latitude: number;
+  longitude: number;
+  altitude: number | null;
+  accuracy: number;
+  altitudeAccuracy: number | null;
+  heading: number | null;
+  speed: number | null;
+}
 // Function to request location permission
 const requestLocationPermission = async () => {
   if (Platform.OS === 'android') {

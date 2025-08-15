@@ -98,7 +98,7 @@ const NotificationSettings = () => {
   });
 
   useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent('notification_settings_opened', {
       screen_name: 'NotificationSettings',
       user_id: currentUser?._id,
     });

@@ -46,7 +46,7 @@ class AnalyticsService {
   private userContext: UserContext = {
     isStreaming: false,
     isWatching: false,
-    userTier: 'free'
+    userTier: 'free',
   };
   private eventQueue: AnalyticsEvent[] = [];
   private isOnline: boolean = true;
@@ -82,9 +82,8 @@ class AnalyticsService {
 
       console.log('📊 Mock Analytics Service initialized', {
         sessionId: this.sessionId,
-        deviceInfo: this.deviceInfo
+        deviceInfo: this.deviceInfo,
       });
-
     } catch (error) {
       console.error('Failed to initialize Analytics Service:', error);
     }
@@ -94,12 +93,12 @@ class AnalyticsService {
   public configure(baseURL: string, authToken: string): void {
     this.baseURL = baseURL;
     this.authToken = authToken;
-    console.log('📊 Analytics configured:', { baseURL, hasToken: !!authToken });
+    console.log('📊 Analytics configured:', {baseURL, hasToken: !!authToken});
   }
 
   // Update user context
   public updateUserContext(context: Partial<UserContext>): void {
-    this.userContext = { ...this.userContext, ...context };
+    this.userContext = {...this.userContext, ...context};
     console.log('📊 User context updated:', this.userContext);
   }
 
@@ -107,7 +106,7 @@ class AnalyticsService {
   public async trackEvent(
     eventType: string,
     eventData: Record<string, any> = {},
-    eventCategory?: string
+    eventCategory?: string,
   ): Promise<void> {
     try {
       const event: AnalyticsEvent = {
@@ -115,9 +114,9 @@ class AnalyticsService {
         eventCategory: eventCategory || this.categorizeEvent(eventType),
         eventData: {
           ...eventData,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         },
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       // Add to queue
@@ -126,14 +125,13 @@ class AnalyticsService {
       console.log('📊 Analytics Event Tracked:', {
         eventType,
         eventCategory: eventCategory || this.categorizeEvent(eventType),
-        eventData
+        eventData,
       });
 
       // Auto-flush if queue is full
       if (this.eventQueue.length >= this.batchSize) {
         await this.flushEvents();
       }
-
     } catch (error) {
       console.error('Failed to track event:', error);
     }
@@ -153,11 +151,15 @@ class AnalyticsService {
   // Track session start
   public async trackSessionStart(): Promise<void> {
     try {
-      await this.trackEvent('session_started', {
-        sessionId: this.sessionId,
-        deviceInfo: this.deviceInfo,
-        userContext: this.userContext
-      }, 'user_engagement');
+      await this.trackEvent(
+        'session_started',
+        {
+          sessionId: this.sessionId,
+          deviceInfo: this.deviceInfo,
+          userContext: this.userContext,
+        },
+        'user_engagement',
+      );
     } catch (error) {
       console.error('Failed to track session start:', error);
     }
@@ -167,12 +169,16 @@ class AnalyticsService {
   public async trackSessionEnd(): Promise<void> {
     try {
       const sessionDuration = Date.now() - this.sessionStartTime.getTime();
-      
-      await this.trackEvent('session_ended', {
-        sessionId: this.sessionId,
-        sessionDuration: Math.floor(sessionDuration / 1000),
-        eventsTracked: this.eventQueue.length
-      }, 'user_engagement');
+
+      await this.trackEvent(
+        'session_ended',
+        {
+          sessionId: this.sessionId,
+          sessionDuration: Math.floor(sessionDuration / 1000),
+          eventsTracked: this.eventQueue.length,
+        },
+        'user_engagement',
+      );
 
       // Final flush before ending session
       await this.flushEvents();
@@ -183,8 +189,8 @@ class AnalyticsService {
 
   // Track map interactions
   public async trackMapInteraction(
-    interactionType: 'marker_clicked' | 'map_moved' | 'map_zoomed',
-    data: Record<string, any>
+    interactionType: 'map_marker_clicked' | 'map_moved' | 'map_zoomed',
+    data: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent(`map_${interactionType}`, data, 'user_engagement');
   }
@@ -192,7 +198,7 @@ class AnalyticsService {
   // Track stream interactions
   public async trackStreamInteraction(
     action: 'join' | 'leave' | 'watch' | 'preview',
-    streamData: Record<string, any>
+    streamData: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent(`stream_${action}`, streamData, 'stream_interaction');
   }
@@ -200,51 +206,78 @@ class AnalyticsService {
   // Track social interactions
   public async trackSocialInteraction(
     interactionType: 'message_sent' | 'reaction_sent' | 'user_followed',
-    data: Record<string, any>
+    data: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent(`social_${interactionType}`, data, 'social');
   }
 
   // Track boost events
   public async trackBoostEvent(
-    eventType: 'boost_intro_viewed' | 'boost_tier_selected' | 'boost_purchased' | 'boost_activated' | 'boost_skipped',
-    data: Record<string, any>
+    eventType:
+      | 'boost_intro_viewed'
+      | 'boost_tier_selected'
+      | 'boost_purchased'
+      | 'boost_activated'
+      | 'boost_skipped',
+    data: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent(eventType, data, 'monetization');
   }
 
   // Track payment events
   public async trackPaymentEvent(
-    eventType: 'payment_initiated' | 'payment_completed' | 'payment_failed' | 'payment_cancelled',
-    data: Record<string, any>
+    eventType:
+      | 'payment_initiated'
+      | 'payment_completed'
+      | 'payment_failed'
+      | 'payment_cancelled',
+    data: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent(eventType, data, 'monetization');
   }
 
   // Track errors
   public async trackError(
-    errorType: 'error_occurred' | 'crash_reported' | 'network_error' | 'permission_denied',
-    errorData: Record<string, any>
+    errorType:
+      | 'error_occurred'
+      | 'crash_reported'
+      | 'network_error'
+      | 'permission_denied',
+    errorData: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent(errorType, errorData, 'technical');
   }
 
   // Track screen views
-  public async trackScreenView(screenName: string, duration?: number): Promise<void> {
-    await this.trackEvent('app_opened', {
-      screenName,
-      duration,
-      timestamp: new Date().toISOString()
-    }, 'user_engagement');
+  public async trackScreenView(
+    screenName: string,
+    duration?: number,
+  ): Promise<void> {
+    await this.trackEvent(
+      'app_opened',
+      {
+        screenName,
+        duration,
+        timestamp: new Date().toISOString(),
+      },
+      'user_engagement',
+    );
   }
 
   // Track location changes
-  public async trackLocationChange(coordinates: [number, number], accuracy?: number): Promise<void> {
-    await this.trackEvent('location_changed', {
-      coordinates,
-      accuracy,
-      timestamp: new Date().toISOString()
-    }, 'user_engagement');
+  public async trackLocationChange(
+    coordinates: [number, number],
+    accuracy?: number,
+  ): Promise<void> {
+    await this.trackEvent(
+      'location_changed',
+      {
+        coordinates,
+        accuracy,
+        timestamp: new Date().toISOString(),
+      },
+      'user_engagement',
+    );
   }
 
   // Flush events to backend
@@ -262,15 +295,17 @@ class AnalyticsService {
         events: eventsToSend.map(e => ({
           type: e.eventType,
           category: e.eventCategory,
-          timestamp: e.timestamp
-        }))
+          timestamp: e.timestamp,
+        })),
       });
 
       // Mock API call - replace with actual backend call when ready
       if (this.baseURL && this.authToken) {
-        console.log('📊 Would send to backend:', `${this.baseURL}/analytics/track-events-batch`);
+        console.log(
+          '📊 Would send to backend:',
+          `${this.baseURL}/analytics/track-events-batch`,
+        );
       }
-
     } catch (error) {
       console.error('Failed to flush events:', error);
     }
@@ -285,7 +320,7 @@ class AnalyticsService {
       deviceModel: 'mock-device',
       screenSize: 'unknown',
       networkType: 'wifi',
-      deviceId: 'mock-device-id'
+      deviceId: 'mock-device-id',
     };
   }
 
@@ -298,27 +333,54 @@ class AnalyticsService {
   // Categorize events
   private categorizeEvent(eventType: string): string {
     const categories: Record<string, string[]> = {
-      'user_engagement': [
-        'app_opened', 'app_closed', 'app_backgrounded', 'app_foregrounded',
-        'map_marker_clicked', 'map_moved', 'map_zoomed', 'location_changed',
-        'screen_viewed', 'category_filter_applied', 'search_performed'
+      user_engagement: [
+        'app_opened',
+        'app_closed',
+        'app_backgrounded',
+        'app_foregrounded',
+        'map_marker_clicked',
+        'map_moved',
+        'map_zoomed',
+        'location_changed',
+        'screen_viewed',
+        'category_filter_applied',
+        'search_performed',
       ],
-      'stream_interaction': [
-        'stream_discovered', 'stream_preview_viewed', 'stream_joined', 'stream_left',
-        'stream_watched', 'go_live_started', 'stream_started', 'stream_ended',
-        'viewer_count_updated'
+      stream_interaction: [
+        'stream_discovered',
+        'stream_preview_viewed',
+        'stream_joined',
+        'stream_left',
+        'stream_watched',
+        'go_live_started',
+        'stream_started',
+        'stream_ended',
+        'viewer_count_updated',
       ],
-      'monetization': [
-        'boost_intro_viewed', 'boost_tier_selected', 'boost_purchased', 'boost_activated',
-        'boost_skipped', 'payment_initiated', 'payment_completed', 'payment_failed',
-        'payment_cancelled'
+      monetization: [
+        'boost_intro_viewed',
+        'boost_tier_selected',
+        'boost_purchased',
+        'boost_activated',
+        'boost_skipped',
+        'payment_initiated',
+        'payment_completed',
+        'payment_failed',
+        'payment_cancelled',
       ],
-      'social': [
-        'message_sent', 'reaction_sent', 'emoji_used', 'user_followed', 'user_unfollowed'
+      social: [
+        'message_sent',
+        'reaction_sent',
+        'emoji_used',
+        'user_followed',
+        'user_unfollowed',
       ],
-      'technical': [
-        'error_occurred', 'crash_reported', 'network_error', 'permission_denied'
-      ]
+      technical: [
+        'error_occurred',
+        'crash_reported',
+        'network_error',
+        'permission_denied',
+      ],
     };
 
     for (const [category, events] of Object.entries(categories)) {

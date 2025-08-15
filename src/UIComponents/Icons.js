@@ -106,8 +106,89 @@ const PersonAddIcon = (props) => {
   return <Ionicons name="person-add" {...props} />;
 }
 
-const ChatbubbleIcon = (props) => {
+const ChatbubbleIcon = (props)=> {
   return <Ionicons name="chatbubble" {...props} />;
+}
+
+// Ad Creation Icons
+const PlusIcon = (props) => {
+  return <Ionicons name="add" {...props} />;
+}
+
+const SparklesIcon = (props) => {
+  return <Ionicons name="sparkles" {...props} />;
+}
+
+const TrendingUpIcon = (props) => {
+  return <Ionicons name="trending-up" {...props} />;
+}
+
+const CreditCardIcon = (props) => {
+  return <Ionicons name="card" {...props} />;
+}
+
+const CheckmarkCircleIcon = (props) => {
+  return <Ionicons name="checkmark-circle" {...props} />;
+}
+
+const ShareIcon = (props) => {
+  return <Ionicons name="share" {...props} />;
+}
+
+const CalendarIcon = (props) => {
+  return <Ionicons name="calendar" {...props} />;
+}
+
+const MapIcon = (props) => {
+  return <Ionicons name="map" {...props} />;
+}
+
+const PlayCircleIcon = (props) => {
+  return <Ionicons name="play-circle" {...props} />;
+}
+
+const EditIcon = (props) => {
+  return <Ionicons name="pencil" {...props} />;
+}
+
+const UploadIcon = (props) => {
+  return <Ionicons name="cloud-upload" {...props} />;
+}
+
+const CameraIcon = (props) => {
+  return <Ionicons name="camera" {...props} />;
+}
+
+const TargetIcon = (props) => {
+  return <Ionicons name="target" {...props} />;
+}
+
+const UsersIcon = (props) => {
+  return <Ionicons name="people" {...props} />;
+}
+
+const DollarSignIcon = (props) => {
+  return <Ionicons name="cash" {...props} />;
+}
+
+const ClockIcon = (props) => {
+  return <Ionicons name="time" {...props} />;
+}
+
+const EyeIcon = (props) => {
+  return <Ionicons name="eye" {...props} />;
+}
+
+const MousePointerIcon = (props) => {
+  return <Ionicons name="hand-left" {...props} />;
+}
+
+const PauseIcon = (props) => {
+  return <Ionicons name="pause" {...props} />;
+}
+
+const PlayIcon = (props) => {
+  return <Ionicons name="play" {...props} />;
 }
 
 export {
@@ -138,4 +219,25 @@ export {
   RadioIcon,
   PersonAddIcon,
   ChatbubbleIcon,
+  // Ad Creation Icons
+  PlusIcon,
+  SparklesIcon,
+  TrendingUpIcon,
+  CreditCardIcon,
+  CheckmarkCircleIcon,
+  ShareIcon,
+  CalendarIcon,
+  MapIcon,
+  PlayCircleIcon,
+  EditIcon,
+  UploadIcon,
+  CameraIcon,
+  TargetIcon,
+  UsersIcon,
+  DollarSignIcon,
+  ClockIcon,
+  EyeIcon,
+  MousePointerIcon,
+  PauseIcon,
+  PlayIcon,
 };

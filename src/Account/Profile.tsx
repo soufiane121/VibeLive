@@ -60,7 +60,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = React.useState<'Activity' | 'Lives' | 'Highlights'>('Activity');
 
   React.useEffect(() => {
-    trackEvent('profile_viewed', {
+    trackEvent('profile_screen_opened', {
       screen_name: 'Profile',
       user_id: currentUser?._id,
     });
@@ -143,6 +143,41 @@ const Profile = () => {
           <TouchableOpacity style={styles.statItem}>
             <Text style={styles.statNumber}>{userStats.highlights}</Text>
             <Text style={styles.statLabel}>Highlights</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Promote Event Section */}
+        <View style={styles.promoteSection}>
+          <TouchableOpacity 
+            style={styles.promoteButton}
+            onPress={() => {
+              trackEvent('profile_promote_event_pressed', {
+                user_id: currentUser?._id,
+              });
+              navigation.navigate('CreateAdFlow' as never, {
+                entryPoint: 'profile_promote',
+              } as never);
+            }}
+          >
+            <View style={styles.promoteContent}>
+              <Text style={styles.promoteTitle}>🚀 Promote Your Event</Text>
+              <Text style={styles.promoteSubtitle}>Reach more people with targeted ads</Text>
+              <View style={styles.promoteOffer}>
+                <Text style={styles.offerText}>50% OFF First Ad!</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.viewAdsButton}
+            onPress={() => {
+              trackEvent('profile_view_ads_pressed', {
+                user_id: currentUser?._id,
+              });
+              navigation.navigate('AdDashboard' as never);
+            }}
+          >
+            <Text style={styles.viewAdsText}>View My Ads</Text>
           </TouchableOpacity>
         </View>
 
@@ -306,6 +341,54 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: '#fff',
+    fontWeight: '600',
+  },
+  promoteSection: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  promoteButton: {
+    backgroundColor: '#1f2937',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#8b5cf6',
+  },
+  promoteContent: {
+    alignItems: 'center',
+  },
+  promoteTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  promoteSubtitle: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginBottom: 8,
+  },
+  promoteOffer: {
+    backgroundColor: '#fbbf24',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  offerText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  viewAdsButton: {
+    backgroundColor: '#374151',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  viewAdsText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
   activitySection: {
