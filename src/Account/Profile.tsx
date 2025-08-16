@@ -13,6 +13,7 @@ import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 
 interface ActivityItem {
   id: string;
@@ -60,7 +61,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = React.useState<'Activity' | 'Lives' | 'Highlights'>('Activity');
 
   React.useEffect(() => {
-    trackEvent('profile_viewed', {
+    trackEvent(AnalyticsEventType.PROFILE_VIEWED, {
       screen_name: 'Profile',
       user_id: currentUser?._id,
     });
@@ -72,7 +73,7 @@ const Profile = () => {
       username: currentUser?.userName,
     });
     // Navigate to go live screen
-    navigation.navigate('LiveStreamContainer' as never);
+    navigation.navigate('Live' as never);
   };
 
   const handleTabPress = (tab: 'Activity' | 'Lives' | 'Highlights') => {

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useAnalytics } from '../Hooks/useAnalytics';
 import SocketAnalyticsService from '../Services/SocketAnalyticsService';
+import { AnalyticsEventType, SocialInteractionType } from '../types/AnalyticsEnums';
 
 interface UserProfile {
   userId: string;
@@ -79,9 +80,10 @@ export const useSocialAnalytics = () => {
     try {
       sessionInteractions.current++;
 
-      await trackSocialInteraction('reaction_sent', {
+      await trackSocialInteraction(SocialInteractionType.REACTION_SENT, {
         reactionId: reactionData.reactionId,
         streamId: reactionData.streamId,
+        userId: reactionData.userId,
         emoji: reactionData.emoji,
         targetType: reactionData.targetType,
         targetId: reactionData.targetId,
@@ -98,7 +100,7 @@ export const useSocialAnalytics = () => {
   // Track user profile view
   const trackProfileView = async (viewedUser: UserProfile, viewMethod: string, viewDuration?: number) => {
     try {
-      await trackEvent('profile_viewed', {
+      await trackEvent(AnalyticsEventType.PROFILE_VIEWED, {
         viewedUserId: viewedUser.userId,
         viewedUsername: viewedUser.username,
         viewMethod, // 'chat_click', 'search_result', 'follower_list', 'stream_info'
@@ -117,7 +119,7 @@ export const useSocialAnalytics = () => {
   // Track follow action
   const trackFollowAction = async (targetUser: UserProfile, action: 'follow' | 'unfollow') => {
     try {
-      await trackSocialInteraction('follow_action', {
+      await trackSocialInteraction(action === 'follow' ? SocialInteractionType.USER_FOLLOWED : SocialInteractionType.USER_UNFOLLOWED, {
         targetUserId: targetUser.userId,
         targetUsername: targetUser.username,
         action,

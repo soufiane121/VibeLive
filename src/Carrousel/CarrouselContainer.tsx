@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { View, Dimensions, FlatList } from 'react-native';
 import StreamPlayer from '../WatchStream/StreamPlayer';
+import {useRoute} from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -26,6 +27,7 @@ const liveStreams = [
 const CarrouselContainer = () => {
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const {groupedData} = useRoute()?.params || [];
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     if (viewableItems.length > 0) {
@@ -34,26 +36,33 @@ const CarrouselContainer = () => {
   }).current;
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'black' }}>
+    <View style={{flex: 1, backgroundColor: 'black'}}>
       <FlatList
         ref={flatListRef}
-        data={liveStreams}
+        data={groupedData}
         keyExtractor={item => item.id}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <View style={{ width, height }}>
-            <StreamPlayer
-              streamId={item.streamId}
-              userId={item.userId}
-              liveDetails={item.liveDetails}
-              coordinates={item.coordinates}
-            />
-          </View>
-        )}
+        renderItem={({item}) => {
+          console.log('----------------------------------------', {
+            item,
+          });
+          return (
+            <View style={{width, height}}>
+              <StreamPlayer
+                streamId={
+                  'g00I5Gc7hoGZ012y4ZaZFXtvEWyuh4w9Fpv1dTUFiqNKM' ||
+                  item.properties?.streamId
+                }
+                userId={item.properties?.userId || ''}
+                liveDetails={item.properties?.liveDetails || {}}
+                coordinates={item.properties?.coordinates || []}
+              />
+            </View>
+          );}}
         onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={{ itemVisiblePercentThreshold: 80 }}
+        viewabilityConfig={{itemVisiblePercentThreshold: 80}}
       />
     </View>
   );

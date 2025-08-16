@@ -26,17 +26,41 @@ import {
 } from '../../features/LiveStream/LiveStream';
 import { setCurrentUser } from '../../features/registrations/CurrentUser';
 
+type NavigationData = {
+  properties?: {
+    streamId: string;
+    userId: string;
+    liveDetails: any;
+    coordinates: string[]; // Changed from number[] to string[]
+  };
+};
+
 type Props = {
-  streamId?: string;
-  userId?: string;
+  streamId: string;
+  userId: string;
   liveDetails?: any;
-  coordinates?: any;
+  coordinates?: string[]; // Changed from number[] to string[]
 };
 
 const StreamPlayer = (props: Props) => {
-  const {
-    properties: {streamId, userId, liveDetails, coordinates},
-  } = useNavigationState(state => state.routes[1]?.params) || {};
+  // Get data from navigation if available, otherwise use direct props
+  const navigationState = useNavigationState(state => {
+    const route = state.routes.find(r => r.name === 'carrouselSwiper');
+    return route?.params as NavigationData | undefined;
+  });
+  
+  // Use navigation data if available, otherwise use direct props
+  // At least one of them must be provided
+  const streamId = navigationState?.properties?.streamId || props.streamId;
+  const userId = navigationState?.properties?.userId || props.userId;
+  
+  // if (!streamId || !userId) {
+  //   console.error('StreamPlayer: Missing required streamId or userId');
+  //   return null;
+  // }
+  
+  const liveDetails = navigationState?.properties?.liveDetails || props.liveDetails || {};
+  const coordinates = (navigationState?.properties?.coordinates || props.coordinates || []) as string[];
   const dispatch = useDispatch();
   const [addFollow] = useAddFollowMutation();
   const [removeFollow] = useRemoveFollowMutation();
@@ -85,7 +109,6 @@ const StreamPlayer = (props: Props) => {
   }, [socket]);
 
   const handleFollowAndUnfollow = async (e: any) => {
-    console.log({e});
 
     try {
       if (areYouFollowing) {
@@ -187,9 +210,9 @@ const StreamPlayer = (props: Props) => {
       </View>
       <MuxVideo
         style={{height: '100%', width: '100%'}}
-        // source={{
-        //   uri: `https://stream.mux.com/${streamId}.m3u8`,
-        // }}
+        source={{
+          uri: `https://stream.mux.com/${streamId}.m3u8`,
+        }}
         fullscreen={true}
         paused={false}
         // resizeMode="contain"
@@ -200,7 +223,7 @@ const StreamPlayer = (props: Props) => {
           // resizeMode: 'cover',
           // ...
         }}
-        muted
+        muted={false}
         muxOptions={{
           application_name: 'test', // (required) the name of your application
           application_version: '1', // the version of your application (optional, but encouraged)

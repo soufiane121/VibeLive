@@ -63,8 +63,14 @@ interface BoostPurchaseData {
   purchaseTime: Date;
 }
 
+interface onCompleteSelection {
+  value: string;
+  boostData?: BoostPurchaseData;
+  title?: string;
+}
+
 interface EventSelectionsProps {
-  onCompleteSelection: (value: string, boostData?: BoostPurchaseData) => void;
+  onCompleteSelection: (args: onCompleteSelection) => void;
   onTitleChange?: (title: string) => void;
 }
 
@@ -104,7 +110,7 @@ const BOOST_TIERS: BoostTier[] = [
   }
 ];
 
-const EventSelections = ({onCompleteSelection, onTitleChange}: EventSelectionsProps) => {
+const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const [title, setTitle] = useState('');
   const [currentStep, setCurrentStep] = useState<FlowStep>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -140,15 +146,15 @@ const EventSelections = ({onCompleteSelection, onTitleChange}: EventSelectionsPr
       countdownFlash.setValue(0);
       
       // Notify parent component of title reset
-      if (onTitleChange) {
-        onTitleChange('');
-      }
+      // if (onTitleChange) {
+      //   onTitleChange('');
+      // }
       
       // Track screen focus for analytics
       trackEvent('go_live_started', {
         timestamp: new Date().toISOString(),
       });
-    }, [onTitleChange])
+    }, [])
   );
 
   useEffect(() => {
@@ -223,7 +229,7 @@ const EventSelections = ({onCompleteSelection, onTitleChange}: EventSelectionsPr
   const handleTitleChange = (text: string) => {
     if (text.length <= 60) {
       setTitle(text);
-      onTitleChange && onTitleChange(text);
+      // onTitleChange && onTitleChange(text);
     }
   };
 
@@ -255,7 +261,7 @@ const EventSelections = ({onCompleteSelection, onTitleChange}: EventSelectionsPr
     });
     
     // Skip boost flow entirely
-    onCompleteSelection(category);
+    onCompleteSelection({value: category, title: title.trim()});
   };
 
   const handleSkipBoost = () => {
@@ -266,7 +272,7 @@ const EventSelections = ({onCompleteSelection, onTitleChange}: EventSelectionsPr
       timestamp: new Date().toISOString(),
     });
     
-    onCompleteSelection(selectedCategory);
+    onCompleteSelection({value:selectedCategory, title:title.trim()});
   };
 
   const handleBoostTierSelection = (tier: BoostTier) => {
@@ -336,7 +342,7 @@ const EventSelections = ({onCompleteSelection, onTitleChange}: EventSelectionsPr
   };
 
   const handleBoostConfirmation = () => {
-    onCompleteSelection(selectedCategory, boostData!);
+    onCompleteSelection({value: selectedCategory, boostData: boostData!, title: title.trim()});
   };
 
 

@@ -22,6 +22,7 @@ const StackNavigation = () => {
   const dispatch = useDispatch();
   const {coordinates} = useGetLocation();
   const [autoLoginFetch, {data, isSuccess}] = useAutoLoginMutation();
+  // const [singOutFetch] = useSingOutMutation();
 
   useEffect(() => {
     if (!data) {
@@ -49,7 +50,7 @@ const StackNavigation = () => {
         headerBackVisible: false,
         headerShown: false,
       }}>
-      {!isSuccess && data?.['_id'] && (
+      {!isSuccess && !data?.['_id'] && (
         <>
           <Stack.Screen name="Login" component={LoginContainer} />
           <Stack.Screen

@@ -7,10 +7,16 @@ const SwitcherContainer = () => {
   const [showStartLive, setShowStartLive] = useState(false);
   const [title, setTitle] = useState('');
     const [selectedEventType, setSelectedEventType] = useState<string | undefined>("");
-  const handleCompleteSelection = (value: string) => {
+  const handleCompleteSelection = (args: {
+    value: string;
+    boostData?: any;
+    title?: string;
+  }) => {
+    const {value, boostData, title: titleValue} = args || {};
     console.log('Selected value:', value);
     setSelectedEventType(value);
     setShowStartLive(true);
+    setTitle(titleValue || "");
   };
   const handleChangeTitle = (title: string) => {
     console.log('Title changed:', title);

@@ -61,6 +61,7 @@ export enum AnalyticsEventType {
   EMOJI_USED = 'emoji_used',
   USER_FOLLOWED = 'user_followed',
   USER_UNFOLLOWED = 'user_unfollowed',
+  PROFILE_VIEWED = 'profile_viewed',
   
   // Payment events
   PAYMENT_INITIATED = 'payment_initiated',
@@ -104,6 +105,8 @@ export enum SocialInteractionType {
   MESSAGE_SENT = 'message_sent',
   REACTION_SENT = 'reaction_sent',
   USER_FOLLOWED = 'user_followed',
+  USER_PROFILE_VIEWED = 'profile_viewed',
+  USER_UNFOLLOWED = 'user_unfollowed',
 }
 
 // Boost Event Types
@@ -184,6 +187,7 @@ export const getEventCategory = (eventType: AnalyticsEventType): AnalyticsEventC
     AnalyticsEventType.EMOJI_USED,
     AnalyticsEventType.USER_FOLLOWED,
     AnalyticsEventType.USER_UNFOLLOWED,
+    AnalyticsEventType.PROFILE_VIEWED,
   ];
 
   const technicalEvents = [

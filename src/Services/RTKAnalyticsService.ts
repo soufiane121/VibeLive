@@ -324,6 +324,8 @@ class RTKAnalyticsService {
       [SocialInteractionType.MESSAGE_SENT]: AnalyticsEventType.MESSAGE_SENT,
       [SocialInteractionType.REACTION_SENT]: AnalyticsEventType.REACTION_SENT,
       [SocialInteractionType.USER_FOLLOWED]: AnalyticsEventType.USER_FOLLOWED,
+      [SocialInteractionType.USER_UNFOLLOWED]: AnalyticsEventType.USER_UNFOLLOWED,
+      [SocialInteractionType.USER_PROFILE_VIEWED]: AnalyticsEventType.PROFILE_VIEWED,
     };
     await this.trackEvent(eventTypeMap[interactionType], data, AnalyticsEventCategory.SOCIAL);
   }

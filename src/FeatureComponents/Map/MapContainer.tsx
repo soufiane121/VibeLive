@@ -57,7 +57,6 @@ const LiveIcon = memo(
     const {navigate} =
       useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     if (!feature.isLive) return null;
-console.log({feature}, 'feature in live icon');
 
     return (
       <ShapeSource
@@ -67,27 +66,35 @@ console.log({feature}, 'feature in live icon');
         {...feature}
         onPress={e => {
           // Track marker click analytics
-          trackMapInteraction('marker_clicked', {
+          trackMapInteraction('map_marker_clicked', {
             markerId: feature.id,
             markerCoordinates: feature.coordinates,
-            markerType: feature.properties?.liveDetails?.isLive ? 'live_stream' : 'marker',
+            markerType: feature.properties?.liveDetails?.isLive
+              ? 'live_stream'
+              : 'marker',
             streamId: feature.properties?.streamId,
             streamerId: feature.properties?.userId,
-            streamCategory: feature.properties?.category || feature.properties?.liveDetails?.category || 'unknown',
-            streamTitle: feature.properties?.title || feature.properties?.liveDetails?.title || '',
+            streamCategory:
+              feature.properties?.category ||
+              feature.properties?.liveDetails?.category ||
+              'unknown',
+            streamTitle:
+              feature.properties?.title ||
+              feature.properties?.liveDetails?.title ||
+              '',
             isLive: feature.properties?.liveDetails?.isLive || false,
             viewerCount: feature.properties?.liveDetails?.viewerCount || 0,
             isBoosted: feature.properties?.isBoosted || false,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
 
           if (feature.properties?.liveDetails?.isLive && !feature.hasNestedMarkers) {
             navigate('StreamPlayer', {
-              properties: {...feature.properties},
+              properties: {...feature?.properties},
             });
           } else {
             navigate('carrouselSwiper', {
-              properties: {...feature.properties},
+              groupedData: feature?.groupedFeatures,
             });
           }
         }}>
@@ -391,8 +398,6 @@ const MapContainer = () => {
                   : `marker-${cluster.properties.id}`;
                 const hasNestedMarkers =
                   cluster?.hasOwnProperty('groupedFeatures');
-                  console.log({cluster});
-
 
                 return !isCluster ? (
                   <ShapeSource
@@ -422,6 +427,7 @@ const MapContainer = () => {
                           ...cluster?.properties,
                         },
                         hasNestedMarkers: hasNestedMarkers,
+                        groupedFeatures: cluster?.groupedFeatures,
                       }}
                       circleLayerRef={ref => {
                         circleLayerRefs.current[
