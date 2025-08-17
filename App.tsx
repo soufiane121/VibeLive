@@ -7,12 +7,10 @@
 
 // import './gesture-handler';
 import React, { useEffect } from 'react';
-import {SafeAreaView, useColorScheme} from 'react-native';
+import { useColorScheme} from 'react-native';
 import Main from './src/Main';
 import {Provider} from 'react-redux';
 import {store} from './redux/store';
-import LiveStreamContainer from './src/LiveStream/LiveStreamContainer';
-import RadarMap from './radarMap-not_in-use';
 import { initOneSignal } from './notifications/IniNotification';
 import { AnalyticsProvider } from './src/Providers/AnalyticsProvider';
 
@@ -23,7 +21,7 @@ function App() {
   }, [])
 
   const handleInitOneSignal =async  ()=> {
-    await initOneSignal();
+    // await initOneSignal();
   }
   
 

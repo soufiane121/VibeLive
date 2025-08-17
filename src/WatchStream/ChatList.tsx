@@ -27,6 +27,7 @@ interface Props {
   userId: string;
   liveDetails: Object;
   coordinates: string[]
+  parentGroupStreamId?: string;
 }
 const ChatList = (props: Props) => {
   const [messages, setMessages] = useState([]);
@@ -85,6 +86,7 @@ const ChatList = (props: Props) => {
     flatListRef.current?.scrollToEnd({animated: true});
   }, [messages]);
 
+  console.log({props});
   const sendReactions = (reactEmogi: string) => {
     let isThrottled = false;
     if (!isThrottled) {
@@ -97,6 +99,7 @@ const ChatList = (props: Props) => {
         id: props?.streamId,
         reactEmogi,
         coordinates: props.coordinates,
+        parentGroupStreamId: props?.parentGroupStreamId,
       });
       isThrottled = true;
 
@@ -109,7 +112,6 @@ const ChatList = (props: Props) => {
   useEffect(() => {
     if (socket) {
       socket.on('get-chat', data => {
-        console.log({data: data.data.newMessage}, 'get-chat ');
         if (data?.data.newMessage?.hasOwnProperty('id')) {
           setMessages(prevMessages => {
             return fadeMessagesHelper(prevMessages, data?.data.newMessage);

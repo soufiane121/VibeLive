@@ -40,6 +40,7 @@ type Props = {
   userId: string;
   liveDetails?: any;
   coordinates?: string[]; // Changed from number[] to string[]
+  parentGroupStreamId?: string;
 };
 
 const StreamPlayer = (props: Props) => {
@@ -74,8 +75,6 @@ const StreamPlayer = (props: Props) => {
   const [titleAnim] = useState(new Animated.Value(0));
   const titleContainerWidth = 100; // Adjust as needed
   const titleTextWidth = 260; // Adjust as needed for longest expected title
-
-  console.log({userId, currentUser});
 
   useEffect(() => {
     titleAnim.setValue(titleContainerWidth);
@@ -129,7 +128,6 @@ const StreamPlayer = (props: Props) => {
         if (res?.status === 200) {
           setAreYouFollowing(true);
           dispatch(setCurrentUser(res.data));
-          console.log({res: res.data}, 'Follow Response');
         }
       }
     } catch (error) {
@@ -242,6 +240,7 @@ const StreamPlayer = (props: Props) => {
         userId={userId || props?.userId}
         liveDetails={liveDetails || props?.liveDetails}
         coordinates={coordinates || props?.coordinates}
+        parentGroupStreamId={props?.parentGroupStreamId}
       />
       {/* </SafeAreaView> */}
     </>

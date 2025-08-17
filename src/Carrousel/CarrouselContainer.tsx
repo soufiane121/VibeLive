@@ -27,7 +27,7 @@ const liveStreams = [
 const CarrouselContainer = () => {
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const {groupedData} = useRoute()?.params || [];
+  const {groupedData, parentGroupStreamId} = useRoute()?.params || [];
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     if (viewableItems.length > 0) {
@@ -45,19 +45,16 @@ const CarrouselContainer = () => {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         renderItem={({item}) => {
-          console.log('----------------------------------------', {
-            item,
-          });
           return (
             <View style={{width, height}}>
               <StreamPlayer
                 streamId={
-                  'g00I5Gc7hoGZ012y4ZaZFXtvEWyuh4w9Fpv1dTUFiqNKM' ||
                   item.properties?.streamId
                 }
                 userId={item.properties?.userId || ''}
                 liveDetails={item.properties?.liveDetails || {}}
                 coordinates={item.properties?.coordinates || []}
+                parentGroupStreamId={parentGroupStreamId || ""}
               />
             </View>
           );}}
