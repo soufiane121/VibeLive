@@ -16,6 +16,9 @@ import StreamingPreferences from '../../Settings/StreamingPreferences';
 import BlockedUsers from '../../Settings/BlockedUsers';
 import PasswordSettings from '../../Settings/PasswordSettings';
 import EmailSettings from '../../Settings/EmailSettings';
+// Events Screens
+import EventDetailsScreen from '../../FeatureComponents/Events/EventDetailsScreen';
+import EventCreationFlow from '../../FeatureComponents/Events/EventCreationFlow';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -70,6 +73,9 @@ const StackNavigation = () => {
       <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
       <Stack.Screen name="PasswordSettings" component={PasswordSettings} />
       <Stack.Screen name="EmailSettings" component={EmailSettings} />
+      {/* Events Screens */}
+      <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
+      <Stack.Screen name="EventCreationFlow" component={EventCreationFlow} />
     </Stack.Navigator>
   );
 };

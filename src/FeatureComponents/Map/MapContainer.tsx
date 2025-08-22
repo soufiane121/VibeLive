@@ -37,6 +37,7 @@ import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
 import {PartialState, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
+import {eventsApi, Event, useGetMapEventsQuery} from '../../../features/Events/EventsApi';
 // import {FloatingEmoji} from '../../FloatingAction/EmojiAnimation';
 import {
   addReaction,
@@ -48,12 +49,100 @@ import { useAnalytics } from '../../Hooks/useAnalytics';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
+const eventIcon = require('../../../assests/event-marker.png'); // We'll need to add this icon
 
 setAccessToken(PUB_MAPBOX_KEY);
 
+// Memoized event marker component
+const EventIcon = memo(
+  ({event, trackMapInteraction}: {event: Event; trackMapInteraction: any}) => {
+    const {navigate} =
+      useNavigation<NativeStackNavigationProp<PartialState<any>>>();
+
+    const getEventTypeColor = (eventType: string) => {
+      const colors = {
+        music: '#9333ea', // Purple
+        sports: '#059669', // Green
+        nightlife: '#dc2626', // Red
+        festival: '#ea580c', // Orange
+        conference: '#0284c7', // Blue
+        comedy: '#ca8a04', // Yellow
+        theater: '#7c3aed', // Violet
+        art: '#db2777', // Pink
+        food: '#16a34a', // Green
+        other: '#6b7280', // Gray
+      };
+      return colors[eventType as keyof typeof colors] || colors.other;
+    };
+
+    const isPromoted = event.promotionStatus === 'map' || event.promotionStatus === 'both';
+
+    return (
+      <ShapeSource
+        key={`event-${event._id}`}
+        id={`event-${event._id}`}
+        shape={point(event.location.coordinates)}
+        onPress={e => {
+          // Track event marker click analytics
+          trackMapInteraction('event_marker_clicked', {
+            eventId: event._id,
+            eventTitle: event.title,
+            eventType: event.eventType,
+            eventCoordinates: event.location.coordinates,
+            isPromoted: isPromoted,
+            rsvpCount: event.rsvpCount,
+            attendeeCount: event.attendeeCount,
+            isFree: event.ticketing.isFree,
+            price: event.ticketing.price,
+            startDate: event.startDate,
+            timestamp: new Date().toISOString(),
+          });
+
+          navigate('EventDetails', {
+            eventId: event._id,
+          });
+        }}>
+        {isPromoted && (
+          <CircleLayer
+            id={`event-promotion-${event._id}`}
+            style={{
+              circleRadius: 25,
+              circleColor: getEventTypeColor(event.eventType),
+              circleOpacity: 0.3,
+              circleStrokeWidth: 2,
+              circleStrokeColor: getEventTypeColor(event.eventType),
+              circleStrokeOpacity: 0.8,
+            }}
+          />
+        )}
+        <CircleLayer
+          id={`event-circle-${event._id}`}
+          style={{
+            circleRadius: 15,
+            circleColor: getEventTypeColor(event.eventType),
+            circleOpacity: 0.9,
+            circleStrokeWidth: 2,
+            circleStrokeColor: '#ffffff',
+            circleStrokeOpacity: 1,
+          }}
+        />
+        <SymbolLayer
+          id={`event-icon-${event._id}`}
+          style={{
+            iconImage: 'event-icon',
+            iconSize: 0.8,
+            iconColor: '#ffffff',
+          }}
+        />
+      </ShapeSource>
+    );
+  },
+  (prevProps, nextProps) => prevProps.event._id === nextProps.event._id,
+);
+
 // Memoized marker component to avoid unnecessary re-renders
 const LiveIcon = memo(
-  ({feature, circleLayerRef, trackMapInteraction}) => {
+  ({feature, circleLayerRef, trackMapInteraction}: {feature: any; circleLayerRef: any; trackMapInteraction: any}) => {
     const {navigate} =
       useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     if (!feature.isLive) return null;
@@ -117,7 +206,7 @@ const LiveIcon = memo(
       </ShapeSource>
     );
   },
-  (prevProps, nextProps) => prevProps.feature.id === nextProps.feature.id,
+  (prevProps: any, nextProps: any) => prevProps.feature.id === nextProps.feature.id,
 );
 const USA_BOUNDS = [
   [-125.0, 24.0], // Southwest corner [longitude, latitude]
@@ -132,6 +221,14 @@ const MapContainer = () => {
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
   const [featuresPointsData, setFeaturesPointsData] = useState([]);
+  
+  // Fetch events for map
+  const { data: eventsData } = useGetMapEventsQuery({
+    coordinates: `${coordinates[1]},${coordinates[0]}`,
+    useDB: true, // Use database for testing
+  });
+  
+  const [mapEvents, setMapEvents] = useState<Event[]>([]);
   const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
@@ -180,6 +277,13 @@ const MapContainer = () => {
     }
   }, [coordinates.length]);
 
+  // Update map events when data changes
+  useEffect(() => {
+    if (eventsData?.success && eventsData.data) {
+      setMapEvents(eventsData.data);
+    }
+  }, [eventsData]);
+
   // Register dynamic images using URLs
   const images = useMemo(() => {
     const imgUrl =
@@ -190,6 +294,8 @@ const MapContainer = () => {
         imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};
       });
     }
+    // Add event icon - using a simple text-based icon for now
+    imageRegistry['event-icon'] = {uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='}; // Base64 encoded calendar SVG
     return imageRegistry;
   }, [featuresPointsData]);
 
@@ -370,7 +476,7 @@ const MapContainer = () => {
             {/* still need to copy radar animation to here
              */}
             <LocationPuck puckBearingEnabled puckBearing="course" />
-            <ShapeSource id="radarSource" data={radarBeam} ref={radarRef}>
+            <ShapeSource id="radarSource" shape={radarBeam as any} ref={radarRef}>
               <FillLayer
                 id="radarBeam"
                 style={{
@@ -382,12 +488,22 @@ const MapContainer = () => {
             <Images
               images={
                 !images.hasOwnProperty('undefined')
-                  ? images
-                  : {tw: twIcon, in: inIcon}
+                  ? {...images, 'event-icon': {uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='}}
+                  : {tw: twIcon, in: inIcon, 'event-icon': {uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='}}
               }
-              // images={{tw: twIcon, in: inIcon}}
             />
 
+            {/* Render event markers */}
+            {shouldRenderMarkers &&
+              mapEvents.map(event => (
+                <EventIcon
+                  key={`event-${event._id}`}
+                  event={event}
+                  trackMapInteraction={trackMapInteraction}
+                />
+              ))}
+
+            {/* Render live stream markers */}
             {shouldRenderMarkers &&
               clusters.map(cluster => {
                 const isCluster = cluster.properties.cluster;

@@ -6,6 +6,7 @@ import {
   mapIcon,
   ProfileIcon,
   SettingsIcon,
+  EventsIcon,
 } from '../../UIComponents/Icons';
 import {Text, View} from 'react-native';
 import tw from '../../../tw';
@@ -13,6 +14,7 @@ import LiveStreamContainer from '../../LiveStream/LiveStreamContainer';
 import SwitcherContainer from '../../LiveStream/SwitcherContainer';
 import Settings from '../../Settings/Settings';
 import Profile from '../../Account/Profile';
+import EventsListScreen from '../../FeatureComponents/Events/EventsListScreen';
 
 function HomeScreen() {
   return (
@@ -77,6 +79,18 @@ export default function BottomNavigation() {
         options={{
           tabBarIcon: ProfileIcon,
           title: 'Profile',
+          tabBarActiveTintColor: '#faf8ff',
+          tabBarLabelStyle: {
+            fontSize: 14,
+          },
+        }}
+      />
+      <BottomTap.Screen
+        name="Events"
+        component={EventsListScreen}
+        options={{
+          tabBarIcon: EventsIcon,
+          title: 'Events',
           tabBarActiveTintColor: '#faf8ff',
           tabBarLabelStyle: {
             fontSize: 14,

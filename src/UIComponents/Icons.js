@@ -5,6 +5,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialDesignIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const mapIcon = props => {
   return <Icon name="map" {...props} size={20} />;
@@ -106,8 +107,16 @@ const PersonAddIcon = (props) => {
   return <Ionicons name="person-add" {...props} />;
 }
 
-const ChatbubbleIcon = (props) => {
+function ChatbubbleIcon(props) {
   return <Ionicons name="chatbubble" {...props} />;
+}
+
+const EventsIcon = (props) => {
+  return <MaterialCommunityIcons name="calendar-star" {...props} />;
+}
+
+const CommonMaterialCommunityIcons = (props) => {
+  return <MaterialCommunityIcons name={props.name} {...props} />;
 }
 
 export {
@@ -138,4 +147,6 @@ export {
   RadioIcon,
   PersonAddIcon,
   ChatbubbleIcon,
+  EventsIcon,
+  CommonMaterialCommunityIcons,
 };
