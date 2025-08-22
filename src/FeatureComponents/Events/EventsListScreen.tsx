@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, {useState, useCallback, useMemo} from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,13 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useGetUpcomingEventsQuery } from '../../../features/Events/EventsApi';
-import { Event } from '../../../features/Events/EventsApi';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useGetUpcomingEventsQuery} from '../../../features/Events/EventsApi';
+import {Event} from '../../../features/Events/EventsApi';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { format, isToday, isTomorrow, isThisWeek } from 'date-fns';
+import {format, isToday, isTomorrow, isThisWeek} from 'date-fns';
 import useGetLocation from '../../CustomHooks/useGetLocation';
 
 // StubHub-inspired dark theme colors
@@ -37,7 +37,7 @@ const colors = {
   borderLight: '#4b5563',
 };
 
-const eventTypeColors: { [key: string]: string } = {
+const eventTypeColors: {[key: string]: string} = {
   music: '#ec4899',
   sports: '#10b981',
   nightlife: '#8b5cf6',
@@ -50,7 +50,7 @@ const eventTypeColors: { [key: string]: string } = {
   other: '#6b7280',
 };
 
-const eventTypeIcons: { [key: string]: string } = {
+const eventTypeIcons: {[key: string]: string} = {
   music: 'music-note',
   sports: 'sports-football',
   nightlife: 'local-bar',
@@ -68,7 +68,7 @@ interface EventItemProps {
   onPress: () => void;
 }
 
-const EventItem: React.FC<EventItemProps> = ({ event, onPress }) => {
+const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
     if (isToday(date)) return 'Today';
@@ -94,37 +94,53 @@ const EventItem: React.FC<EventItemProps> = ({ event, onPress }) => {
   };
 
   return (
-    <TouchableOpacity style={styles.eventItem} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={styles.eventItem}
+      onPress={onPress}
+      activeOpacity={0.8}>
       {getPromotionBadge()}
-      
+
       <View style={styles.eventHeader}>
         <View style={styles.eventTypeContainer}>
-          <View style={[styles.eventTypeIcon, { backgroundColor: eventTypeColors[event.eventType] || eventTypeColors.other }]}>
-            <MaterialCommunityIcons 
-              name={(eventTypeIcons[event.eventType] || eventTypeIcons.other) as any} 
-              size={16} 
-              color="#ffffff" 
+          <View
+            style={[
+              styles.eventTypeIcon,
+              {
+                backgroundColor:
+                  eventTypeColors[event.eventType] || eventTypeColors.other,
+              },
+            ]}>
+            <MaterialCommunityIcons
+              name={
+                (eventTypeIcons[event.eventType] || eventTypeIcons.other) as any
+              }
+              size={16}
+              color="#ffffff"
             />
           </View>
           <Text style={styles.eventType}>{event.eventType.toUpperCase()}</Text>
         </View>
-        
+
         <View style={styles.dateTimeContainer}>
-          <Text style={styles.eventDate}>{formatEventDate(event.startDate)}</Text>
-          <Text style={styles.eventTime}>{formatEventTime(event.startDate)}</Text>
+          <Text style={styles.eventDate}>
+            {formatEventDate(event.startDate)}
+          </Text>
+          <Text style={styles.eventTime}>
+            {formatEventTime(event.startDate)}
+          </Text>
         </View>
       </View>
 
       <View style={styles.eventContent}>
         {event.banner?.url && (
-          <Image source={{ uri: event.banner.url }} style={styles.eventImage} />
+          <Image source={{uri: event.banner.url}} style={styles.eventImage} />
         )}
-        
+
         <View style={styles.eventInfo}>
           <Text style={styles.eventTitle} numberOfLines={2}>
             {event.title}
           </Text>
-          
+
           <View style={styles.locationContainer}>
             <Icon name="location-on" size={14} color={colors.textMuted} />
             <Text style={styles.eventLocation} numberOfLines={1}>
@@ -135,7 +151,9 @@ const EventItem: React.FC<EventItemProps> = ({ event, onPress }) => {
           <View style={styles.eventFooter}>
             <View style={styles.ticketingInfo}>
               {event.ticketing.isFree ? (
-                <Text style={[styles.priceText, { color: colors.success }]}>FREE</Text>
+                <Text style={[styles.priceText, {color: colors.success}]}>
+                  FREE
+                </Text>
               ) : (
                 <Text style={styles.priceText}>
                   ${event.ticketing.price} {event.ticketing.currency}
@@ -144,11 +162,19 @@ const EventItem: React.FC<EventItemProps> = ({ event, onPress }) => {
             </View>
 
             <View style={styles.rsvpInfo}>
-              <MaterialCommunityIcons name="account-group" size={14} color={colors.textMuted} />
+              <MaterialCommunityIcons
+                name="account-group"
+                size={14}
+                color={colors.textMuted}
+              />
               <Text style={styles.rsvpCount}>{event.rsvpCount} interested</Text>
               {event.hasUserRSVP && (
                 <View style={styles.userRsvpIndicator}>
-                  <MaterialCommunityIcons name="check-circle" size={14} color={colors.success} />
+                  <MaterialCommunityIcons
+                    name="check-circle"
+                    size={14}
+                    color={colors.success}
+                  />
                 </View>
               )}
             </View>
@@ -163,8 +189,8 @@ const EventsListScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
-  const { coordinates } = useGetLocation();
-console.log("from event list screen",{coordinates});
+  const {coordinates} = useGetLocation();
+  console.log('from event list screen', {coordinates});
 
   const {
     data: eventsResponse,
@@ -175,38 +201,30 @@ console.log("from event list screen",{coordinates});
   } = useGetUpcomingEventsQuery({
     days: 7,
     limit: 50,
-    eventType: selectedFilter === 'all' ? "all" : selectedFilter,
+    eventType: selectedFilter === 'all' ? 'all' : selectedFilter,
     useDB: false, // Use database first for debugging
     coordinates: coordinates?.join(','),
     radius: 100,
   });
 
   const events = eventsResponse?.data || [];
-  // console.log('EventsListScreen Debug:', {
-  //   eventsResponse,
-  //   events,
-  //   isLoading,
-  //   isError,
-  //   error,
-  //   selectedFilter
-  // });
-  
 
   const eventFilters = [
-    { key: 'all', label: 'All Events', icon: 'event' },
-    { key: 'music', label: 'Music', icon: 'music-note' },
-    { key: 'sports', label: 'Sports', icon: 'sports-football' },
-    { key: 'nightlife', label: 'Nightlife', icon: 'local-bar' },
-    { key: 'festival', label: 'Festivals', icon: 'celebration' },
-    { key: 'other', label: 'Other', icon: 'more-horiz' },
+    {key: 'all', label: 'All Events', icon: 'event'},
+    {key: 'music', label: 'Music', icon: 'music-note'},
+    {key: 'sports', label: 'Sports', icon: 'sports-football'},
+    {key: 'nightlife', label: 'Nightlife', icon: 'local-bar'},
+    {key: 'festival', label: 'Festivals', icon: 'celebration'},
+    {key: 'other', label: 'Other', icon: 'more-horiz'},
   ];
 
   const sortedEvents = useMemo(() => {
     return [...events].sort((a, b) => {
       // Featured events first
-      if (a.promotionStatus === 'top' || a.promotionStatus === 'both') return -1;
+      if (a.promotionStatus === 'top' || a.promotionStatus === 'both')
+        return -1;
       if (b.promotionStatus === 'top' || b.promotionStatus === 'both') return 1;
-      
+
       // Then by start date
       return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
     });
@@ -219,25 +237,24 @@ console.log("from event list screen",{coordinates});
   }, [refetch]);
 
   const handleEventPress = (event: Event) => {
-    navigation.navigate('EventDetails', { eventId: event._id });
+    navigation.navigate('EventDetails', {eventId: event._id});
   };
 
   const handleCreateEvent = () => {
     navigation.navigate('EventCreationFlow');
   };
 
-  const renderEventItem = ({ item }: { item: Event }) => (
+  const renderEventItem = ({item}: {item: Event}) => (
     <EventItem event={item} onPress={() => handleEventPress(item)} />
   );
 
-  const renderFilterItem = ({ item }: { item: typeof eventFilters[0] }) => (
+  const renderFilterItem = ({item}: {item: (typeof eventFilters)[0]}) => (
     <TouchableOpacity
       style={[
         styles.filterItem,
         selectedFilter === item.key && styles.filterItemActive,
       ]}
-      onPress={() => setSelectedFilter(item.key)}
-    >
+      onPress={() => setSelectedFilter(item.key)}>
       <MaterialCommunityIcons
         name={item.icon as any}
         size={16}
@@ -247,8 +264,7 @@ console.log("from event list screen",{coordinates});
         style={[
           styles.filterText,
           selectedFilter === item.key && styles.filterTextActive,
-        ]}
-      >
+        ]}>
         {item.label}
       </Text>
     </TouchableOpacity>
@@ -256,14 +272,20 @@ console.log("from event list screen",{coordinates});
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <MaterialCommunityIcons name="calendar-blank" size={64} color={colors.textMuted} />
+      <MaterialCommunityIcons
+        name="calendar-blank"
+        size={64}
+        color={colors.textMuted}
+      />
       <Text style={styles.emptyStateTitle}>No Events Found</Text>
       <Text style={styles.emptyStateText}>
-        {selectedFilter === 'all' 
-          ? 'There are no upcoming events in your area.' 
+        {selectedFilter === 'all'
+          ? 'There are no upcoming events in your area.'
           : `No ${selectedFilter} events found.`}
       </Text>
-      <TouchableOpacity style={styles.createEventButton} onPress={handleCreateEvent}>
+      <TouchableOpacity
+        style={styles.createEventButton}
+        onPress={handleCreateEvent}>
         <Text style={styles.createEventButtonText}>Create Event</Text>
       </TouchableOpacity>
     </View>
@@ -271,7 +293,11 @@ console.log("from event list screen",{coordinates});
 
   const renderError = () => (
     <View style={styles.errorState}>
-      <MaterialCommunityIcons name="alert-circle" size={64} color={colors.error} />
+      <MaterialCommunityIcons
+        name="alert-circle"
+        size={64}
+        color={colors.error}
+      />
       <Text style={styles.errorTitle}>Unable to Load Events</Text>
       <Text style={styles.errorText}>
         Please check your connection and try again.
@@ -291,7 +317,9 @@ console.log("from event list screen",{coordinates});
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Events</Text>
-        <TouchableOpacity style={styles.createButton} onPress={handleCreateEvent}>
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={handleCreateEvent}>
           <MaterialCommunityIcons name="plus" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
@@ -300,7 +328,7 @@ console.log("from event list screen",{coordinates});
       <FlatList
         data={eventFilters}
         renderItem={renderFilterItem}
-        keyExtractor={(item) => item.key}
+        keyExtractor={item => item.key}
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.filtersContainer}
@@ -317,7 +345,7 @@ console.log("from event list screen",{coordinates});
         <FlatList
           data={sortedEvents}
           renderItem={renderEventItem}
-          keyExtractor={(item) => item._id}
+          keyExtractor={item => item._id}
           contentContainerStyle={styles.eventsContainer}
           refreshControl={
             <RefreshControl
@@ -356,7 +384,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  createButton: {
+  createButton: { 
     width: 44,
     height: 44,
     borderRadius: 22,

@@ -39,10 +39,6 @@ import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/nat
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
 import {eventsApi, Event, useGetMapEventsQuery} from '../../../features/Events/EventsApi';
 // import {FloatingEmoji} from '../../FloatingAction/EmojiAnimation';
-import {
-  addReaction,
-  clearReactions,
-} from '../../../features/LiveStream/LiveStreamSlice';
 import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
 import { useAnalytics } from '../../Hooks/useAnalytics';

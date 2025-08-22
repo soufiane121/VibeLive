@@ -55,7 +55,7 @@ const eventTypeColors: { [key: string]: string } = {
 const EventDetailsScreen: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const { eventId } = route.params as { eventId: string };
+  const { eventId, fromEventCreation } = route.params as { eventId: string; fromEventCreation?: boolean };
   
   const { data: eventResponse, isLoading, error, refetch } = useGetEventByIdQuery(eventId);
   const [rsvpEvent, { isLoading: isRsvping }] = useRsvpEventMutation();
@@ -161,7 +161,13 @@ const EventDetailsScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => {
+          if (fromEventCreation) {
+            navigation.navigate('EventDetails', { eventId: event._id });
+          } else {
+            navigation.goBack();
+          }
+        }}>
           <CommonMaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleShare}>
