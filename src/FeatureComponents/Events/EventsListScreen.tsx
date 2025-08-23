@@ -14,10 +14,12 @@ import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useGetUpcomingEventsQuery} from '../../../features/Events/EventsApi';
 import {Event} from '../../../features/Events/EventsApi';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {format, isToday, isTomorrow, isThisWeek} from 'date-fns';
 import useGetLocation from '../../CustomHooks/useGetLocation';
+import {
+  CommonMaterialCommunityIcons,
+  CommonMaterialIcons,
+} from '../../UIComponents/Icons';
 
 // StubHub-inspired dark theme colors
 const colors = {
@@ -85,7 +87,11 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
     if (event.promotionStatus === 'top' || event.promotionStatus === 'both') {
       return (
         <View style={styles.promotionBadge}>
-          <MaterialCommunityIcons name="star" size={12} color={colors.accent} />
+          <CommonMaterialCommunityIcons
+            name="star"
+            size={12}
+            color={colors.accent}
+          />
           <Text style={styles.promotionText}>FEATURED</Text>
         </View>
       );
@@ -110,7 +116,7 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
                   eventTypeColors[event.eventType] || eventTypeColors.other,
               },
             ]}>
-            <MaterialCommunityIcons
+            <CommonMaterialCommunityIcons
               name={
                 (eventTypeIcons[event.eventType] || eventTypeIcons.other) as any
               }
@@ -118,7 +124,9 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
               color="#ffffff"
             />
           </View>
-          <Text style={styles.eventType}>{event.eventType.toUpperCase()}</Text>
+          <Text style={styles.eventType}>
+            {event?.eventType?.toUpperCase()}
+          </Text>
         </View>
 
         <View style={styles.dateTimeContainer}>
@@ -142,7 +150,11 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
           </Text>
 
           <View style={styles.locationContainer}>
-            <Icon name="location-on" size={14} color={colors.textMuted} />
+            <CommonMaterialIcons
+              name="location-on"
+              size={14}
+              color={colors.textMuted}
+            />
             <Text style={styles.eventLocation} numberOfLines={1}>
               {event.location.address}
             </Text>
@@ -162,7 +174,7 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
             </View>
 
             <View style={styles.rsvpInfo}>
-              <MaterialCommunityIcons
+              <CommonMaterialCommunityIcons
                 name="account-group"
                 size={14}
                 color={colors.textMuted}
@@ -170,7 +182,7 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
               <Text style={styles.rsvpCount}>{event.rsvpCount} interested</Text>
               {event.hasUserRSVP && (
                 <View style={styles.userRsvpIndicator}>
-                  <MaterialCommunityIcons
+                  <CommonMaterialCommunityIcons
                     name="check-circle"
                     size={14}
                     color={colors.success}
@@ -207,15 +219,42 @@ const EventsListScreen: React.FC = () => {
     radius: 100,
   });
 
-  const events = eventsResponse?.data || [];
+  // Handle empty array response from backend
+  const events = Array.isArray(eventsResponse?.data) ? eventsResponse.data : [];
 
-  const eventFilters = [
-    {key: 'all', label: 'All Events', icon: 'event'},
+  interface FilterItem {
+    key: string;
+    label: string;
+    icon: string | ((props: {style?: any}) => React.ReactElement);
+  }
+
+  const eventFilters: FilterItem[] = [
+    {
+      key: 'all',
+      label: 'All Events',
+      icon: ({style}) => <CommonMaterialIcons name="event" style={style} />,
+    },
     {key: 'music', label: 'Music', icon: 'music-note'},
-    {key: 'sports', label: 'Sports', icon: 'sports-football'},
-    {key: 'nightlife', label: 'Nightlife', icon: 'local-bar'},
-    {key: 'festival', label: 'Festivals', icon: 'celebration'},
-    {key: 'other', label: 'Other', icon: 'more-horiz'},
+    {
+      key: 'sports',
+      label: 'Sports',
+      icon: ({style}) => (
+        <CommonMaterialIcons name="sports-football" style={style} />
+      ),
+    },
+    {
+      key: 'nightlife',
+      label: 'Nightlife',
+      icon: ({style}) => <CommonMaterialIcons name="nightlife" style={style} />,
+    },
+    {
+      key: 'festival',
+      label: 'Festivals',
+      icon: ({style}) => (
+        <CommonMaterialIcons name="celebration" style={style} />
+      ),
+    },
+    {key: 'other', label: 'Other', icon: 'more-horizontal'},
   ];
 
   const sortedEvents = useMemo(() => {
@@ -244,35 +283,51 @@ const EventsListScreen: React.FC = () => {
     navigation.navigate('EventCreationFlow');
   };
 
-  const renderEventItem = ({item}: {item: Event}) => (
-    <EventItem event={item} onPress={() => handleEventPress(item)} />
-  );
+  const renderEventItem = ({item}: {item: Event}) => {
+    // Safety check for valid event data
+    if (!item || !item._id) {
+      return null;
+    }
+    return <EventItem event={item} onPress={() => handleEventPress(item)} />;
+  };
 
-  const renderFilterItem = ({item}: {item: (typeof eventFilters)[0]}) => (
-    <TouchableOpacity
-      style={[
-        styles.filterItem,
-        selectedFilter === item.key && styles.filterItemActive,
-      ]}
-      onPress={() => setSelectedFilter(item.key)}>
-      <MaterialCommunityIcons
-        name={item.icon as any}
-        size={16}
-        color={selectedFilter === item.key ? colors.primary : colors.textMuted}
-      />
-      <Text
+  const renderFilterItem = ({item}: {item: (typeof eventFilters)[0]}) => {
+    const iconStyle = {
+      marginRight: 6,
+      color: selectedFilter === item.key ? colors.primary : colors.textMuted,
+      fontSize: 16, // Use fontSize instead of size for consistency
+    };
+
+    return (
+      <TouchableOpacity
         style={[
-          styles.filterText,
-          selectedFilter === item.key && styles.filterTextActive,
-        ]}>
-        {item.label}
-      </Text>
-    </TouchableOpacity>
-  );
+          styles.filterItem,
+          selectedFilter === item.key && styles.filterItemActive,
+        ]}
+        onPress={() => setSelectedFilter(item.key)}>
+        {typeof item.icon === 'string' ? (
+          <CommonMaterialCommunityIcons
+            name={item.icon as any}
+            size={16}
+            style={iconStyle}
+          />
+        ) : (
+          item.icon({style: iconStyle})
+        )}
+        <Text
+          style={[
+            styles.filterText,
+            selectedFilter === item.key && styles.filterTextActive,
+          ]}>
+          {item.label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <MaterialCommunityIcons
+      <CommonMaterialCommunityIcons
         name="calendar-blank"
         size={64}
         color={colors.textMuted}
@@ -293,7 +348,7 @@ const EventsListScreen: React.FC = () => {
 
   const renderError = () => (
     <View style={styles.errorState}>
-      <MaterialCommunityIcons
+      <CommonMaterialCommunityIcons
         name="alert-circle"
         size={64}
         color={colors.error}
@@ -320,7 +375,11 @@ const EventsListScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.createButton}
           onPress={handleCreateEvent}>
-          <MaterialCommunityIcons name="plus" size={24} color={colors.text} />
+          <CommonMaterialCommunityIcons
+            name="plus"
+            size={24}
+            color={colors.text}
+          />
         </TouchableOpacity>
       </View>
 
@@ -384,7 +443,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  createButton: { 
+  createButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -396,19 +455,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    minHeight: 60, // Ensure minimum height
+    maxHeight: 80
   },
   filtersContent: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 12,
+    alignItems: 'center', // Center items vertically
   },
   filterItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    marginRight: 12,
+    marginRight: 8,
     borderRadius: 20,
     backgroundColor: colors.surfaceVariant,
+    height: 36, // Fixed height for consistency
+    minWidth: 100, // Minimum width to prevent content squishing
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -438,9 +503,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   promotionBadge: {
-    position: 'absolute',
+    // position: 'absolute',
     top: 12,
-    right: 12,
+    left: 12,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.accent + '20',
@@ -448,6 +513,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
     zIndex: 1,
+    width: 90,
   },
   promotionText: {
     marginLeft: 4,

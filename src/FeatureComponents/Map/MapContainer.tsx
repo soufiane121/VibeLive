@@ -45,7 +45,9 @@ import { useAnalytics } from '../../Hooks/useAnalytics';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
-const eventIcon = require('../../../assests/event-marker.png'); // We'll need to add this icon
+const eventIcon = require('../../../assests/yawning.png'); // We'll need to add this icon
+
+
 
 setAccessToken(PUB_MAPBOX_KEY);
 
@@ -472,20 +474,22 @@ const MapContainer = () => {
             {/* still need to copy radar animation to here
              */}
             <LocationPuck puckBearingEnabled puckBearing="course" />
-            <ShapeSource id="radarSource" shape={radarBeam as any} ref={radarRef}>
-              <FillLayer
-                id="radarBeam"
-                style={{
-                  fillColor: '#cbd5e1', // Radar beam color (orange, semi-transparent)
-                  fillOpacity: 0.2,
-                }}
-              />
-            </ShapeSource>
+            {radarBeam && (
+              <ShapeSource id="radarSource" shape={radarBeam as any} ref={radarRef}>
+                <FillLayer
+                  id="radarBeam"
+                  style={{
+                    fillColor: '#cbd5e1', // Radar beam color (orange, semi-transparent)
+                    fillOpacity: 0.2,
+                  }}
+                />
+              </ShapeSource>
+            )}
             <Images
               images={
                 !images.hasOwnProperty('undefined')
-                  ? {...images, 'event-icon': {uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='}}
-                  : {tw: twIcon, in: inIcon, 'event-icon': {uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='}}
+                  ? {...images, 'event-icon': eventIcon}
+                  : {tw: twIcon, in: inIcon, 'event-icon': eventIcon}
               }
             />
 

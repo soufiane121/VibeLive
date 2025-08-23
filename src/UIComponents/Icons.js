@@ -119,6 +119,10 @@ const CommonMaterialCommunityIcons = (props) => {
   return <MaterialCommunityIcons name={props.name} {...props} />;
 }
 
+const CommonMaterialIcons = (props)=> {
+return <MaterialIcons name={props.name} {...props} />
+}
+
 export {
   mapIcon,
   LocationIcon,
@@ -149,4 +153,5 @@ export {
   ChatbubbleIcon,
   EventsIcon,
   CommonMaterialCommunityIcons,
+  CommonMaterialIcons,
 };
