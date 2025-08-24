@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
+import { GlobalColors } from '../styles/GlobalColors';
 
 interface BoostPurchaseData {
   tier: 'basic' | 'premium' | 'ultimate';
@@ -32,24 +33,26 @@ interface BoostConfirmationScreenProps {
   onContinue: () => void;
 }
 
+const colors = GlobalColors.BoostFOMOFlow;
+
 const tierConfig = {
   basic: {
     name: 'Visibility Boost',
     emoji: '⚡',
-    color: '#00FFFF',
-    gradient: ['#00FFFF', '#0080FF'],
+    color: colors.tierBasic,
+    gradient: [colors.tierBasicGradientStart, colors.tierBasicGradientEnd],
   },
   premium: {
     name: 'Prime Time',
     emoji: '👑',
-    color: '#FFD700',
-    gradient: ['#FFD700', '#FF8C00'],
+    color: colors.tierPremium,
+    gradient: [colors.tierPremiumGradientStart, colors.tierPremiumGradientEnd],
   },
   ultimate: {
     name: 'Viral Mode',
     emoji: '🚀',
-    color: '#FF1493',
-    gradient: ['#FF1493', '#8A2BE2'],
+    color: colors.tierUltimate,
+    gradient: [colors.tierUltimateGradientStart, colors.tierUltimateGradientEnd],
   },
 };
 
@@ -115,7 +118,7 @@ export const BoostConfirmationScreen: React.FC<BoostConfirmationScreenProps> = (
 
   return (
     <LinearGradient
-      colors={['#0a0a0a', '#1a1a2e', '#16213e']}
+      colors={[colors.background, colors.surface, colors.overlay]}
       style={styles.container}>
       
       {/* Confetti Effect */}
@@ -127,7 +130,7 @@ export const BoostConfirmationScreen: React.FC<BoostConfirmationScreenProps> = (
               styles.confetti,
               {
                 left: `${Math.random() * 100}%`,
-                backgroundColor: i % 2 === 0 ? '#FFD700' : '#FF1493',
+                backgroundColor: i % 2 === 0 ? colors.primary : colors.accent,
               },
             ]}
           />
@@ -293,14 +296,14 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '600',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   successSubtitle: {
     fontSize: 16,
-    color: '#B0B0B0',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   detailsContainer: {
@@ -320,17 +323,17 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: '#B0B0B0',
+    color: colors.textSecondary,
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text,
   },
   transactionId: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#00FFFF',
+    color: colors.primary,
     fontFamily: 'monospace',
   },
   featuresContainer: {
@@ -338,8 +341,8 @@ const styles = StyleSheet.create({
   },
   featuresTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '600',
+    color: colors.text,
     marginBottom: 15,
     textAlign: 'center',
   },
@@ -351,13 +354,13 @@ const styles = StyleSheet.create({
   },
   featureIcon: {
     fontSize: 16,
-    color: '#00FF00',
+    color: colors.success,
     marginRight: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   featureText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
     flex: 1,
   },
   previewContainer: {
@@ -365,43 +368,43 @@ const styles = StyleSheet.create({
   },
   previewTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '600',
+    color: colors.text,
     marginBottom: 15,
     textAlign: 'center',
   },
   previewCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(0,255,255,0.3)',
+    borderColor: colors.borderActive,
     position: 'relative',
   },
   previewCategory: {
     fontSize: 12,
-    color: '#B0B0B0',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   previewStreamTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 8,
   },
   boostBadge: {
     position: 'absolute',
     top: -8,
     right: 16,
-    backgroundColor: '#FF1493',
+    backgroundColor: colors.primary,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   boostBadgeText: {
     fontSize: 10,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '600',
+    color: colors.text,
   },
   buttonContainer: {
     marginBottom: 20,
@@ -417,8 +420,8 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '600',
+    color: colors.text,
   },
   footer: {
     alignItems: 'center',
@@ -426,7 +429,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#888888',
+    color: colors.textMuted,
     textAlign: 'center',
     marginBottom: 4,
   },

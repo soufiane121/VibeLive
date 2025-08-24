@@ -4,18 +4,9 @@ import {
   Text,
   StyleSheet,
 } from 'react-native';
+import { GlobalColors } from '../../../styles/GlobalColors';
 
-const colors = {
-  background: '#0a0a0a',
-  surface: '#1a1a1a',
-  surfaceVariant: '#2a2a2a',
-  primary: '#4f46e5',
-  text: '#ffffff',
-  textSecondary: '#a1a1aa',
-  textMuted: '#71717a',
-  error: '#ef4444',
-  border: '#374151',
-};
+const colors = GlobalColors.EventCreationFlow;
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -40,17 +31,48 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, totalSteps }
 };
 
 const styles = StyleSheet.create({
-  stepIndicator: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 20, backgroundColor: colors.surface },
-  stepContainer: { flexDirection: 'row', alignItems: 'center' },
-  stepCircle: {
-    width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceVariant,
-    justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: colors.border,
+  stepIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: colors.background,
   },
-  stepCircleActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  stepNumber: { fontSize: 14, fontWeight: 'bold', color: colors.textMuted },
-  stepNumberActive: { color: colors.text },
-  stepLine: { width: 40, height: 2, backgroundColor: colors.border, marginHorizontal: 8 },
-  stepLineActive: { backgroundColor: colors.primary },
+  stepContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    // backgroundColor: colors.stepIndicatorInactive,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  stepCircleActive: {
+    backgroundColor: colors.stepIndicatorActive,
+    borderColor: colors.stepIndicatorActive,
+  },
+  stepNumber: {
+    fontSize: 14,
+    // fontWeight: 'bold',
+    color: colors.textMuted,
+  },
+  stepNumberActive: {
+    color: colors.text,
+  },
+  stepLine: {
+    width: 40,
+    height: 2,
+    backgroundColor: colors.stepIndicatorInactive,
+    marginHorizontal: 8,
+  },
+  stepLineActive: {
+    backgroundColor: colors.stepIndicatorActive,
+  },
 });
 
 export default StepIndicator;

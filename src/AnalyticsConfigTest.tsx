@@ -25,6 +25,9 @@ import {
   getServiceInfo,
   AnalyticsDebug 
 } from './Config/AnalyticsConfig';
+import { GlobalColors } from './styles/GlobalColors';
+
+const colors = GlobalColors.Analytics;
 
 interface ServiceStatus {
   serviceType: 'mock' | 'full' | null;
@@ -382,25 +385,25 @@ const AnalyticsConfigTest: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: '#2c3e50',
+    backgroundColor: colors.surface,
     padding: 20,
     alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: colors.text,
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 14,
-    color: '#bdc3c7',
+    color: colors.textSecondary,
   },
   section: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     margin: 10,
     padding: 15,
     borderRadius: 8,
@@ -413,26 +416,26 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: colors.text,
     marginBottom: 10,
   },
   statusContainer: {
-    backgroundColor: '#ecf0f1',
+    backgroundColor: colors.surface,
     padding: 10,
     borderRadius: 5,
   },
   statusText: {
     fontSize: 14,
-    color: '#34495e',
+    color: colors.text,
     marginBottom: 5,
   },
   highlight: {
     fontWeight: 'bold',
-    color: '#3498db',
+    color: colors.primary,
   },
   warningText: {
     fontSize: 14,
-    color: '#e74c3c',
+    color: colors.error,
     fontWeight: 'bold',
   },
   buttonGrid: {
@@ -441,7 +444,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   testButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: colors.primary,
     padding: 10,
     borderRadius: 5,
     width: '48%',
@@ -449,47 +452,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
+    color: colors.text,
     fontSize: 12,
     fontWeight: 'bold',
   },
   primaryButton: {
-    backgroundColor: '#27ae60',
+    backgroundColor: colors.success,
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 10,
   },
   primaryButtonText: {
-    color: 'white',
+    color: colors.text,
     fontSize: 16,
     fontWeight: 'bold',
   },
   secondaryButton: {
-    backgroundColor: '#95a5a6',
+    backgroundColor: colors.border,
     padding: 12,
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 8,
   },
   secondaryButtonText: {
-    color: 'white',
+    color: colors.text,
     fontSize: 14,
     fontWeight: 'bold',
   },
   resultsContainer: {
-    backgroundColor: '#2c3e50',
+    backgroundColor: colors.surface,
     padding: 10,
     borderRadius: 5,
     maxHeight: 300,
   },
   noResults: {
-    color: '#bdc3c7',
+    color: colors.textSecondary,
     fontStyle: 'italic',
     textAlign: 'center',
   },
   resultText: {
-    color: '#ecf0f1',
+    color: colors.text,
     fontSize: 12,
     fontFamily: 'monospace',
     marginBottom: 2,
@@ -500,7 +503,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: colors.textSecondary,
     fontStyle: 'italic',
   },
 });

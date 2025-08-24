@@ -19,12 +19,15 @@ import {useEffect, useState} from 'react';
 import {CloseIcon, EyeViewsIcon} from '../UIComponents/Icons';
 import {formatToKSymbol} from '../Utils/helperFuncs';
 import ChatList from './ChatList';
+import { GlobalColors } from '../styles/GlobalColors';
 import FloatingEmojiReactions from '../FloatingAction/EmojiAnimation';
 import {
   useAddFollowMutation,
   useRemoveFollowMutation,
 } from '../../features/LiveStream/LiveStream';
 import { setCurrentUser } from '../../features/registrations/CurrentUser';
+
+const colors = GlobalColors.StreamPlayer;
 
 type NavigationData = {
   properties?: {
@@ -169,7 +172,7 @@ const StreamPlayer = (props: Props) => {
             }}>
             <Animated.Text
               style={{
-                color: '#CFD6DF',
+                color: colors.titleText,
                 fontSize: 15,
                 fontWeight: '500',
                 width: titleTextWidth,
@@ -258,7 +261,7 @@ const styles = StyleSheet.create({
     // display: 'flex',
     height: '6.5%',
     // backgroundColor: 'black',
-    backgroundColor: 'transparent',
+    backgroundColor: colors.headerBackground,
     display: 'flex',
     justifyContent: 'space-between',
     flexDirection: 'row',
@@ -278,7 +281,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     // width: '62%',
-    backgroundColor: 'rgba(136, 48, 78, 0.3)',
+    backgroundColor: colors.userInfoBackground,
     borderRadius: 50,
   },
   avatar: {
@@ -288,7 +291,7 @@ const styles = StyleSheet.create({
     marginTop: '1%',
   },
   userName: {
-    color: '#CFD6DF',
+    color: colors.userName,
     fontSize: 14,
     // marginLeft: '3%',
     fontWeight: '700',
@@ -303,27 +306,27 @@ const styles = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(95,103,111, 0.2)',
+    backgroundColor: colors.liveInfoBackground,
     borderRadius: 40,
     flexDirection: 'row',
     // gap: '2%',
     // paddingHorizontal: 4,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
   eyeIcon: {
     fontSize: 25,
-    color: '#CFD6DF',
+    color: colors.eyeIcon,
     fontWeight: 900,
   },
   countNumber: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#CFD6DF',
+    color: colors.countText,
     marginRight: '5%',
   },
   liveContainer: {
-    backgroundColor: '#B71C1C', // darker red
-    color: '#CFD6DF',
+    backgroundColor: colors.liveBackground,
+    color: colors.text,
     width: '45%',
     // fontSize: 17,
     fontWeight: '700',
@@ -358,12 +361,12 @@ const styles = StyleSheet.create({
   },
   close: {
     fontSize: 23,
-    color: 'white',
+    color: colors.closeIcon,
     fontWeight: '800',
   },
 
   followContainer: {
-    backgroundColor: 'rgba(136, 48, 78, 0.8)',
+    backgroundColor: colors.followBackground,
     borderRadius: 50,
     paddingVertical: 4,
     paddingHorizontal: 4,
@@ -372,7 +375,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   followText: {
-    color: '#CFD6DF',
+    color: colors.followText,
     fontSize: 14,
     fontWeight: '600',
   },

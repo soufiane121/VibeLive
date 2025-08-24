@@ -18,6 +18,7 @@ import Animated, {
   interpolate,
   withSpring,
 } from 'react-native-reanimated';
+import { GlobalColors, ColorUtils } from '../styles/GlobalColors';
 
 interface BoostFOMOFlowProps {
   category: string;
@@ -39,6 +40,8 @@ interface BoostTier {
   popular?: boolean;
 }
 
+const colors = GlobalColors.BoostFOMOFlow;
+
 const boostTiers: BoostTier[] = [
   {
     id: 'basic',
@@ -47,8 +50,8 @@ const boostTiers: BoostTier[] = [
     originalPrice: 4.99,
     duration: 2,
     features: ['2x visibility', 'Priority in search', 'Basic analytics'],
-    color: '#00FFFF',
-    gradient: ['#00FFFF', '#0080FF'],
+    color: colors.tierBasic,
+    gradient: [colors.tierBasicGradientStart, colors.tierBasicGradientEnd],
   },
   {
     id: 'premium',
@@ -57,8 +60,8 @@ const boostTiers: BoostTier[] = [
     originalPrice: 12.99,
     duration: 6,
     features: ['5x visibility', 'Featured placement', 'Advanced analytics', 'Custom badges'],
-    color: '#FFD700',
-    gradient: ['#FFD700', '#FF8C00'],
+    color: colors.tierUltimate,
+    gradient: [colors.tierUltimateGradientStart, colors.tierUltimateGradientEnd],
     popular: true,
   },
   {
@@ -68,8 +71,8 @@ const boostTiers: BoostTier[] = [
     originalPrice: 24.99,
     duration: 12,
     features: ['10x visibility', 'Homepage featured', 'Premium analytics', 'VIP badges', 'Push notifications'],
-    color: '#FF1493',
-    gradient: ['#FF1493', '#8A2BE2'],
+    color: colors.tierPremium,
+    gradient: [colors.tierPremiumGradientStart, colors.tierPremiumGradientEnd],
   },
 ];
 
@@ -183,7 +186,7 @@ export const BoostFOMOFlow: React.FC<BoostFOMOFlowProps> = ({
         style={styles.continueButton}
         onPress={() => setCurrentStep(2)}>
         <LinearGradient
-          colors={['#FF1493', '#8A2BE2']}
+          colors={[colors.tierPremiumGradientStart, colors.tierPremiumGradientEnd]}
           style={styles.buttonGradient}>
           <Text style={styles.continueButtonText}>See What You're Missing 👀</Text>
         </LinearGradient>
@@ -235,7 +238,7 @@ export const BoostFOMOFlow: React.FC<BoostFOMOFlowProps> = ({
         style={styles.continueButton}
         onPress={() => setCurrentStep(3)}>
         <LinearGradient
-          colors={['#FFD700', '#FF8C00']}
+          colors={[colors.tierUltimateGradientStart, colors.tierUltimateGradientEnd]}
           style={styles.buttonGradient}>
           <Text style={styles.continueButtonText}>Choose Your Boost Level 🚀</Text>
         </LinearGradient>
@@ -303,7 +306,7 @@ export const BoostFOMOFlow: React.FC<BoostFOMOFlowProps> = ({
   return (
     <Modal visible={true} animationType="slide" presentationStyle="pageSheet">
       <LinearGradient
-        colors={['#0a0a0a', '#1a1a2e', '#16213e']}
+        colors={[colors.background, colors.surface, colors.surface]}
         style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -365,10 +368,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(242,239,232,0.3)',
   },
   progressDotActive: {
-    backgroundColor: '#00FFFF',
+    backgroundColor: colors.primary,
   },
   stepContainer: {
     flex: 1,
@@ -381,13 +384,13 @@ const styles = StyleSheet.create({
   urgencyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FF1493',
+    color: colors.urgency,
     textAlign: 'center',
     marginBottom: 8,
   },
   urgencySubtitle: {
     fontSize: 16,
-    color: '#B0B0B0',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   timerContainer: {
@@ -396,21 +399,21 @@ const styles = StyleSheet.create({
   },
   timerLabel: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 8,
   },
   timerBox: {
-    backgroundColor: 'rgba(255,20,147,0.2)',
+    backgroundColor: colors.pulse,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#FF1493',
+    borderColor: colors.urgency,
   },
   timerText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FF1493',
+    color: colors.urgency,
   },
   socialProofContainer: {
     marginBottom: 30,
@@ -418,7 +421,7 @@ const styles = StyleSheet.create({
   socialProofTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 15,
   },
@@ -432,11 +435,11 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#00FFFF',
+    color: colors.primary,
   },
   statLabel: {
     fontSize: 12,
-    color: '#B0B0B0',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   successStories: {
@@ -445,19 +448,19 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 15,
     textAlign: 'center',
   },
   storyItem: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(242,239,232,0.1)',
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
   },
   storyText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
     fontStyle: 'italic',
   },
   scarcityHeader: {
@@ -467,7 +470,7 @@ const styles = StyleSheet.create({
   scarcityTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: colors.scarcity,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -476,7 +479,7 @@ const styles = StyleSheet.create({
   },
   slotsText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 10,
   },
   slotsContainer: {
@@ -490,34 +493,34 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   slotTaken: {
-    backgroundColor: '#FF1493',
+    backgroundColor: colors.urgency,
   },
   slotAvailable: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(242,239,232,0.3)',
   },
   slotsCount: {
     fontSize: 14,
-    color: '#FFD700',
+    color: colors.scarcity,
     fontWeight: 'bold',
   },
   competitorWarning: {
-    backgroundColor: 'rgba(255,69,0,0.1)',
+    backgroundColor: 'rgba(212,175,55,0.1)',
     borderRadius: 16,
     padding: 20,
     marginBottom: 30,
     borderWidth: 1,
-    borderColor: 'rgba(255,69,0,0.3)',
+    borderColor: 'rgba(212,175,55,0.3)',
   },
   warningTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.competition,
     marginBottom: 10,
     textAlign: 'center',
   },
   warningText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 20,
@@ -532,18 +535,18 @@ const styles = StyleSheet.create({
   },
   comparisonLabel: {
     fontSize: 12,
-    color: '#B0B0B0',
+    color: colors.textSecondary,
     marginBottom: 5,
   },
   comparisonValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
   },
   vsText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FF1493',
+    color: colors.urgency,
   },
   tierHeader: {
     alignItems: 'center',
@@ -552,12 +555,12 @@ const styles = StyleSheet.create({
   tierTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 8,
   },
   tierSubtitle: {
     fontSize: 16,
-    color: '#FFD700',
+    color: colors.accent,
     textAlign: 'center',
   },
   tierCard: {
@@ -568,14 +571,14 @@ const styles = StyleSheet.create({
   },
   popularTier: {
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: colors.accent,
   },
   popularBadge: {
     position: 'absolute',
     top: -1,
     left: 20,
     right: 20,
-    backgroundColor: '#FFD700',
+    backgroundColor: colors.accent,
     paddingVertical: 4,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
@@ -584,7 +587,7 @@ const styles = StyleSheet.create({
   popularBadgeText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#000000',
+    color: colors.background,
     textAlign: 'center',
   },
   tierGradient: {
@@ -597,7 +600,7 @@ const styles = StyleSheet.create({
   tierName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 10,
   },
   priceContainer: {
@@ -607,18 +610,18 @@ const styles = StyleSheet.create({
   },
   originalPrice: {
     fontSize: 16,
-    color: '#B0B0B0',
+    color: colors.textSecondary,
     textDecorationLine: 'line-through',
     marginRight: 10,
   },
   currentPrice: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
   },
   duration: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 15,
   },
   featuresContainer: {
@@ -627,7 +630,7 @@ const styles = StyleSheet.create({
   },
   feature: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 5,
   },
   continueButton: {
@@ -643,7 +646,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
   },
   skipButton: {
     paddingVertical: 12,
@@ -652,7 +655,7 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 16,
-    color: '#888888',
+    color: colors.textSecondary,
     textDecorationLine: 'underline',
   },
 });

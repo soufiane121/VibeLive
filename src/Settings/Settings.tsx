@@ -13,6 +13,7 @@ import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon, ChevronForwardIcon } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { GlobalColors } from '../styles/GlobalColors';
 
 interface SettingsItemProps {
   icon: string;
@@ -268,10 +269,12 @@ const Settings = () => {
 
 export default Settings;
 
+const colors = GlobalColors.Settings;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -280,7 +283,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: colors.border,
   },
   backButton: {
     padding: 5,
@@ -288,7 +291,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.text,
   },
   placeholder: {
     width: 34, // Same width as back button for centering
@@ -303,10 +306,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: colors.border,
   },
   highlightedItem: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.sectionBackground,
   },
   settingsItemLeft: {
     flexDirection: 'row',
@@ -317,13 +320,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#374151',
+    backgroundColor: colors.itemBackground,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 15,
   },
   highlightedIconContainer: {
-    backgroundColor: '#8b5cf6',
+    backgroundColor: colors.boostHighlight,
   },
   textContainer: {
     flex: 1,
@@ -331,32 +334,32 @@ const styles = StyleSheet.create({
   settingsTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#fff',
+    color: colors.text,
     marginBottom: 2,
   },
   highlightedTitle: {
-    color: '#8b5cf6',
+    color: colors.boostHighlight,
     fontWeight: '600',
   },
   settingsSubtitle: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textMuted,
   },
   userInfoSection: {
     margin: 20,
     padding: 20,
-    backgroundColor: '#1f2937',
+    backgroundColor: colors.surface,
     borderRadius: 12,
   },
   userInfoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.text,
     marginBottom: 15,
   },
   userInfoText: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
 });

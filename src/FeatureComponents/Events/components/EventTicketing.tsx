@@ -7,17 +7,19 @@ import {
   StyleSheet,
 } from 'react-native';
 import { CommonMaterialCommunityIcons } from '../../../UIComponents/Icons';
+import GlobalColors from '../../../styles/GlobalColors';
 
+const Colors = GlobalColors.EventCreationFlow;
 const colors = {
-  background: '#0a0a0a',
-  surface: '#1a1a1a',
+  background: Colors.background,
+  surface: Colors.surface,
   surfaceVariant: '#2a2a2a',
-  primary: '#4f46e5',
-  text: '#ffffff',
-  textSecondary: '#a1a1aa',
-  textMuted: '#71717a',
-  error: '#ef4444',
-  border: '#374151',
+  primary: Colors.primary,
+  text: Colors.text,
+  textSecondary: Colors.textSecondary,
+  textMuted: Colors.textMuted,
+  error: Colors.error,
+  border: Colors.border,
 };
 
 interface EventTicketingProps {

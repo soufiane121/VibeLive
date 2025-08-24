@@ -42,6 +42,7 @@ import {eventsApi, Event, useGetMapEventsQuery} from '../../../features/Events/E
 import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
 import { useAnalytics } from '../../Hooks/useAnalytics';
+import { GlobalColors } from '../../styles/GlobalColors';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');

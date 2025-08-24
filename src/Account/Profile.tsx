@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
 import { AnalyticsEventType } from '../types/AnalyticsEnums';
+import { GlobalColors } from '../styles/GlobalColors';
 
 interface ActivityItem {
   id: string;
@@ -193,64 +194,147 @@ const Profile = () => {
 
 export default Profile;
 
+const colors = GlobalColors.Profile;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingTop: 60,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  placeholder: {
+    width: 34,
   },
   scrollView: {
     flex: 1,
   },
-  profileSection: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
   avatarContainer: {
+    alignItems: 'center',
     marginBottom: 15,
   },
   avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
-    borderColor: '#374151',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   username: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.text,
     marginBottom: 20,
   },
-  goLiveButton: {
-    backgroundColor: '#8b5cf6',
-    paddingHorizontal: 40,
-    paddingVertical: 12,
-    borderRadius: 25,
-    elevation: 3,
-    shadowColor: '#8b5cf6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
   goLiveText: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
   statsSection: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  profileSection: {
+    alignItems: 'center',
+    paddingVertical: 30,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 15,
+  },
+  profileImagePlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 15,
+  },
+  profileImageText: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 5,
+  },
+  profileUsername: {
+    fontSize: 16,
+    color: colors.textMuted,
+    marginBottom: 15,
+  },
+  profileBio: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+    lineHeight: 20,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    gap: 15,
+  },
+  goLiveButton: {
+    flex: 1,
+    backgroundColor: colors.goLiveButton,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  goLiveButtonText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  promoteButton: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  promoteButtonText: {
+    color: colors.promoteButton,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: colors.border,
   },
   statItem: {
     alignItems: 'center',
@@ -258,12 +342,12 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.statsText,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   liveNotification: {
@@ -273,7 +357,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     marginHorizontal: 20,
     marginVertical: 15,
-    backgroundColor: '#1f2937',
+    backgroundColor: colors.surface,
     borderRadius: 12,
   },
   liveIcon: {
@@ -281,14 +365,16 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   liveText: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '500',
   },
   tabsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   tab: {
     flex: 1,
@@ -298,15 +384,15 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#8b5cf6',
+    borderBottomColor: colors.tabActive,
   },
   tabText: {
     fontSize: 16,
-    color: '#9ca3af',
+    color: colors.tabInactive,
     fontWeight: '500',
   },
   activeTabText: {
-    color: '#fff',
+    color: colors.text,
     fontWeight: '600',
   },
   activitySection: {
@@ -318,7 +404,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: colors.border,
   },
   activityThumbnail: {
     width: 50,
@@ -332,16 +418,16 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.text,
     marginBottom: 4,
   },
   activitySubtitle: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textMuted,
   },
   activityTime: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textMuted,
     fontWeight: '500',
   },
 });

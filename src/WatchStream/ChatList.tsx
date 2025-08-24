@@ -18,6 +18,9 @@ import {useSocketInstance} from '../CustomHooks/useSocketInstance';
 import FloatingActionButton from '../FloatingAction/FloatingButton';
 import {useDispatch} from 'react-redux';
 import {addReaction} from '../../features/LiveStream/LiveStreamSlice';
+import { GlobalColors } from '../styles/GlobalColors';
+
+const colors = GlobalColors.ChatList;
 
 const MAX_VISIBLE_MESSAGES = 10;
 const NON_FADED_COUNT = 4; // Keep last 3 messages fully visible
@@ -188,7 +191,7 @@ const ChatList = (props: Props) => {
           <TextInput
             style={styles.input}
             placeholder="Comment..."
-            placeholderTextColor="#ddd"
+            placeholderTextColor={colors.inputPlaceholder}
             value={inputText}
             onChangeText={setInputText}
             onPress={Keyboard.dismiss}
@@ -211,7 +214,7 @@ const ChatList = (props: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: colors.background,
     marginTop: '-90%',
     // position: "absolute"
   },
@@ -239,19 +242,19 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   messageContent: {
-    backgroundColor: 'rgba(30, 30, 30, 0.8)',
+    backgroundColor: colors.messageBackground,
     borderRadius: 10,
     padding: 10,
     flex: 1,
   },
   userName: {
-    color: '#fff',
+    color: colors.userName,
     fontWeight: 'bold',
     fontSize: 14,
     marginBottom: 2,
   },
   messageText: {
-    color: '#ddd',
+    color: colors.messageText,
     fontSize: 13,
   },
   footer: {
@@ -273,13 +276,13 @@ const styles = StyleSheet.create({
     height: 40,
     // backgroundColor: 'rgba(30, 30, 30, 0.9)',
     paddingHorizontal: 15,
-    color: '#fff',
+    color: colors.inputText,
   },
   inputWrraper: {
     display: 'flex',
     flexDirection: 'row',
     width: '80%',
-    backgroundColor: 'rgba(30, 30, 30, 0.9)',
+    backgroundColor: colors.inputBackground,
     borderRadius: 20,
     paddingHorizontal: 15,
   },
@@ -292,14 +295,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendText: {
-    color: 'grey',
+    color: colors.sendIcon,
     fontSize: 18,
     fontWeight: 'bold',
   },
   reactionButton: {
     marginLeft: 10,
     // backgroundColor: '#ff4757',
-    backgroundColor: 'rgba(95,103,111, 0.5)',
+    backgroundColor: colors.reactionBackground,
 
     borderRadius: 20,
     width: 40,
@@ -310,7 +313,7 @@ const styles = StyleSheet.create({
   reactionIcon: {
     fontSize: 20,
     // color: '#fff',
-    color: '#CFD6DF',
+    color: colors.reactionIcon,
   },
 });
 

@@ -4,37 +4,29 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
+  SafeAreaView,
+  StatusBar,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
+  StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CommonMaterialCommunityIcons } from '../../UIComponents/Icons';
-import { useCreateEventMutation } from '../../../features/Events/EventsApi';
+import { ChevronBackIcon, CommonMaterialCommunityIcons } from '../../UIComponents/Icons';
 import EventBasicDetails from './components/EventBasicDetails';
 import EventDateTime from './components/EventDateTime';
 import EventLocation from './components/EventLocation';
 import EventTicketing from './components/EventTicketing';
 import EventPromotion from './components/EventPromotion';
 import StepIndicator from './components/StepIndicator';
+import { useCreateEventMutation } from '../../../features/Events/EventsApi';
+import { useAnalytics } from '../../Hooks/useAnalytics';
+import { GlobalColors } from '../../styles/GlobalColors';
 import useGetLocation from '../../CustomHooks/useGetLocation';
+import { KeyboardAvoidingView } from 'react-native';
+import { Platform } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-
-const colors = {
-  background: '#0a0a0a',
-  surface: '#1a1a1a',
-  surfaceVariant: '#2a2a2a',
-  primary: '#4f46e5',
-  text: '#ffffff',
-  textSecondary: '#a1a1aa',
-  textMuted: '#71717a',
-  error: '#ef4444',
-  border: '#374151',
-};
-
+const colors = GlobalColors.EventCreationFlow;
 
 const EventCreationFlow: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -329,8 +321,8 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: colors.text },
   headerRight: { width: 24 },
   content: { flex: 1 },
-  footer: { padding: 20, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border },
-  button: { borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
+  footer: { padding: 20, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, marginBottom: 10 },
+  button: { borderRadius: 10, paddingVertical: 16, alignItems: 'center' },
   nextButton: { backgroundColor: colors.primary },
   nextButtonText: { fontSize: 16, fontWeight: '600', color: colors.text },
 });

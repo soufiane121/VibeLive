@@ -1,25 +1,27 @@
 import {
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
   TextInput,
   Modal,
   Alert,
   ActivityIndicator,
   Dimensions,
   Animated,
-  Easing
+  Easing,
 } from 'react-native';
-import React, { useState, useEffect, useRef } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { BoostColors } from '../Utils/BoostColors';
+import React, {useState, useEffect, useRef} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
+import {GlobalColors} from '../styles/GlobalColors';
+
+const colors = GlobalColors.BoostFOMOFlow;
 // import { LinearGradient } from 'react-native-linear-gradient';
-// import Animated, { 
-//   useSharedValue, 
-//   useAnimatedStyle, 
-//   withTiming, 
+// import Animated, {
+//   useSharedValue,
+//   useAnimatedStyle,
+//   withTiming,
 //   withRepeat,
 //   interpolate,
 //   runOnJS
@@ -74,7 +76,12 @@ interface EventSelectionsProps {
   onTitleChange?: (title: string) => void;
 }
 
-type FlowStep = 'category' | 'boost_intro' | 'boost_tiers' | 'processing' | 'confirmation';
+type FlowStep =
+  | 'category'
+  | 'boost_intro'
+  | 'boost_tiers'
+  | 'processing'
+  | 'confirmation';
 
 const BOOST_TIERS: BoostTier[] = [
   {
@@ -85,7 +92,7 @@ const BOOST_TIERS: BoostTier[] = [
     duration: 2,
     features: ['2x visibility', 'Priority in nearby feeds', 'Basic analytics'],
     multiplier: '2x',
-    color: '#00FFFF'
+    color: colors.primary,
   },
   {
     id: 'premium',
@@ -93,10 +100,15 @@ const BOOST_TIERS: BoostTier[] = [
     price: 7.99,
     originalPrice: 12.99,
     duration: 6,
-    features: ['5x visibility', 'Featured placement', 'Advanced analytics', 'Custom badges'],
+    features: [
+      '5x visibility',
+      'Featured placement',
+      'Advanced analytics',
+      'Custom badges',
+    ],
     multiplier: '5x',
     badge: 'MOST POPULAR',
-    color: '#FF1493'
+    color: colors.accent,
   },
   {
     id: 'ultimate',
@@ -104,10 +116,16 @@ const BOOST_TIERS: BoostTier[] = [
     price: 14.99,
     originalPrice: 24.99,
     duration: 12,
-    features: ['10x visibility', 'Homepage featured', 'Premium analytics', 'VIP support', 'Custom effects'],
+    features: [
+      '10x visibility',
+      'Homepage featured',
+      'Premium analytics',
+      'VIP support',
+      'Custom effects',
+    ],
     multiplier: '10x',
-    color: '#FFD700'
-  }
+    color: colors.primary,
+  },
 ];
 
 const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
@@ -117,12 +135,12 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const [selectedTier, setSelectedTier] = useState<BoostTier | null>(null);
   const [boostData, setBoostData] = useState<BoostPurchaseData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // FOMO state
   const [timeLeft, setTimeLeft] = useState(1847); // 30:47 in seconds
   const [premiumSlotsLeft] = useState(3);
   const [competingStreamers] = useState(47);
-  
+
   // Animations
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -139,22 +157,22 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       setBoostData(null);
       setIsProcessing(false);
       setTimeLeft(1847); // Reset countdown timer
-      
+
       // Reset animations
       pulseAnim.setValue(0);
       glowAnim.setValue(0);
       countdownFlash.setValue(0);
-      
+
       // Notify parent component of title reset
       // if (onTitleChange) {
       //   onTitleChange('');
       // }
-      
+
       // Track screen focus for analytics
       trackEvent('go_live_started', {
         timestamp: new Date().toISOString(),
       });
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
@@ -173,7 +191,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     ).start();
 
     Animated.loop(
@@ -182,7 +200,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         duration: 2000,
         easing: Easing.inOut(Easing.ease),
         useNativeDriver: false,
-      })
+      }),
     ).start();
   }, []);
 
@@ -195,7 +213,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
             clearInterval(timer);
             return 0;
           }
-          
+
           // Flash animation when under 5 minutes
           if (prev <= 300 && prev % 10 === 0) {
             Animated.sequence([
@@ -211,7 +229,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
               }),
             ]).start();
           }
-          
+
           return prev - 1;
         });
       }, 1000);
@@ -247,7 +265,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       title: title.trim(),
       timestamp: new Date().toISOString(),
     });
-    
+
     // Give user choice: boost or go directly to streaming
     setCurrentStep('boost_intro');
   };
@@ -259,7 +277,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       title: title.trim(),
       timestamp: new Date().toISOString(),
     });
-    
+
     // Skip boost flow entirely
     onCompleteSelection({value: category, title: title.trim()});
   };
@@ -271,8 +289,8 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       step: currentStep,
       timestamp: new Date().toISOString(),
     });
-    
-    onCompleteSelection({value:selectedCategory, title:title.trim()});
+
+    onCompleteSelection({value: selectedCategory, title: title.trim()});
   };
 
   const handleBoostTierSelection = (tier: BoostTier) => {
@@ -287,17 +305,19 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
   const handleBoostPurchase = async () => {
     if (!selectedTier) return;
-    
+
     setIsProcessing(true);
     setCurrentStep('processing');
-    
+
     try {
       // Mock payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Mock successful purchase
-      const transactionId = `boost_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+      const transactionId = `boost_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+
       const purchaseData: BoostPurchaseData = {
         tier: selectedTier.id,
         duration: selectedTier.duration,
@@ -306,10 +326,10 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         transactionId,
         purchaseTime: new Date(),
       };
-      
+
       setBoostData(purchaseData);
       setCurrentStep('confirmation');
-      
+
       trackEvent('boost_purchased', {
         tier: selectedTier.id,
         price: selectedTier.price,
@@ -318,18 +338,17 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         transactionId,
         timestamp: new Date().toISOString(),
       });
-      
     } catch (error) {
       console.error('Boost purchase failed:', error);
       Alert.alert(
         'Purchase Failed',
         'Unable to complete your boost purchase. Please try again.',
         [
-          { text: 'Try Again', onPress: () => setCurrentStep('boost_tiers') },
-          { text: 'Skip Boost', onPress: handleSkipBoost },
-        ]
+          {text: 'Try Again', onPress: () => setCurrentStep('boost_tiers')},
+          {text: 'Skip Boost', onPress: handleSkipBoost},
+        ],
       );
-      
+
       trackEvent('boost_purchase_failed', {
         tier: selectedTier.id,
         category: selectedCategory,
@@ -342,16 +361,18 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   };
 
   const handleBoostConfirmation = () => {
-    onCompleteSelection({value: selectedCategory, boostData: boostData!, title: title.trim()});
+    onCompleteSelection({
+      value: selectedCategory,
+      boostData: boostData!,
+      title: title.trim(),
+    });
   };
-
-
 
   // Processing Screen
   if (currentStep === 'processing') {
     return (
       <View style={styles.processingContainer}>
-        <ActivityIndicator size="large" color="#00FFFF" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.processingText}>Processing your boost...</Text>
         <Text style={styles.processingSubtext}>Securing your premium spot</Text>
       </View>
@@ -367,42 +388,54 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           <Text style={styles.confettiEmoji}>✨</Text>
           <Text style={styles.confettiEmoji}>🚀</Text>
         </View>
-        
+
         <Text style={styles.confirmationTitle}>Boost Activated! 🔥</Text>
         <Text style={styles.confirmationSubtitle}>
           Your stream is now supercharged for maximum visibility
         </Text>
-        
+
         <View style={styles.boostDetailsCard}>
           <View style={styles.boostDetailRow}>
             <Text style={styles.boostDetailLabel}>Tier:</Text>
-            <Text style={[styles.boostDetailValue, { color: selectedTier?.color }]}>
+            <Text
+              style={[styles.boostDetailValue, {color: selectedTier?.color}]}>
               {selectedTier?.name}
             </Text>
           </View>
           <View style={styles.boostDetailRow}>
             <Text style={styles.boostDetailLabel}>Duration:</Text>
-            <Text style={styles.boostDetailValue}>{boostData.duration} hours</Text>
+            <Text style={styles.boostDetailValue}>
+              {boostData.duration} hours
+            </Text>
           </View>
           <View style={styles.boostDetailRow}>
             <Text style={styles.boostDetailLabel}>Visibility:</Text>
-            <Text style={styles.boostDetailValue}>{selectedTier?.multiplier} boost</Text>
+            <Text style={styles.boostDetailValue}>
+              {selectedTier?.multiplier} boost
+            </Text>
           </View>
           <View style={styles.boostDetailRow}>
             <Text style={styles.boostDetailLabel}>Transaction:</Text>
-            <Text style={styles.boostDetailValue}>{boostData.transactionId.slice(-8)}</Text>
+            <Text style={styles.boostDetailValue}>
+              {boostData.transactionId.slice(-8)}
+            </Text>
           </View>
         </View>
-        
+
         <View style={styles.featuresUnlocked}>
           <Text style={styles.featuresTitle}>Features Unlocked:</Text>
           {boostData.features.map((feature, index) => (
-            <Text key={index} style={styles.featureItem}>✓ {feature}</Text>
+            <Text key={index} style={styles.featureItem}>
+              ✓ {feature}
+            </Text>
           ))}
         </View>
-        
+
         <TouchableOpacity
-          style={[styles.continueButton, { backgroundColor: selectedTier?.color }]}
+          style={[
+            styles.continueButton,
+            {backgroundColor: selectedTier?.color},
+          ]}
           onPress={handleBoostConfirmation}>
           <Text style={styles.continueButtonText}>Start Boosted Stream 🚀</Text>
         </TouchableOpacity>
@@ -415,14 +448,15 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     return (
       <View style={styles.boostTiersContainer}>
         <View style={styles.urgencyHeader}>
-          <Animated.View style={{
-            backgroundColor: countdownFlash.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['rgba(255, 20, 147, 0.2)', 'rgba(255, 20, 147, 0.6)']
-            })
-          }}>
+          <Animated.View
+            style={{
+              backgroundColor: countdownFlash.interpolate({
+                inputRange: [0, 1],
+                outputRange: [colors.pulse, colors.flash],
+              }),
+            }}>
             <Text style={styles.urgencyText}>
-              ⏰ Special pricing ends in {formatTime(timeLeft)}
+               Special pricing ends in {formatTime(timeLeft)}
             </Text>
           </Animated.View>
           <Text style={styles.scarcityText}>
@@ -431,73 +465,74 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         </View>
 
         <Text style={styles.tiersTitle}>Choose Your Boost Level</Text>
-        
+
         <FlatList
           data={BOOST_TIERS}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Animated.View style={{
-              transform: [{
-                scale: pulseAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, item.badge ? 1.02 : 1]
-                })
-              }]
-            }}>
+          keyExtractor={item => item.id}
+          renderItem={({item}) => (
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    scale: pulseAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, item.badge ? 1.02 : 1],
+                    }),
+                  },
+                ],
+              }}>
               <TouchableOpacity
                 style={[
                   styles.tierCard,
-                  { borderColor: item.color },
-                  selectedTier?.id === item.id && { backgroundColor: `${item.color}20` }
+                  selectedTier?.id === item.id && styles.tierCardSelected,
                 ]}
                 onPress={() => handleBoostTierSelection(item)}>
-                
                 {item.badge && (
-                  <View style={[styles.badge, { backgroundColor: item.color }]}>
+                  <View style={styles.badge}>
                     <Text style={styles.badgeText}>{item.badge}</Text>
                   </View>
                 )}
-                
-                <Text style={[styles.tierName, { color: item.color }]}>{item.name}</Text>
-                <Text style={styles.tierMultiplier}>{item.multiplier} Visibility</Text>
-                
-                <View style={styles.priceContainer}>
-                  <Text style={styles.originalPrice}>${item.originalPrice}</Text>
-                  <Text style={[styles.currentPrice, { color: item.color }]}>
-                    ${item.price}
-                  </Text>
+
+                <View style={styles.tierIcon}>
+                  <Text style={styles.tierIconText}>{item.name.charAt(0)}</Text>
                 </View>
-                
-                <Text style={styles.duration}>{item.duration} hours active</Text>
-                
-                <View style={styles.featuresContainer}>
-                  {item.features.map((feature, index) => (
-                    <Text key={index} style={styles.feature}>✓ {feature}</Text>
-                  ))}
+
+                <View style={styles.tierContent}>
+                  <Text style={styles.tierName}>{item.name}</Text>
+                  <Text style={styles.tierPrice}>${item.price}</Text>
+
+                  <View style={styles.tierFeatures}>
+                    {item.features.map((feature, index) => (
+                      <Text key={index} style={styles.tierFeature}>
+                        • {feature}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+
+                <View
+                  style={[
+                    styles.radioButton,
+                    selectedTier?.id === item.id && styles.radioButtonSelected,
+                  ]}>
+                  {selectedTier?.id === item.id && (
+                    <View style={styles.radioButtonInner} />
+                  )}
                 </View>
               </TouchableOpacity>
             </Animated.View>
           )}
         />
-        
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[
-              styles.purchaseButton,
-              { backgroundColor: selectedTier?.color || '#666' },
-              !selectedTier && styles.disabledButton
-            ]}
-            onPress={handleBoostPurchase}
-            disabled={!selectedTier}>
-            <Text style={styles.purchaseButtonText}>
-              {selectedTier ? `Boost for $${selectedTier.price}` : 'Select a tier'}
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.skipButton} onPress={handleSkipBoost}>
-            <Text style={styles.skipButtonText}>Start Without Boost</Text>
-          </TouchableOpacity>
-        </View>
+
+        <TouchableOpacity
+          style={[
+            styles.continueToPaymentButton,
+            !selectedTier && styles.disabledButton,
+          ]}
+          onPress={handleBoostPurchase}
+          disabled={!selectedTier}>
+          <Text style={styles.continueToPaymentText}>Continue to Payment</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -507,16 +542,17 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     return (
       <View style={styles.boostIntroContainer}>
         <View style={styles.urgencyBanner}>
-          <Text style={styles.urgencyTitle}>🚨 Prime Time Alert!</Text>
+          <Text style={styles.urgencyTitle}>Prime Time Alert!</Text>
           <Text style={styles.urgencySubtitle}>
             {competingStreamers} streamers nearby are competing for attention
           </Text>
-          <Animated.View style={{
-            backgroundColor: countdownFlash.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['rgba(255, 20, 147, 0.2)', 'rgba(255, 20, 147, 0.6)']
-            })
-          }}>
+          <Animated.View
+            style={{
+              backgroundColor: countdownFlash.interpolate({
+                inputRange: [0, 1],
+                outputRange: [colors.pulse, colors.flash],
+              }),
+            }}>
             <Text style={styles.countdownText}>
               Special pricing ends in {formatTime(timeLeft)}
             </Text>
@@ -547,7 +583,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                 key={i}
                 style={[
                   styles.slot,
-                  i < 7 ? styles.takenSlot : styles.availableSlot
+                  i < 7 ? styles.takenSlot : styles.availableSlot,
                 ]}
               />
             ))}
@@ -558,22 +594,27 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         </View>
 
         <View style={styles.introButtons}>
-          <Animated.View style={{
-            transform: [{
-              scale: pulseAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [1, 1.05]
-              })
-            }]
-          }}>
+          <Animated.View
+            style={{
+              transform: [
+                {
+                  scale: pulseAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1, 1.05],
+                  }),
+                },
+              ],
+            }}>
             <TouchableOpacity
               style={styles.boostButton}
               onPress={() => setCurrentStep('boost_tiers')}>
               <Text style={styles.boostButtonText}>🚀 Boost My Stream</Text>
             </TouchableOpacity>
           </Animated.View>
-          
-          <TouchableOpacity style={styles.skipIntroButton} onPress={handleSkipBoost}>
+
+          <TouchableOpacity
+            style={styles.skipIntroButton}
+            onPress={handleSkipBoost}>
             <Text style={styles.skipIntroButtonText}>No Thanks</Text>
           </TouchableOpacity>
         </View>
@@ -594,24 +635,25 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       <TextInput
         style={styles.titleInput}
         placeholder="Give your stream a vibe, party? chill? wild?"
-        placeholderTextColor="#888"
+        placeholderTextColor={colors.textMuted}
         value={title}
         onChangeText={handleTitleChange}
         maxLength={60}
       />
-      
+
       <Text style={styles.categoryTitle}>What's your vibe?</Text>
-      
+
       <FlatList
         data={eventsList}
         numColumns={3}
-        keyExtractor={(item) => item.key}
+        keyExtractor={item => item.key}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.categoriesContainer}
-        renderItem={({ item }) => (
+        renderItem={({item}) => (
           <TouchableOpacity
             style={[
               styles.categoryTag,
-              selectedCategory === item.key && styles.selectedCategoryTag
+              selectedCategory === item.key && styles.selectedCategoryTag,
             ]}
             onPress={() => setSelectedCategory(item.key)}>
             <Text style={styles.categoryEmoji}>{item.emoji}</Text>
@@ -619,36 +661,44 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           </TouchableOpacity>
         )}
       />
-      
+
       {selectedCategory && (
         <View style={styles.actionSection}>
           <Text style={styles.actionTitle}>Ready to go live?</Text>
-          
+
           <TouchableOpacity
             style={styles.primaryActionButton}
             onPress={() => handleGoDirectToStream(selectedCategory)}>
-            <Text style={styles.primaryActionText}>🎬 Start Streaming</Text>
+            <Text style={styles.primaryActionText}>Start Streaming</Text>
           </TouchableOpacity>
-          
+
           <View style={styles.orDivider}>
             <View style={styles.dividerLine} />
             <Text style={styles.orText}>or</Text>
             <View style={styles.dividerLine} />
           </View>
-          
+
           <TouchableOpacity
             style={styles.boostActionButton}
             onPress={() => handleCategorySelection(selectedCategory)}>
-            <Animated.View style={{
-              transform: [{
-                scale: pulseAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, 1.02]
-                })
-              }]
-            }}>
-              <Text style={styles.boostActionText}>🚀 Boost for More Viewers</Text>
-              <Text style={styles.boostActionSubtext}>Get 5x more visibility</Text>
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    scale: pulseAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.02],
+                    }),
+                  },
+                ],
+              }}>
+              <Text style={styles.boostActionText}>
+                {' '}
+                Boost for More Viewers
+              </Text>
+              <Text style={styles.boostActionSubtext}>
+                Get 5x more visibility
+              </Text>
             </Animated.View>
           </TouchableOpacity>
         </View>
@@ -657,17 +707,17 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   );
 };
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   // Base container
   container: {
     flex: 1,
-    backgroundColor: BoostColors.background.primary,
+    backgroundColor: colors.background,
     paddingHorizontal: 20,
     paddingTop: 20,
   },
-  
+
   // Header styles
   header: {
     alignItems: 'center',
@@ -675,35 +725,35 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: BoostColors.text.primary,
+    fontWeight: '400',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: BoostColors.text.secondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
-  
+
   // Title input
   titleInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(242, 239, 232, 0.1)',
     borderWidth: 1,
-    borderColor: BoostColors.primary,
+    borderColor: colors.primary,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: BoostColors.text.primary,
+    color: colors.text,
     marginBottom: 30,
     textAlign: 'center',
   },
-  
+
   // Category selection
   categoryTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: BoostColors.text.primary,
+    fontWeight: '300',
+    color: colors.text,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -712,9 +762,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   categoryTag: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: colors.cardBackground,
     borderWidth: 1,
-    borderColor: BoostColors.ui.border,
+    borderColor: colors.border,
     borderRadius: 25,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -725,8 +775,8 @@ const styles = StyleSheet.create({
     maxWidth: (width - 80) / 3,
   },
   selectedCategoryTag: {
-    borderColor: BoostColors.primary,
-    backgroundColor: BoostColors.tiers.basic.background,
+    borderColor: colors.primary,
+    backgroundColor: colors.tierBasicBackground,
   },
   categoryEmoji: {
     fontSize: 20,
@@ -734,36 +784,38 @@ const styles = StyleSheet.create({
   },
   categoryLabel: {
     fontSize: 11,
-    fontWeight: '500',
-    color: BoostColors.text.primary,
+    fontWeight: '300',
+    color: colors.text,
     textAlign: 'center',
   },
-  
+
   // Action section
   actionSection: {
     marginTop: 20,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: BoostColors.ui.divider,
+    borderTopColor: colors.border,
   },
   actionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: BoostColors.text.primary,
+    fontWeight: '300',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 20,
   },
   primaryActionButton: {
-    backgroundColor: BoostColors.buttons.primary.background,
+    backgroundColor: colors.buttonSecondary,
+    borderWidth: 0.5,
+    borderColor: colors.borderActive,
     paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 25,
-    marginBottom: 20,
+    borderRadius: 15,
+    // marginBottom: 20,
   },
   primaryActionText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: BoostColors.buttons.primary.text,
+    fontSize: 16,
+    // fontWeight: '400',
+    color: colors.text,
     textAlign: 'center',
   },
   orDivider: {
@@ -774,81 +826,83 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: BoostColors.ui.divider,
+    backgroundColor: colors.border,
   },
   orText: {
     fontSize: 14,
-    color: BoostColors.text.secondary,
+    color: colors.textSecondary,
     marginHorizontal: 15,
   },
   boostActionButton: {
-    backgroundColor: BoostColors.buttons.secondary.background,
-    borderWidth: 1,
-    borderColor: BoostColors.buttons.secondary.border,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 25,
+    backgroundColor: colors.buttonSecondary,
+    borderWidth: 0.5,
+    borderColor: colors.borderActive,
+    paddingVertical: 10,
+    // paddingHorizontal: 32,
+    borderRadius: 15,
+    marginBottom:10
   },
   boostActionText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: BoostColors.buttons.secondary.text,
+    fontWeight: '500',
+    color: colors.text,
     textAlign: 'center',
   },
   boostActionSubtext: {
     fontSize: 12,
-    color: BoostColors.text.secondary,
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: 4,
+    // marginTop: 4,
   },
-  
+
   // Boost preview
   boostPreview: {
-    backgroundColor: BoostColors.tiers.premium.background,
+    backgroundColor: colors.tierPremiumBackground,
     borderWidth: 1,
-    borderColor: BoostColors.tiers.premium.border,
+    borderColor: colors.borderActive,
     borderRadius: 16,
     padding: 20,
     marginTop: 20,
   },
   previewTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: BoostColors.text.primary,
+    fontWeight: '600',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   previewText: {
     fontSize: 14,
-    color: BoostColors.text.secondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
-  
+
   // Processing screen
   processingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: BoostColors.background.primary,
+    backgroundColor: colors.background,
+    padding: 20,
   },
   processingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: BoostColors.primary,
-    marginTop: 20,
+    fontSize: 24,
+    fontWeight: '600',
+    color: colors.text,
     textAlign: 'center',
+    marginBottom: 10,
   },
   processingSubtext: {
-    fontSize: 14,
-    color: BoostColors.text.secondary,
-    marginTop: 8,
+    fontSize: 16,
+    color: colors.textSecondary,
     textAlign: 'center',
+    marginBottom: 30,
   },
-  
+
   // Confirmation screen
   confirmationContainer: {
     flex: 1,
-    backgroundColor: BoostColors.background.primary,
+    backgroundColor: colors.background,
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
@@ -865,19 +919,19 @@ const styles = StyleSheet.create({
   },
   confirmationTitle: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: BoostColors.primary,
+    fontWeight: '600',
+    color: colors.primary,
     textAlign: 'center',
     marginBottom: 16,
   },
   confirmationSubtitle: {
     fontSize: 16,
-    color: BoostColors.text.secondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 30,
   },
   boostDetailsCard: {
-    backgroundColor: BoostColors.background.secondary,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 30,
@@ -890,12 +944,12 @@ const styles = StyleSheet.create({
   },
   boostDetailLabel: {
     fontSize: 16,
-    color: BoostColors.text.secondary,
+    color: colors.textSecondary,
   },
   boostDetailValue: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: BoostColors.text.primary,
+    fontWeight: '600',
+    color: colors.text,
   },
   featuresUnlocked: {
     marginBottom: 30,
@@ -903,14 +957,14 @@ const styles = StyleSheet.create({
   },
   featuresTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: BoostColors.text.primary,
+    fontWeight: '600',
+    color: colors.text,
     marginBottom: 12,
     textAlign: 'center',
   },
   featureItem: {
     fontSize: 14,
-    color: BoostColors.text.secondary,
+    color: colors.textSecondary,
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -922,15 +976,15 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: BoostColors.text.inverse,
+    fontWeight: '600',
+    color: colors.text,
     textAlign: 'center',
   },
-  
+
   // Boost tiers screen
   boostTiersContainer: {
     flex: 1,
-    backgroundColor: BoostColors.background.primary,
+    backgroundColor: colors.background,
     padding: 16,
     paddingTop: 10,
   },
@@ -940,128 +994,199 @@ const styles = StyleSheet.create({
   },
   urgencyText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: BoostColors.semantic.urgency,
+    fontWeight: '600',
+    color: colors.urgency,
     textAlign: 'center',
     padding: 10,
     borderRadius: 8,
   },
   scarcityText: {
     fontSize: 12,
-    color: BoostColors.semantic.scarcity,
+    color: colors.scarcity,
     textAlign: 'center',
     marginTop: 6,
   },
   tiersTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: BoostColors.text.primary,
+    fontWeight: '600',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 12,
   },
   tierCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 2,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
   badge: {
     position: 'absolute',
     top: -8,
     right: 16,
+    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
   badgeText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontWeight: '600',
+    color: colors.background,
   },
   tierName: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  tierPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+    marginBottom: 12,
+  },
+  tierIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  tierIconText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.background,
+  },
+  tierContent: {
+    flex: 1,
+  },
+  tierFeatures: {
+    marginTop: 8,
+  },
+  tierFeature: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 4,
+    paddingLeft: 8,
+  },
+  radioButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.border,
+    marginLeft: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioButtonSelected: {
+    borderColor: colors.primary,
+  },
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.primary,
+  },
+  continueToPaymentButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 24,
+    marginHorizontal: 16,
+  },
+  continueToPaymentText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.background,
     textAlign: 'center',
-    marginBottom: 8,
+  },
+  tierCardSelected: {
+    borderColor: colors.primary,
+    borderWidth: 2,
   },
   tierMultiplier: {
-    fontSize: 16,
-    color: '#CCCCCC',
-    textAlign: 'center',
-    marginBottom: 12,
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 8,
   },
   priceContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
   originalPrice: {
-    fontSize: 16,
-    color: '#888888',
+    fontSize: 14,
+    color: colors.textMuted,
     textDecorationLine: 'line-through',
     marginRight: 8,
   },
   currentPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
   },
   duration: {
     fontSize: 14,
-    color: '#CCCCCC',
-    textAlign: 'center',
-    marginBottom: 16,
+    color: colors.textSecondary,
+    marginBottom: 12,
   },
   featuresContainer: {
-    alignItems: 'center',
+    marginTop: 8,
   },
   feature: {
     fontSize: 14,
-    color: '#CCCCCC',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   actionButtons: {
     marginTop: 20,
   },
   purchaseButton: {
+    backgroundColor: colors.primary,
     paddingVertical: 16,
-    borderRadius: 25,
+    borderRadius: 12,
     marginBottom: 12,
   },
   disabledButton: {
     opacity: 0.5,
   },
   purchaseButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.background,
     textAlign: 'center',
   },
   skipButton: {
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#666666',
-    borderRadius: 25,
+    borderColor: colors.border,
+    borderRadius: 12,
   },
   skipButtonText: {
     fontSize: 16,
-    color: '#CCCCCC',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
-  
+
   // Boost intro screen
   boostIntroContainer: {
     flex: 1,
-    backgroundColor: BoostColors.background.primary,
+    backgroundColor: colors.background,
     padding: 16,
     paddingTop: 10,
   },
   urgencyBanner: {
-    backgroundColor: 'rgba(255, 20, 147, 0.1)',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: BoostColors.semantic.urgency,
+    borderColor: colors.urgency,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
@@ -1069,21 +1194,21 @@ const styles = StyleSheet.create({
   },
   urgencyTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: BoostColors.semantic.urgency,
+    fontWeight: '600',
+    color: colors.urgency,
     textAlign: 'center',
     marginBottom: 6,
   },
   urgencySubtitle: {
     fontSize: 13,
-    color: BoostColors.text.secondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 8,
   },
   countdownText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FF1493',
+    color: colors.urgency,
     textAlign: 'center',
     padding: 8,
     borderRadius: 8,
@@ -1096,8 +1221,8 @@ const styles = StyleSheet.create({
   },
   socialProofTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: BoostColors.text.primary,
+    fontWeight: '600',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -1110,17 +1235,17 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#00FFFF',
+    color: colors.primary,
     marginRight: 8,
   },
   statLabel: {
     fontSize: 16,
-    color: '#CCCCCC',
+    color: colors.textSecondary,
   },
   scarcityContainer: {
     backgroundColor: 'rgba(255, 215, 0, 0.1)',
     borderWidth: 1,
-    borderColor: BoostColors.semantic.scarcity,
+    borderColor: colors.scarcity,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
@@ -1128,8 +1253,8 @@ const styles = StyleSheet.create({
   },
   scarcityTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: BoostColors.semantic.scarcity,
+    fontWeight: '600',
+    color: colors.scarcity,
     marginBottom: 12,
   },
   slotsVisualization: {
@@ -1143,27 +1268,27 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   takenSlot: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: colors.error,
   },
   availableSlot: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: colors.success,
   },
   slotsText: {
     fontSize: 14,
-    color: '#FFD700',
+    color: colors.primary,
     textAlign: 'center',
   },
   competitorWarning: {
     backgroundColor: 'rgba(255, 165, 0, 0.1)',
     borderWidth: 1,
-    borderColor: '#FFA500',
+    borderColor: colors.warning,
     borderRadius: 16,
     padding: 16,
     marginBottom: 30,
   },
   warningText: {
     fontSize: 14,
-    color: '#FFA500',
+    color: colors.warning,
     textAlign: 'center',
   },
   introButtons: {
@@ -1171,34 +1296,34 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   boostButton: {
-    backgroundColor: '#FF1493',
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 25,
     marginBottom: 12,
   },
   boostButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    // fontWeight: 'bold',
+    color: colors.text,
     textAlign: 'center',
   },
   skipIntroButton: {
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#666666',
+    borderColor: colors.border,
     borderRadius: 25,
   },
   skipIntroButtonText: {
     fontSize: 16,
-    color: '#CCCCCC',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
-  
+
   // Legacy text style
   text: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text,
     textAlign: 'center',
   },
 });

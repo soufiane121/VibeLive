@@ -20,37 +20,10 @@ import {
   CommonMaterialCommunityIcons,
   CommonMaterialIcons,
 } from '../../UIComponents/Icons';
+import { GlobalColors, ColorUtils } from '../../styles/GlobalColors';
 
-// StubHub-inspired dark theme colors
-const colors = {
-  background: '#0a0a0a',
-  surface: '#1a1a1a',
-  surfaceVariant: '#2a2a2a',
-  primary: '#4f46e5',
-  primaryVariant: '#6366f1',
-  accent: '#f59e0b',
-  text: '#ffffff',
-  textSecondary: '#a1a1aa',
-  textMuted: '#71717a',
-  success: '#10b981',
-  error: '#ef4444',
-  warning: '#f59e0b',
-  border: '#374151',
-  borderLight: '#4b5563',
-};
-
-const eventTypeColors: {[key: string]: string} = {
-  music: '#ec4899',
-  sports: '#10b981',
-  nightlife: '#8b5cf6',
-  festival: '#f59e0b',
-  conference: '#3b82f6',
-  comedy: '#f97316',
-  theater: '#ef4444',
-  art: '#06b6d4',
-  food: '#84cc16',
-  other: '#6b7280',
-};
+// Use global colors configuration
+const colors = GlobalColors.EventsListScreen;
 
 const eventTypeIcons: {[key: string]: string} = {
   music: 'music-note',
@@ -112,8 +85,7 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
             style={[
               styles.eventTypeIcon,
               {
-                backgroundColor:
-                  eventTypeColors[event.eventType] || eventTypeColors.other,
+                backgroundColor: ColorUtils.getEventTypeColor(event.eventType),
               },
             ]}>
             <CommonMaterialCommunityIcons
@@ -295,7 +267,7 @@ const EventsListScreen: React.FC = () => {
     const iconStyle = {
       marginRight: 6,
       color: selectedFilter === item.key ? colors.primary : colors.textMuted,
-      fontSize: 16, // Use fontSize instead of size for consistency
+      fontSize: 18, // Use fontSize instead of size for consistency
     };
 
     return (
@@ -471,7 +443,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 8,
     borderRadius: 20,
-    backgroundColor: colors.surfaceVariant,
+    // backgroundColor: colors.surfaceVariant,
     height: 36, // Fixed height for consistency
     minWidth: 100, // Minimum width to prevent content squishing
     borderWidth: 1,
@@ -508,7 +480,7 @@ const styles = StyleSheet.create({
     left: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.accent + '20',
+    // backgroundColor: colors.accent + '20',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
