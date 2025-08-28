@@ -123,6 +123,31 @@ const CommonMaterialIcons = (props)=> {
 return <MaterialIcons name={props.name} {...props} />
 }
 
+// Live Stream Icons
+const CameraIcon = (props) => {
+  return <Ionicons name="camera" {...props} />;
+}
+
+const CameraReverseIcon = (props) => {
+  return <Ionicons name="camera-reverse" {...props} />;
+}
+
+const MicrophoneIcon = (props) => {
+  return <Ionicons name="mic" {...props} />;
+}
+
+const MicrophoneSlashIcon = (props) => {
+  return <Ionicons name="mic-off" {...props} />;
+}
+
+const PlayIcon = (props) => {
+  return <Ionicons name="play" {...props} />;
+}
+
+const StopIcon = (props) => {
+  return <Ionicons name="stop" {...props} />;
+}
+
 export {
   mapIcon,
   LocationIcon,
@@ -154,4 +179,11 @@ export {
   EventsIcon,
   CommonMaterialCommunityIcons,
   CommonMaterialIcons,
+  // Live Stream Icons
+  CameraIcon,
+  CameraReverseIcon,
+  MicrophoneIcon,
+  MicrophoneSlashIcon,
+  PlayIcon,
+  StopIcon,
 };
