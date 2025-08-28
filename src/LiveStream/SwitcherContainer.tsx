@@ -6,17 +6,28 @@ import LiveStreamContainer from './LiveStreamContainer';
 const SwitcherContainer = () => {
   const [showStartLive, setShowStartLive] = useState(false);
   const [title, setTitle] = useState('');
-    const [selectedEventType, setSelectedEventType] = useState<string | undefined>("");
+  const [selectedEventType, setSelectedEventType] = useState<string | undefined>("");
+  const [boostData, setBoostData] = useState<any>(null);
+  
   const handleCompleteSelection = (args: {
     value: string;
     boostData?: any;
     title?: string;
   }) => {
-    const {value, boostData, title: titleValue} = args || {};
-    console.log('Selected value:', value);
+    const {value, boostData: boostInfo, title: titleValue} = args || {};
+    console.log('🔄 SwitcherContainer - Selection completed:');
+    console.log('📋 Selected value:', value);
+    console.log('🎯 Boost data received:', boostInfo);
+    console.log('📝 Title received:', titleValue);
+    console.log('🔍 Boost data type:', typeof boostInfo);
+    console.log('🔍 Boost data content:', JSON.stringify(boostInfo, null, 2));
+    
     setSelectedEventType(value);
+    setBoostData(boostInfo);
     setShowStartLive(true);
     setTitle(titleValue || "");
+    
+    console.log('✅ SwitcherContainer state updated - proceeding to LiveStreamContainer');
   };
   const handleChangeTitle = (title: string) => {
     console.log('Title changed:', title);
@@ -28,7 +39,11 @@ const SwitcherContainer = () => {
       {!showStartLive ? (
         <EventSelections onCompleteSelection={handleCompleteSelection} onTitleChange={handleChangeTitle} />
       ) : (
-        <LiveStreamContainer streamEventType={selectedEventType || 'default'   } streamTitle={title || 'default'} />
+        <LiveStreamContainer 
+          streamEventType={selectedEventType || 'default'} 
+          streamTitle={title || 'default'} 
+          boostData={boostData}
+        />
       )}
     </SafeAreaView>
   );

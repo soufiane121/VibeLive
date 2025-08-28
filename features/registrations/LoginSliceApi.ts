@@ -68,10 +68,20 @@ export const loginApi = createApi({
         credentials: 'include',
         body
       }),
-    }), 
+    }),
+    boostStream: builder.mutation({
+      query: (body) => ({
+        url: 'users/boost-stream',
+        method: 'POST',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body
+      }),
+    }),
   }),
 });
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const {useLoginMutation, useAutoLoginMutation, useSignUpMutation, useSingOutMutation} = loginApi;
+export const {useLoginMutation, useAutoLoginMutation, useSignUpMutation, useSingOutMutation, useBoostStreamMutation} = loginApi;

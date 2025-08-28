@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {View, Button, StyleSheet, Platform, Text} from 'react-native';
+import {View, Button, StyleSheet, Platform, Text, Alert} from 'react-native';
 import {
   Camera,
   useCameraPermission,
@@ -7,6 +7,7 @@ import {
 } from 'react-native-vision-camera';
 // import {FFmpegKit} from 'react-native-ffmpeg';
 import {useStartStreamingMutation} from '../../features/LiveStream/LiveStream';
+import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
 import {
   NodeMediaClient,
   NodePublisher,
@@ -18,30 +19,50 @@ import {useSelector} from 'react-redux';
 import useGetLocation from '../CustomHooks/useGetLocation';
 import RTMPStreamingHelper from './RTMPStreamingHelper';
 
+interface BoostPurchaseData {
+  tier: 'basic' | 'premium' | 'ultimate' | 'visibility' | 'prime' | 'viral';
+  duration: number;
+  price: number;
+  features: string[];
+  transactionId: string;
+  purchaseTime: Date;
+}
+
 interface LiveStreamContainerProps {
   streamEventType?: string;
   streamTitle?: string;
+  boostData?: BoostPurchaseData;
 }
 export default function LiveStreamContainer(props: LiveStreamContainerProps) {
-  const {streamEventType, streamTitle} = props;
+  const {streamEventType, streamTitle, boostData} = props;
   const {
     currentUser
   } = useSelector((state: any) => state?.currentUser);
   
-  // Debug current user state
-  console.log('🔍 LiveStream - Current user state:', {
-    currentUser,
-    hasUser: !!currentUser,
-    userId: currentUser?._id || currentUser?.id,
-    email: currentUser?.email
+  // Debug props received
+  console.log('🎬 LiveStreamContainer mounted with props:', {
+    streamEventType,
+    streamTitle,
+    hasBoostData: !!boostData,
+    boostData: boostData
   });
+  
+  // // Debug current user state
+  // console.log('🔍 LiveStream - Current user state:', {
+  //   currentUser,
+  //   hasUser: !!currentUser,
+  //   userId: currentUser?._id || currentUser?.id,
+  //   email: currentUser?.email
+  // });
   const {coordinates} = useGetLocation();
   const [fetchStartStream, {data, isLoading, isSuccess}] =
     useStartStreamingMutation();
+  const [boostStream] = useBoostStreamMutation();
   const [isStreaming, setIsStreaming] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [streamKey, setStreamKey] = useState<string | null>(null);
   const [playbackId, setPlaybackId] = useState<string | null>(null);
+  const [streamId, setStreamId] = useState<string | null>(null);
   const [socketInstance, setSocketInstance] = useState<any>(null);
   const [streamHealth, setStreamHealth] = useState<'connecting' | 'stable' | 'unstable' | 'disconnected'>('disconnected');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
@@ -55,11 +76,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const devices = useCameraDevices();
   const [cameraPosition, setCameraPosition] = useState<'front' | 'back'>('front');
   const device = devices.find(d => d.position === cameraPosition) || devices.find(d => d.position === 'front') || devices.find(d => d.position === 'back');
-  
-  // Debug device detection
-  console.log('🔍 Camera devices:', devices);
-  console.log('🔍 Selected device:', device);
-  console.log('🔍 Camera position:', cameraPosition);
+
   const rtmp = useRef<any>(null);
   const streamHealthTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -150,12 +167,131 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           token: currentUser.email,
         },
       });
+      
+      // Handle stop-all-streams event
+      socket.on('stop-all-streams', (data) => {
+        console.log('🚨 STOP ALL STREAMS - Force stopping stream:', data);
+        console.log('🔍 Current streaming state:', { isStreaming, streamHealth, streamKey });
+        
+        // Force stop streaming immediately
+        if (isStreaming) {
+          console.log('🛑 Calling stopStreaming() due to limit reached');
+          stopStreaming();
+        }
+        
+        // Also force stop the RTMP publisher directly
+        if (rtmp.current) {
+          console.log('🔌 Force stopping RTMP publisher');
+          try {
+            rtmp.current.stop();
+            rtmp.current.release();
+          } catch (error) {
+            console.log('⚠️ Error stopping RTMP:', error);
+          }
+        }
+        
+        // Force update state
+        setIsStreaming(false);
+        setStreamHealth('disconnected');
+        setDataFlowActive(false);
+        
+        // Show alert to user
+        Alert.alert('Streaming Stopped', `Streaming has been stopped: ${data.message}`);
+      });
+
+      // Handle force-stream-stop event (sent before socket disconnect)
+      socket.on('force-stream-stop', (data) => {
+        console.log('🚨 FORCE STREAM STOP - Immediate termination:', data);
+        
+        // Immediately stop RTMP publisher
+        if (rtmp.current) {
+          try {
+            rtmp.current.stop();
+            rtmp.current.release();
+            console.log('✅ RTMP publisher forcibly stopped');
+          } catch (error) {
+            console.log('⚠️ Error force stopping RTMP:', error);
+          }
+        }
+        
+        // Force update all streaming states
+        setIsStreaming(false);
+        setStreamHealth('disconnected');
+        setDataFlowActive(false);
+        setStreamStartTime(null);
+      });
+
+      // Handle boost-limit-reached event
+      socket.on('boost-limit-reached', (data) => {
+        console.log('🚨 BOOST LIMIT REACHED:', data);
+        
+        // Force stop streaming immediately
+        if (isStreaming) {
+          stopStreaming();
+        }
+        
+        // Force stop RTMP publisher
+        if (streamingHelper) {
+          streamingHelper.stopPublisher();
+        }
+        
+        // Clear streaming state
+        setIsStreaming(false);
+        setStreamHealth('disconnected');
+        setStreamKey(null);
+        
+        // Show alert to user
+        Alert.alert(
+          'Boost Limit Reached', 
+          `${data.message}`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Navigate back or show upgrade options
+                console.log('User acknowledged boost limit reached');
+              }
+            }
+          ]
+        );
+      });
+
+      // Handle explicit camera stop event
+      socket.on('stop-camera', (data) => {
+        console.log('📷 STOP CAMERA EVENT:', data);
+        
+        // Force stop streaming and camera
+        if (isStreaming) {
+          stopStreaming();
+        }
+        
+        // Force stop RTMP publisher
+        if (streamingHelper) {
+          streamingHelper.stopPublisher();
+        }
+        
+        // Clear all streaming state
+        setIsStreaming(false);
+        setStreamHealth('disconnected');
+        setStreamKey(null);
+        
+        console.log('📷 Camera and streaming stopped due to server event');
+      });
+
+      // Handle stream-start-blocked event
+      socket.on('stream-start-blocked', (data) => {
+        console.log('🚫 STREAM START BLOCKED:', data);
+        Alert.alert('Cannot Start Streaming', `Cannot start streaming: ${data.message}`);
+        setIsStreaming(false);
+        setStreamHealth('disconnected');
+      });
+      
       setSocketInstance(socket);
     }
     return () => {
       socketInstance?.disconnect();
     };
-  }, [isSuccess]);
+  }, [isSuccess]); // Removed isStreaming dependency to prevent reconnection
 
   // Request camera and microphone permissions
   const requestPermissions = async () => {
@@ -193,16 +329,33 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     try {
       console.log('🔑 Creating MUX stream credentials...');
       console.log('🌐 Backend URL:', baseUrl);
-      const response = await fetchStartStream('').unwrap();
+      
+      // Send stream metadata to backend for boost timeout tracking
+      const streamRequestData = {
+        streamEventType: streamEventType || 'general',
+        streamTitle: streamTitle || 'Live Stream',
+        // Include boost data if available
+        ...(boostData && {
+          boostTier: boostData.tier,
+          boostDuration: boostData.duration,
+          boostTransactionId: boostData.transactionId
+        })
+      };
+      
+      console.log('📤 Sending stream request with data:', streamRequestData);
+      const response = await fetchStartStream(streamRequestData).unwrap();
       
       console.log('📡 API Response received:', response);
       
-      if (response?.data?.stream_key && response?.data?.playback_ids?.[0]?.id) {
+      if (response?.data?.stream_key && response?.data?.playback_ids?.[0]?.id && response?.data?.id) {
         setStreamKey(response.data.stream_key);
         setPlaybackId(response.data.playback_ids[0].id);
+        setStreamId(response.data.id); // Store the MUX stream ID for tracking
+        
         console.log('✅ MUX credentials received:', {
           streamKey: response.data.stream_key,
-          playbackId: response.data.playback_ids[0].id
+          playbackId: response.data.playback_ids[0].id,
+          streamId: response.data.id
         });
       } else {
         console.error('❌ Invalid MUX response structure:', response);
@@ -214,6 +367,25 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     }
   };
 
+  // Boost activation is now handled in EventSelections.tsx during purchase
+  // This function just returns true since boost is already activated
+  const activateBoost = async () => {
+    if (!boostData) {
+      console.log('📝 No boost data - proceeding with regular stream');
+      return true;
+    }
+
+    console.log('✅ Boost already activated during purchase - proceeding with stream');
+    console.log('🔍 Boost data received:', {
+      transactionId: boostData.transactionId,
+      tier: boostData.tier,
+      duration: boostData.duration,
+      price: boostData.price
+    });
+    
+    return true;
+  };
+
   // Production MUX streaming with comprehensive data flow validation
   const startStreaming = async () => {
     console.log('🚀 Starting stream process...');
@@ -221,6 +393,38 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     console.log('📱 Device check:', { device: !!device, hasPermission });
     console.log('🎬 RTMP ref check:', { rtmpCurrent: !!rtmp.current });
     console.log('🔧 Streaming helper check:', { streamingHelper: !!streamingHelper });
+    
+    // Debug boost data before activation
+    console.log('🔍 Boost data check:', {
+      hasBoostData: !!boostData,
+      boostData: boostData,
+      streamEventType,
+      streamTitle
+    });
+
+    // Activate boost first if available
+    console.log('🚀 About to call activateBoost()...');
+    console.log('🔍 ActivateBoost function exists:', typeof activateBoost);
+    
+    let boostActivated = false;
+    try {
+      boostActivated = await activateBoost();
+      console.log('✅ ActivateBoost completed with result:', boostActivated);
+    } catch (activateError) {
+      console.error('❌ ActivateBoost threw error:', activateError);
+      boostActivated = false;
+    }
+    
+    if (boostData && !boostActivated) {
+      console.log('❌ Boost activation failed - aborting stream start');
+      return;
+    }
+    
+    // Add delay after boost activation to ensure database is updated
+    if (boostData && boostActivated) {
+      console.log('⏳ Waiting for boost activation to propagate...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
     
     if (!streamKey || !playbackId) {
       console.error('❌ Stream credentials not available');
@@ -325,7 +529,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         if (socketInstance) {
           socketInstance.emit('start-streaming', {
             token: currentUser?.email,
-            streamId: playbackId,
+            streamId: streamId, // Send MUX stream ID for proper tracking
             coordinates,
             streamEventType: streamEventType || 'default',
             streamTitle: streamTitle || 'Untitled Stream',
@@ -373,7 +577,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       if (socketInstance) {
         socketInstance.emit('stop-streaming', {
           token: currentUser?.email,
-          streamId: playbackId
+          streamId: streamId // Send MUX stream ID for proper termination
         });
       }
       
@@ -499,12 +703,18 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           <Button
             title={isStreaming ? 'Stop Streaming' : 'Start Streaming'}
             onPress={() => {
-              console.log('🎯 Button pressed!', { isStreaming, device: !!device, streamKey: !!streamKey });
+              console.log('🎯 Start Streaming Button pressed!', { 
+                isStreaming, 
+                device: !!device, 
+                streamKey: !!streamKey,
+                hasBoostData: !!boostData,
+                boostData: boostData
+              });
               if (isStreaming) {
                 console.log('🛑 Calling stopStreaming...');
                 stopStreaming();
               } else {
-                console.log('🚀 Calling startStreaming...');
+                console.log('🚀 Calling startStreaming with boost data...');
                 startStreaming();
               }
             }}

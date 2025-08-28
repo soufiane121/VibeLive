@@ -15,6 +15,7 @@ import {
 import React, {useState, useEffect, useRef} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
 import {GlobalColors} from '../styles/GlobalColors';
+import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
 
 const colors = GlobalColors.BoostFOMOFlow;
 // import { LinearGradient } from 'react-native-linear-gradient';
@@ -135,6 +136,9 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const [selectedTier, setSelectedTier] = useState<BoostTier | null>(null);
   const [boostData, setBoostData] = useState<BoostPurchaseData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // RTK Query mutation for boost activation
+  const [boostStream, {isLoading: isBoostLoading}] = useBoostStreamMutation();
 
   // FOMO state
   const [timeLeft, setTimeLeft] = useState(1847); // 30:47 in seconds
@@ -283,6 +287,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   };
 
   const handleSkipBoost = () => {
+    console.log('🚫 User skipped boost - proceeding without boost data');
     trackEvent('boost_skipped', {
       category: selectedCategory,
       title: title.trim(),
@@ -290,6 +295,11 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       timestamp: new Date().toISOString(),
     });
 
+    console.log('📤 Calling onCompleteSelection without boost data:', {
+      value: selectedCategory,
+      title: title.trim(),
+      boostData: null
+    });
     onCompleteSelection({value: selectedCategory, title: title.trim()});
   };
 
@@ -310,13 +320,37 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     setCurrentStep('processing');
 
     try {
-      // Mock payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('🚀 Starting mock boost purchase process:', {
+        tier: selectedTier.id,
+        duration: selectedTier.duration,
+        price: selectedTier.price,
+        category: selectedCategory,
+        title: title.trim()
+      });
 
-      // Mock successful purchase
+      // Mock payment processing - simulate 2 second delay
+      console.log('💳 Simulating payment processing...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('✅ Mock payment successful');
+
+      // Generate transaction ID
       const transactionId = `boost_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`;
+
+      // Call backend boost activation endpoint using RTK Query
+      console.log('🚀 Calling backend boost activation API...');
+      const boostResult = await boostStream({
+        transactionId,
+        tier: selectedTier.id,
+        duration: selectedTier.duration,
+        price: selectedTier.price,
+        category: selectedCategory,
+        title: title.trim(),
+        receipt: `mock_receipt_${transactionId}`
+      }).unwrap();
+
+      console.log('✅ Backend boost activation successful:', boostResult);
 
       const purchaseData: BoostPurchaseData = {
         tier: selectedTier.id,
@@ -330,6 +364,8 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       setBoostData(purchaseData);
       setCurrentStep('confirmation');
 
+      console.log('🎉 Boost purchase completed successfully:', purchaseData);
+
       trackEvent('boost_purchased', {
         tier: selectedTier.id,
         price: selectedTier.price,
@@ -338,11 +374,12 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         transactionId,
         timestamp: new Date().toISOString(),
       });
-    } catch (error) {
-      console.error('Boost purchase failed:', error);
+    } catch (error: any) {
+      console.error('❌ Boost purchase failed:', error);
+      console.error('❌ Error details:', JSON.stringify(error, null, 2));
       Alert.alert(
         'Purchase Failed',
-        'Unable to complete your boost purchase. Please try again.',
+        `Unable to complete your boost purchase: ${error?.data?.error || error?.message || 'Unknown error'}`,
         [
           {text: 'Try Again', onPress: () => setCurrentStep('boost_tiers')},
           {text: 'Skip Boost', onPress: handleSkipBoost},
@@ -352,7 +389,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       trackEvent('boost_purchase_failed', {
         tier: selectedTier.id,
         category: selectedCategory,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error?.data?.error || error?.message || 'Unknown error',
         timestamp: new Date().toISOString(),
       });
     } finally {
@@ -361,6 +398,12 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   };
 
   const handleBoostConfirmation = () => {
+    console.log('🎉 User confirmed boost purchase - proceeding with boost data');
+    console.log('📤 Calling onCompleteSelection WITH boost data:', {
+      value: selectedCategory,
+      boostData: boostData,
+      title: title.trim()
+    });
     onCompleteSelection({
       value: selectedCategory,
       boostData: boostData!,

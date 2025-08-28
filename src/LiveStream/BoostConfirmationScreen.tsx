@@ -230,7 +230,7 @@ export const BoostConfirmationScreen: React.FC<BoostConfirmationScreenProps> = (
               colors={config.gradient}
               style={styles.buttonGradient}>
               <Text style={styles.continueButtonText}>
-                Start Boosted Stream 🚀
+                Start Boosted Stream
               </Text>
             </LinearGradient>
           </TouchableOpacity>
