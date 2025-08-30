@@ -27,8 +27,8 @@ const liveStreams = [
 const CarrouselContainer = () => {
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const {groupedData, parentGroupStreamId} = useRoute()?.params || [];
-
+  const {groupedData , parentData} = useRoute()?.params || [];
+  
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     if (viewableItems.length > 0) {
       setCurrentIndex(viewableItems[0].index);
@@ -40,7 +40,7 @@ const CarrouselContainer = () => {
       <FlatList
         ref={flatListRef}
         data={groupedData}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item?.properties?.id}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -48,16 +48,15 @@ const CarrouselContainer = () => {
           return (
             <View style={{width, height}}>
               <StreamPlayer
-                streamId={
-                  item.properties?.streamId
-                }
+                streamId={item.properties?.liveDetails?.streamId}
                 userId={item.properties?.userId || ''}
                 liveDetails={item.properties?.liveDetails || {}}
                 coordinates={item.properties?.coordinates || []}
-                parentGroupStreamId={parentGroupStreamId || ""}
+                parentGroupStreamId={parentData?.properties?.streamId || ''}
               />
             </View>
-          );}}
+          );
+        }}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{itemVisiblePercentThreshold: 80}}
       />

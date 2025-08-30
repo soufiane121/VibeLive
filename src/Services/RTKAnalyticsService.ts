@@ -67,14 +67,14 @@ class RTKAnalyticsService {
       this.startPeriodicFlush();
 
       if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-        console.log('📊 RTK Analytics Service initialized', {
-          sessionId: this.sessionId,
-          deviceInfo: this.deviceInfo
-        });
+        // console.log('📊 RTK Analytics Service initialized', {
+        //   sessionId: this.sessionId,
+        //   deviceInfo: this.deviceInfo
+        // });
       }
 
     } catch (error) {
-      console.error('Failed to initialize RTK Analytics Service:', error);
+      // console.error('Failed to initialize RTK Analytics Service:', error);
     }
   }
 
@@ -82,7 +82,7 @@ class RTKAnalyticsService {
   public configure(baseURL: string, authToken: string): void {
     // RTK Analytics doesn't need manual configuration since it uses RTK Query
     if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-      console.log('📊 RTK Analytics Service configure called (handled by RTK Query)');
+      // console.log('📊 RTK Analytics Service configure called (handled by RTK Query)');
     }
   }
 
@@ -98,16 +98,16 @@ class RTKAnalyticsService {
     this.trackEventMutation = mutations.trackEvent;
     this.trackEventsBatchMutation = mutations.trackEventsBatch;
 
-    if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-      console.log('📊 RTK Analytics Service configured with mutations');
-    }
+    // if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
+    //   console.log('📊 RTK Analytics Service configured with mutations');
+    // }
   }
 
   // Update user context
   public updateUserContext(context: Partial<UserContext>): void {
     this.userContext = { ...this.userContext, ...context };
     if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-      console.log('📊 User context updated:', this.userContext);
+      // console.log('📊 User context updated:', this.userContext);
     }
   }
 
@@ -124,7 +124,7 @@ class RTKAnalyticsService {
       // Check for duplicate events within the deduplication window
       if (this.recentEvents.has(eventKey)) {
         if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-          console.log('📊 Duplicate event prevented:', eventType);
+          // console.log('📊 Duplicate event prevented:', eventType);
         }
         return;
       }
@@ -159,11 +159,11 @@ class RTKAnalyticsService {
       }
 
       if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-        console.log('📊 Event tracked:', { eventType, eventCategory, eventData });
+        // console.log('📊 Event tracked:', { eventType, eventCategory, eventData });
       }
 
     } catch (error) {
-      console.error('Failed to track event:', error);
+      // console.error('Failed to track event:', error);
     }
   }
 
@@ -176,7 +176,7 @@ class RTKAnalyticsService {
         
         if (this.recentEvents.has(eventKey)) {
           if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-            console.log('📊 Duplicate batch event prevented:', event.eventType);
+            // console.log('📊 Duplicate batch event prevented:', event.eventType);
           }
           return false;
         }
@@ -194,11 +194,11 @@ class RTKAnalyticsService {
       await this.flushEvents();
 
       if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-        console.log(`📊 Batch of ${uniqueEvents.length}/${events.length} unique events tracked`);
+        // console.log(`📊 Batch of ${uniqueEvents.length}/${events.length} unique events tracked`);
       }
 
     } catch (error) {
-      console.error('Failed to track events batch:', error);
+      // console.error('Failed to track events batch:', error);
     }
   }
 
@@ -230,13 +230,13 @@ class RTKAnalyticsService {
           }
         } catch (error) {
           if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-            console.warn('⚠️ Failed to send session start to backend:', error);
+            // console.warn('⚠️ Failed to send session start to backend:', error);
           }
         }
       }
 
     } catch (error) {
-      console.error('Failed to track session start:', error);
+      // console.error('Failed to track session start:', error);
     }
   }
 
@@ -246,7 +246,7 @@ class RTKAnalyticsService {
       // Prevent duplicate session end events
       if (this.sessionEnded) {
         if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-          console.log('📊 Session already ended, skipping duplicate trackSessionEnd');
+          // console.log('📊 Session already ended, skipping duplicate trackSessionEnd');
         }
         return;
       }
@@ -274,17 +274,17 @@ class RTKAnalyticsService {
           }).unwrap();
 
           if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-            console.log('📊 Session end sent to backend successfully');
+            // console.log('📊 Session end sent to backend successfully');
           }
         } catch (error) {
           if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-            console.warn('⚠️ Failed to send session end to backend:', error);
+            // console.warn('⚠️ Failed to send session end to backend:', error);
           }
         }
       }
 
     } catch (error) {
-      console.error('Failed to track session end:', error);
+      // console.error('Failed to track session end:', error);
     }
   }
 
@@ -395,12 +395,12 @@ class RTKAnalyticsService {
       }).unwrap();
 
       if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-        console.log(`📊 Successfully sent ${eventsToSend.length} analytics events to backend`);
+        // console.log(`📊 Successfully sent ${eventsToSend.length} analytics events to backend`);
       }
 
     } catch (error) {
       if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-        console.warn('⚠️ Failed to flush analytics events:', error);
+        // console.warn('⚠️ Failed to flush analytics events:', error);
       }
       // Events are already removed from queue, but we could implement retry logic here
     }
@@ -428,7 +428,7 @@ class RTKAnalyticsService {
         deviceId: this.generateUUID()
       };
     } catch (error) {
-      console.error('Failed to get device info:', error);
+      // console.error('Failed to get device info:', error);
       return {
         platform: Platform.OS,
         osVersion: 'unknown',

@@ -123,11 +123,11 @@ class AnalyticsService {
       // Add to queue
       this.eventQueue.push(event);
 
-      console.log('📊 Analytics Event Tracked:', {
-        eventType,
-        eventCategory: eventCategory || this.categorizeEvent(eventType),
-        eventData
-      });
+      // console.log('📊 Analytics Event Tracked:', {
+      //   eventType,
+      //   eventCategory: eventCategory || this.categorizeEvent(eventType),
+      //   eventData
+      // });
 
       // Auto-flush if queue is full
       if (this.eventQueue.length >= this.batchSize) {

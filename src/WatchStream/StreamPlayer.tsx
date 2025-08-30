@@ -19,13 +19,13 @@ import {useEffect, useState} from 'react';
 import {CloseIcon, EyeViewsIcon} from '../UIComponents/Icons';
 import {formatToKSymbol} from '../Utils/helperFuncs';
 import ChatList from './ChatList';
-import { GlobalColors } from '../styles/GlobalColors';
+import {GlobalColors} from '../styles/GlobalColors';
 import FloatingEmojiReactions from '../FloatingAction/EmojiAnimation';
 import {
   useAddFollowMutation,
   useRemoveFollowMutation,
 } from '../../features/LiveStream/LiveStream';
-import { setCurrentUser } from '../../features/registrations/CurrentUser';
+import {setCurrentUser} from '../../features/registrations/CurrentUser';
 
 const colors = GlobalColors.StreamPlayer;
 
@@ -49,22 +49,35 @@ type Props = {
 const StreamPlayer = (props: Props) => {
   // Get data from navigation if available, otherwise use direct props
   const navigationState = useNavigationState(state => {
-    const route = state.routes.find(r => r.name === 'carrouselSwiper');
+    const route = state.routes.find(
+      r => r.name === 'carrouselSwiper' || r.name === 'StreamPlayer',
+    );
     return route?.params as NavigationData | undefined;
   });
-  
+
   // Use navigation data if available, otherwise use direct props
   // At least one of them must be provided
-  const streamId = navigationState?.properties?.streamId || props.streamId;
-  const userId = navigationState?.properties?.userId || props.userId;
-  
+  const streamId =
+    navigationState?.parentData?.properties?.liveDetails?.playbackId ||
+    navigationState?.parentData?.playbackId ||
+    props?.liveDetails?.playbackId;
+  const userId =
+    navigationState?.parentData?.properties?.userId ||
+    navigationState?.parentData?.userId ||
+    props?.userId;
+
   // if (!streamId || !userId) {
   //   console.error('StreamPlayer: Missing required streamId or userId');
   //   return null;
   // }
-  
-  const liveDetails = navigationState?.properties?.liveDetails || props.liveDetails || {};
-  const coordinates = (navigationState?.properties?.coordinates || props.coordinates || []) as string[];
+
+  const liveDetails =
+    navigationState?.parentData?.properties?.liveDetails ||
+    props.liveDetails ||
+    {};
+  const coordinates = (navigationState?.parentData?.properties?.coordinates ||
+    props.coordinates ||
+    []) as string[];
   const dispatch = useDispatch();
   const [addFollow] = useAddFollowMutation();
   const [removeFollow] = useRemoveFollowMutation();
@@ -111,7 +124,6 @@ const StreamPlayer = (props: Props) => {
   }, [socket]);
 
   const handleFollowAndUnfollow = async (e: any) => {
-
     try {
       if (areYouFollowing) {
         const resp = await removeFollow({
@@ -179,7 +191,7 @@ const StreamPlayer = (props: Props) => {
                 transform: [{translateX: titleAnim}],
               }}
               numberOfLines={1}>
-              {liveDetails?.title || "DJ vibe from rooftop don't miss it"}
+              {liveDetails?.streamTitle || "DJ vibe from rooftop don't miss it"}
             </Animated.Text>
           </View>
           <View style={styles.liveInfoContainer}>
@@ -210,30 +222,41 @@ const StreamPlayer = (props: Props) => {
         </View>
       </View>
       <MuxVideo
-        style={{height: '100%', width: '100%'}}
+        style={styles.muxVideo}
         source={{
           uri: `https://stream.mux.com/${streamId}.m3u8`,
         }}
         fullscreen={true}
         paused={false}
-        // resizeMode="contain"
-        poster={{
-          source: {
-            uri: `https://image.mux.com/${streamId}/thumbnail.png?height=121&time=25&width=214&fit_mode=preserve`,
-          },
-          // resizeMode: 'cover',
-          // ...
-        }}
+        resizeMode="contain"
+        // Remove poster for live streams to avoid blocking live content
+        // poster={{
+        //   source: {
+        //     uri: `https://image.mux.com/${streamId}/thumbnail.png?height=121&time=25&width=214&fit_mode=preserve`,
+        //   },
+        // }}
         muted={false}
+        bufferConfig={{
+          minBufferMs: 1000, // Minimum buffer for live streams
+          maxBufferMs: 3000, // Maximum buffer to reduce latency
+          bufferForPlaybackMs: 500, // Start playback quickly
+          bufferForPlaybackAfterRebufferMs: 1000,
+        }}
+        playInBackground={false}
+        playWhenInactive={false}
+        ignoreSilentSwitch="ignore"
+        automaticallyWaitsToMinimizeStalling={false}
+        controls={false}
+        repeat={false}
         muxOptions={{
-          application_name: 'test', // (required) the name of your application
-          application_version: '1', // the version of your application (optional, but encouraged)
+          application_name: 'VibeLive', // (required) the name of your application
+          application_version: '1.0.0', // the version of your application (optional, but encouraged)
           data: {
             env_key: MAPBOX_ENV_KEY, // (required)
-            video_id: 'My Video Id', // (required)
-            video_title: 'My awesome video',
-            player_software_version: '5.0.2', // (optional, but encouraged) the version of react-native-video that you are using
-            player_name: 'React Native Player', // See metadata docs for available metadata fields /docs/web-integration-guide#section-5-add-metadata
+            video_id: streamId, // Use actual stream ID
+            video_title: liveDetails?.streamTitle || 'Live Stream',
+            player_software_version: '6.0.0', // Updated version
+            player_name: 'VibeLive Player', // See metadata docs for available metadata fields /docs/web-integration-guide#section-5-add-metadata
           },
         }}
       />
@@ -251,6 +274,16 @@ const StreamPlayer = (props: Props) => {
 };
 
 const styles = StyleSheet.create({
+  muxVideo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'black',
+    zIndex: 1,
+    // transform: [{rotate: '0deg'}, {scaleX: 1}],
+  },
   safeHeaderArea: {
     // backgroundColor: 'black',
   },

@@ -18,7 +18,7 @@ import {useSocketInstance} from '../CustomHooks/useSocketInstance';
 import FloatingActionButton from '../FloatingAction/FloatingButton';
 import {useDispatch} from 'react-redux';
 import {addReaction} from '../../features/LiveStream/LiveStreamSlice';
-import { GlobalColors } from '../styles/GlobalColors';
+import {GlobalColors} from '../styles/GlobalColors';
 
 const colors = GlobalColors.ChatList;
 
@@ -27,12 +27,14 @@ const NON_FADED_COUNT = 4; // Keep last 3 messages fully visible
 
 interface Props {
   streamId: string;
-  userId: string;
-  liveDetails: Object;
-  coordinates: string[]
+  userId?: string;
+  liveDetails?: Object;
+  coordinates?: string[];
   parentGroupStreamId?: string;
+  showInput?: boolean;
 }
 const ChatList = (props: Props) => {
+  const {showInput = true} = props;
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef(null);
@@ -89,13 +91,10 @@ const ChatList = (props: Props) => {
     flatListRef.current?.scrollToEnd({animated: true});
   }, [messages]);
 
-  console.log({props});
   const sendReactions = (reactEmogi: string) => {
     let isThrottled = false;
     if (!isThrottled) {
-      dispatch(
-        addReaction({id: props?.streamId, emoji: reactEmogi}),
-      );
+      dispatch(addReaction({id: props?.streamId, emoji: reactEmogi}));
       emitEvent('reaction-to-stream', {
         roomName: props?.streamId,
         streamerId: props.userId,
@@ -137,7 +136,7 @@ const ChatList = (props: Props) => {
   useEffect(() => {
     if (socket) {
       emitEvent('join-chat-room', {
-        roomName: props?.streamId,
+        roomName: props?.liveDetails?.streamId,
       });
     }
 
@@ -184,28 +183,30 @@ const ChatList = (props: Props) => {
       </View>
 
       {/* Fixed Chat Input */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.footer}>
-        <View style={styles.inputWrraper}>
-          <TextInput
-            style={styles.input}
-            placeholder="Comment..."
-            placeholderTextColor={colors.inputPlaceholder}
-            value={inputText}
-            onChangeText={setInputText}
-            onPress={Keyboard.dismiss}
-          />
-          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-            {/* <Text style={styles.sendText}>➤</Text> */}
-            <SendIcon style={styles.sendText} />
+      {showInput && (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.footer}>
+          <View style={styles.inputWrraper}>
+            <TextInput
+              style={styles.input}
+              placeholder="Comment..."
+              placeholderTextColor={colors.inputPlaceholder}
+              value={inputText}
+              onChangeText={setInputText}
+              onPress={Keyboard.dismiss}
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+              {/* <Text style={styles.sendText}>➤</Text> */}
+              <SendIcon style={styles.sendText} />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.reactionButton}>
+            {/* <Text style={styles.reactionIcon}>❤️</Text> */}
+            <FloatingActionButton sendReactions={sendReactions} />
           </TouchableOpacity>
-        </View>
-        <TouchableOpacity style={styles.reactionButton}>
-          {/* <Text style={styles.reactionIcon}>❤️</Text> */}
-          <FloatingActionButton sendReactions={sendReactions} />
-        </TouchableOpacity>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      )}
     </View>
   );
 };

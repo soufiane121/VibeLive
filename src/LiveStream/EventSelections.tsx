@@ -1341,7 +1341,7 @@ const styles = StyleSheet.create({
   boostButton: {
     backgroundColor: colors.primary,
     paddingVertical: 16,
-    borderRadius: 25,
+    borderRadius: 15,
     marginBottom: 12,
   },
   boostButtonText: {

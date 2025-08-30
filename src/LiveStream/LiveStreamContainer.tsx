@@ -11,7 +11,15 @@ import {
   Dimensions,
 } from 'react-native';
 // Using existing icon components from the app
-import { CameraIcon, CameraReverseIcon, MicrophoneIcon, MicrophoneSlashIcon, CloseIcon, PlayIcon, StopIcon } from '../UIComponents/Icons';
+import {
+  CameraIcon,
+  CameraReverseIcon,
+  MicrophoneIcon,
+  MicrophoneSlashIcon,
+  CloseIcon,
+  PlayIcon,
+  StopIcon,
+} from '../UIComponents/Icons';
 import EndStreamModal from './EndStreamModal';
 import {
   Camera,
@@ -26,7 +34,8 @@ import {baseUrl} from '../../baseUrl';
 import {useSelector} from 'react-redux';
 import useGetLocation from '../CustomHooks/useGetLocation';
 import RTMPStreamingHelper from './RTMPStreamingHelper';
-import { useNavigation, CommonActions } from '@react-navigation/native';
+import {useNavigation, CommonActions} from '@react-navigation/native';
+import ChatList from '../WatchStream/ChatList';
 
 interface BoostPurchaseData {
   tier: 'basic' | 'premium' | 'ultimate' | 'visibility' | 'prime' | 'viral';
@@ -50,7 +59,6 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const {coordinates} = useGetLocation();
   const [fetchStartStream, {data, isLoading, isSuccess}] =
     useStartStreamingMutation();
-  const [boostStream] = useBoostStreamMutation();
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamKey, setStreamKey] = useState<string | null>(null);
   const [playbackId, setPlaybackId] = useState<string | null>(null);
@@ -87,7 +95,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, '0')}:${secs
+      .toString()
+      .padStart(2, '0')}`;
   };
 
   // Start duration timer
@@ -95,7 +105,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     if (durationTimer.current) clearInterval(durationTimer.current);
     setStreamStartTime(Date.now());
     setStreamDuration(0);
-    
+
     durationTimer.current = setInterval(() => {
       setStreamDuration(prev => prev + 1);
     }, 1000);
@@ -126,7 +136,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     } else {
       // Stop duration timer if running
       stopDurationTimer();
-      
+
       // Stop RTMP publisher and camera completely
       if (rtmp.current) {
         try {
@@ -142,16 +152,15 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           }
           // Clear the ref to ensure complete cleanup
           rtmp.current = null;
-        } catch (error) {
-        }
+        } catch (error) {}
       }
-      
+
       // Cleanup socket connection
       if (socketInstance) {
         socketInstance.disconnect();
         setSocketInstance(null);
       }
-      
+
       // Reset all streaming states
       setIsStreaming(false);
       setStreamHealth('disconnected');
@@ -161,18 +170,18 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       setStreamKey(null);
       setPlaybackId(null);
       setStreamId(null);
-      
+
       // Force a small delay to ensure cleanup completes
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // Navigate back to the Map tab in the bottom navigation
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
           routes: [
-            { name: 'Map' } // This will reset to the Map tab in the bottom navigation
-          ]
-        })
+            {name: 'Map'}, // This will reset to the Map tab in the bottom navigation
+          ],
+        }),
       );
     }
   };
@@ -201,13 +210,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             rtmp.current.release();
           }
           rtmp.current = null; // Clear the ref
-        } catch (error) {
-        }
+        } catch (error) {}
       }
-      
+
       // Stop timers
       stopDurationTimer();
-      
+
       // Disconnect socket
       if (socketInstance) {
         socketInstance.disconnect();
@@ -227,14 +235,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         if (Platform.OS === 'ios') {
           try {
             NodeMediaClient.setAudioSessionMode(1); // AVAudioSessionModeVideoRecording
-          } catch (e) {
-          }
+          } catch (e) {}
         }
 
         // Create stream after proper initialization with retry
         setTimeout(() => createStream(), 1000); // Wait for user auth
-      } catch (error) {
-      }
+      } catch (error) {}
     };
 
     initializeStreaming();
@@ -250,23 +256,20 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           rtmp.current.stopPreview();
         }
         rtmp.current = null; // Clear the ref
-      } catch (error) {
-      }
+      } catch (error) {}
     }
   }, [device]);
 
   // Initialize NodePublisher camera capture when component mounts
   useEffect(() => {
     const initializeNodePublisher = () => {
-
       // Wait for NodePublisher to be mounted and ready
       setTimeout(() => {
         if (rtmp.current) {
           try {
             // The NodePublisher should now be ready to capture camera frames
             // when start() is called during streaming
-          } catch (error) {
-          }
+          } catch (error) {}
         } else {
           // Handle error silently
         }
@@ -297,8 +300,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           try {
             rtmp.current.stop();
             rtmp.current.release();
-          } catch (error) {
-          }
+          } catch (error) {}
         }
 
         // Force update state
@@ -320,8 +322,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           try {
             rtmp.current.stop();
             rtmp.current.release();
-          } catch (error) {
-          }
+          } catch (error) {}
         }
 
         // Force update all streaming states
@@ -441,8 +442,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setStreamId(response.data.id); // Store the MUX stream ID for tracking
       } else {
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   // Boost activation is now handled in EventSelections.tsx during purchase
@@ -526,13 +526,11 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             if (rtmp.current.startPreview) {
               rtmp.current.startPreview();
             }
-          } catch (previewError) {
-          }
+          } catch (previewError) {}
 
           // Verify camera is active and capturing
         }
-      } catch (error) {
-      }
+      } catch (error) {}
 
       // Start streaming through helper
       const success = await streamingHelper.startStreaming(streamConfig);
@@ -542,9 +540,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
 
         // Notify backend
         if (socketInstance) {
+          console.log("we sent data to backed ");
+          
           socketInstance.emit('start-streaming', {
             token: currentUser?.email,
             streamId: streamId, // Send MUX stream ID for proper tracking
+            playbackId: playbackId, // Send MUX playback ID for streaming
             coordinates,
             streamEventType: streamEventType || 'default',
             streamTitle: streamTitle || 'Untitled Stream',
@@ -599,7 +600,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   };
 
   return (
-    <View style={styles.container}>      
+    <View style={styles.container}>
       {/* Header with LIVE indicator, viewer count, timer, and close button */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -608,9 +609,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           </View>
           <Text style={styles.viewerCount}>{viewerCount}K</Text>
         </View>
-        
+
         <Text style={styles.timer}>{formatDuration(streamDuration)}</Text>
-        
+
         <TouchableOpacity style={styles.closeButton} onPress={handleClosePress}>
           <CloseIcon size={24} color="white" />
         </TouchableOpacity>
@@ -624,152 +625,116 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             <Text style={styles.placeholderText}>Live Camera Feed</Text>
           </View>
         )}
-        
+
         {device && (
           <>
-
-          {/* NodePublisher for Streaming - Simplified configuration to avoid authorization issues */}
-          <NodePublisher
-            ref={rtmp}
-            style={[{
-              height: '120%',
-              width: '100%',
-              opacity: 1,
-              zIndex: 1,
-              marginTop: 100,
-              position: 'absolute',
-            }, cameraPosition === 'front' 
-              ? { transform: [{ rotate: '-0deg' }] }
-              : { transform: [{ rotate: '0deg' }, { scaleX: 1 }] }
-            ]}
-            url={
-              streamKey
-                ? `rtmps://global-live.mux.com:443/app/${streamKey}`
-                : ''
-            }
-            autoStart={isStreaming}
-            isPreview={!isStreaming}
-            audioParam={{
-              codecid: NodePublisher.NMC_CODEC_ID_AAC,
-              profile: NodePublisher.NMC_PROFILE_BASELINE,
-              samplerate: 44100,
-              channels: 2,
-              bitrate: 96000, // Lower audio bitrate for reduced latency
-            }}
-            videoParam={{
-              codecid: NodePublisher.NMC_CODEC_ID_H264,
-              profile: NodePublisher.NMC_PROFILE_BASELINE,
-              width: 1280, // Higher resolution for MUX
-              height: 720, // Landscape orientation for better data flow
-              fps: 30,
-              bitrate: 2500000, // Optimized for low latency vs quality balance
-              preset: 0, // Ultrafast preset for minimum latency
-              videoFrontMirror: false, // Disable mirror for streaming
-              videoBitrateMode: 1, // CBR mode for consistent low latency
-              bufferTime: 300, // Ultra minimal buffer (300ms)
-              keyFrameInterval: 1, // Every 1 second for quick recovery
-              bFrames: 0, // No B-frames for lowest latency
-            }}
-            frontCamera={cameraPosition === 'front' ? true : false}
-            HWAccelEnable={true}
-            denoiseEnable={false} // Disable for lower latency
-            keyFrameInterval={1} // Frequent keyframes for quick recovery
-            videoOrientation={NodePublisher.VIDEO_ORIENTATION_PORTRAIT}
-            videoFrontMirror={cameraPosition === 'front'}
-            smoothSkinEnable={false} // Disable beauty filters for speed
-            videoPreviewMirror={false} // No mirror for streaming
-            audioEnable={true} // Ensure audio capture
-            videoEnable={true} // Ensure video capture
-            lowLatencyMode={true} // Enable low latency mode if available
-            onStatus={(status: any) => {
-              console.log('📊 MUX Stream Status:', status);
-              console.log(
-                '📊 Status details - Code:',
-                status.code,
-                'Message:',
-                status.msg,
-              );
-
-              // Enhanced status handling for MUX reliability with frame capture verification
-              if (status.code === 2001) {
-                console.log(
-                  '✅ Successfully connected to MUX - RTMP handshake complete',
-                );
-                setStreamHealth('stable');
-              } else if (status.code === 2002) {
-                console.log(
-                  '🎥 Stream publishing started - Camera frames being sent to MUX',
-                );
-                setStreamHealth('stable');
-                setDataFlowActive(true);
-              } else if (status.code === 2004) {
-                console.log(
-                  '📡 Stream data actively flowing to MUX - Video frames confirmed',
-                );
-                setStreamHealth('stable');
-                setDataFlowActive(true);
-              } else if (status.code === 2000) {
-                console.log(
-                  '🔄 Stream initialized - Preparing to send camera data',
-                );
-              } else if (status.code >= 2100) {
-                console.error('❌ MUX Stream error:', status);
-                console.error(
-                  '❌ This may indicate insufficient camera frame data',
-                );
-                setStreamHealth('unstable');
-
-                // Auto-reconnect on MUX errors - DISABLED to prevent unwanted restarts
-                console.log(
-                  '❌ Stream error detected but auto-reconnect is disabled',
-                );
-                console.log(
-                  '❌ Manual restart required to avoid unwanted stream restarts',
-                );
-                setIsStreaming(false);
-                setStreamHealth('disconnected');
-              } else if (status.code === 2003) {
-                console.warn(
-                  '⚠️ MUX connection lost - Camera frame transmission interrupted',
-                );
-                setStreamHealth('disconnected');
-              } else {
-                console.log('ℹ️ Unknown status code:', status.code, status.msg);
+            {/* NodePublisher for Streaming - Simplified configuration to avoid authorization issues */}
+            <View style={styles.cameraAspectContainer}>
+              <NodePublisher
+                ref={rtmp}
+                style={[
+                  styles.cameraPreview,
+                  cameraPosition === 'front'
+                    ? {transform: [{rotate: '-0deg'}]}
+                    : {transform: [{rotate: '0deg'}, {scaleX: 1}]},
+                ]}
+              url={
+                streamKey
+                  ? `rtmps://global-live.mux.com:443/app/${streamKey}`
+                  : ''
               }
-            }}
-          />
+              autoStart={isStreaming}
+              isPreview={!isStreaming}
+              audioParam={{
+                codecid: NodePublisher.NMC_CODEC_ID_AAC,
+                profile: NodePublisher.NMC_PROFILE_BASELINE,
+                samplerate: 44100,
+                channels: 2,
+                bitrate: 96000, // Lower audio bitrate for reduced latency
+              }}
+              videoParam={{
+                codecid: NodePublisher.NMC_CODEC_ID_H264,
+                profile: NodePublisher.NMC_PROFILE_BASELINE,
+                width: 405,  // 9:16 aspect ratio width for 720p height
+                height: 720, // 720p height
+                fps: 30,
+                bitrate: 1500000, // Adjusted bitrate for 720p
+                preset: 0, // Ultrafast preset for minimum latency
+                videoFrontMirror: false, // Disable mirror for streaming
+                videoBitrateMode: 1, // CBR mode for consistent low latency
+                bufferTime: 300, // Ultra minimal buffer (300ms)
+                keyFrameInterval: 1, // Every 1 second for quick recovery
+                bFrames: 0, // No B-frames for lowest latency
+              }}
+              frontCamera={cameraPosition === 'front' ? true : false}
+              HWAccelEnable={true}
+              denoiseEnable={false} // Disable for lower latency
+              keyFrameInterval={1} // Frequent keyframes for quick recovery
+              videoOrientation={NodePublisher.VIDEO_ORIENTATION_PORTRAIT}
+              videoFrontMirror={cameraPosition === 'front'}
+              smoothSkinEnable={false} // Disable beauty filters for speed
+              videoPreviewMirror={false} // No mirror for streaming
+              audioEnable={isMuted ? false : true} // Ensure audio capture
+              videoEnable={true} // Ensure video capture
+              lowLatencyMode={true} // Enable low latency mode if available
+              onStatus={(status: any) => {
+                // Enhanced status handling for MUX reliability with frame capture verification
+                if (status.code === 2001) {
+                  console.log('✅ Successfully connected to MUX - RTMP handshake complete');
+                  setStreamHealth('stable');
+                } else if (status.code === 2002) {
+                  console.log('🎥 Stream publishing started - Camera frames being sent to MUX');
+                  setStreamHealth('stable');
+                  setDataFlowActive(true);
+                } else if (status.code === 2004) {
+                  console.log('📡 Stream data actively flowing to MUX - Video frames confirmed');
+                  setStreamHealth('stable');
+                  setDataFlowActive(true);
+                } else if (status.code < 0) {
+                  // Error codes are negative
+                  console.error('❌ Streaming error:', status.msg);
+                  setStreamHealth('disconnected');
+                  setDataFlowActive(false);
+                }
+              }}
+            />
+            </View>
           </>
         )}
       </View>
-      
+
       {/* Control Panel */}
       <View style={styles.controlPanel}>
         {/* Main Stream Button */}
         <TouchableOpacity
-          style={[styles.streamButton, isStreaming ? styles.stopButton : styles.startButton]}
+          style={[
+            styles.streamButton,
+            isStreaming ? styles.stopButton : styles.startButton,
+          ]}
           onPress={() => {
-            if (isStreaming) {
-              handleClosePress(); // Show confirmation modal
-            } else {
-              startStreaming();
-            }
-          }}
-        >
-          {isStreaming ? (
+            // if (isStreaming) {
+            //   handleClosePress(); // Show confirmation modal
+            // } else {
+            //   startStreaming();
+            // }
+            startStreaming();
+          }}>
+          {/* {isStreaming ? (
             <StopIcon size={24} color="white" />
           ) : (
             <PlayIcon size={24} color="white" />
-          )}
+          )} */}
+          <Text style={styles.streamButtonText}>Go Live</Text>
         </TouchableOpacity>
       </View>
-      
+
       {/* Side Controls */}
       <View style={styles.sideControls}>
         {/* Camera Toggle */}
         <TouchableOpacity style={styles.controlButton} onPress={toggleCamera}>
           <CameraReverseIcon size={24} color="white" />
         </TouchableOpacity>
-        
+
         {/* Microphone Toggle */}
         <TouchableOpacity style={styles.controlButton} onPress={toggleMute}>
           {isMuted ? (
@@ -778,9 +743,15 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             <MicrophoneIcon size={24} color="white" />
           )}
         </TouchableOpacity>
-        
       </View>
-      
+      {isStreaming && streamId && coordinates && (
+        <ChatList
+          streamId={streamId}
+          coordinates={coordinates}
+          showInput={false}
+        />
+      )}
+
       {/* End Stream Confirmation Modal */}
       <EndStreamModal
         visible={showEndStreamModal}
@@ -789,12 +760,11 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         viewerCount={viewerCount}
         streamDuration={streamDuration}
       />
-
     </View>
   );
 }
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -842,12 +812,29 @@ const styles = StyleSheet.create({
   },
   cameraContainer: {
     flex: 1,
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  cameraAspectContainer: {
+    width: '100%',
+    aspectRatio: 9/16, // 9:16 aspect ratio container
+    maxHeight: '100%',
+    backgroundColor: '#000',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  cameraPreview: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+  },
   cameraPlaceholder: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#000',
   },
   placeholderText: {
     color: 'rgba(255,255,255,0.6)',
@@ -864,13 +851,19 @@ const styles = StyleSheet.create({
     top: '85%',
   },
   streamButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    // width: 80,
+    // height: 80,
+    // borderRadius: 40,
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    // borderWidth: 4,
+    // borderColor: 'white',
+    width: 180,
+    height: 40,
+    padding: 10,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 4,
-    borderColor: 'white',
   },
   startButton: {
     backgroundColor: '#EF4444',
@@ -882,7 +875,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     top: '50%',
-    transform: [{ translateY: -100 }],
+    transform: [{translateY: -100}],
     zIndex: 1,
   },
   controlButton: {
@@ -907,5 +900,10 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     backgroundColor: '#EF4444',
+  },
+  streamButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
