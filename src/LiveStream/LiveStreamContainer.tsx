@@ -588,6 +588,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         socketInstance.emit('stop-streaming', {
           token: currentUser?.email,
           streamId: streamId, // Send MUX stream ID for proper termination
+          playbackId: playbackId,
         });
       }
 

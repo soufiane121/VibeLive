@@ -1,4 +1,5 @@
 import {
+  Alert,
   Animated,
   Easing,
   Image,
@@ -15,12 +16,14 @@ import Video from 'react-native-video'; // import Video from react-native-video 
 import muxReactNativeVideo from '@mux/mux-data-react-native-video';
 import {useSocketInstance} from '../CustomHooks/useSocketInstance';
 import {useDispatch, useSelector} from 'react-redux';
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {CloseIcon, EyeViewsIcon} from '../UIComponents/Icons';
 import {formatToKSymbol} from '../Utils/helperFuncs';
-import ChatList from './ChatList';
+import {useAnalytics} from '../Hooks/useAnalytics';
 import {GlobalColors} from '../styles/GlobalColors';
 import FloatingEmojiReactions from '../FloatingAction/EmojiAnimation';
+import BottomModal from '../UIComponents/BottomModal';
+import ChatList from './ChatList';
 import {
   useAddFollowMutation,
   useRemoveFollowMutation,
@@ -47,6 +50,9 @@ type Props = {
 };
 
 const StreamPlayer = (props: Props) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  let alertTimeoutId = useRef<NodeJS.Timeout | null>(null);
+
   // Get data from navigation if available, otherwise use direct props
   const navigationState = useNavigationState(state => {
     const route = state.routes.find(
@@ -86,7 +92,7 @@ const StreamPlayer = (props: Props) => {
   const amIfollowing = currentUser?.following?.includes(userId);
   const [liveCount, setLiveCount] = useState<number>(9099);
   const MuxVideo = muxReactNativeVideo(Video);
-  const {navigate, goBack} = useNavigation();
+  const {goBack, dispatch: navigationDispatch} = useNavigation();
   const [areYouFollowing, setAreYouFollowing] = useState(amIfollowing);
   const [titleAnim] = useState(new Animated.Value(0));
   const titleContainerWidth = 100; // Adjust as needed
@@ -120,7 +126,29 @@ const StreamPlayer = (props: Props) => {
         console.log({data: data.data.liveDetails}, 'streamCount');
         setLiveCount(+data.data.liveDetails.liveViewrsCount);
       });
+      socket?.on('stream-stopped', data => {
+        if (data?.playbackId && data?.playbackId === streamId) {
+          if (alertTimeoutId.current) {
+            clearTimeout(alertTimeoutId.current);
+          }
+          setModalVisible(true);
+
+          alertTimeoutId.current = setTimeout(() => {
+            setModalVisible(false);
+            goBack();
+          }, 9000); // 5000ms = 5 seconds
+        }
+      });
     }
+    return () => {
+      if (alertTimeoutId.current) {
+        clearTimeout(alertTimeoutId.current);
+      }
+    };
+    // return () => {
+    //   socket?.off('stream-counts');
+    //   socket?.off('stream-stopped');
+    // };
   }, [socket]);
 
   const handleFollowAndUnfollow = async (e: any) => {
@@ -268,6 +296,36 @@ const StreamPlayer = (props: Props) => {
         coordinates={coordinates || props?.coordinates}
         parentGroupStreamId={props?.parentGroupStreamId}
       />
+
+      {/* Stream Stopped Modal */}
+      <BottomModal
+        visible={true || modalVisible}
+        onClose={() => {
+          if (alertTimeoutId.current) {
+            clearTimeout(alertTimeoutId.current);
+          }
+          setModalVisible(false);
+          goBack();
+        }}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Stream Ended</Text>
+          <Text style={styles.modalMessage}>
+            The live stream has been stopped by the broadcaster.
+          </Text>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              if (alertTimeoutId.current) {
+                clearTimeout(alertTimeoutId.current);
+              }
+              setModalVisible(false);
+              goBack();
+            }}>
+            <View style={styles.modalButton}>
+              <Text style={styles.modalButtonText}>OK</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </BottomModal>
       {/* </SafeAreaView> */}
     </>
   );
@@ -410,6 +468,37 @@ const styles = StyleSheet.create({
   followText: {
     color: colors.followText,
     fontSize: 14,
+    fontWeight: '600',
+  },
+  modalContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 24,
+    opacity: 0.8,
+  },
+  modalButton: {
+    backgroundColor: colors.followBackground,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 25,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: colors.followText,
+    fontSize: 16,
     fontWeight: '600',
   },
 });

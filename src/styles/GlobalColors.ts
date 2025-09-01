@@ -395,7 +395,7 @@ export const GlobalColors = {
     liveInfoBackground: 'rgba(95,103,111, 0.2)',
     followBackground: 'rgba(136, 48, 78, 0.8)',
     liveBackground: baseColors.error, // Red for live indicator
-    text: baseColors.offWhite, // #CFD6DF
+    text: baseColors.white_ivory, // #CFD6DF
     titleText: baseColors.offWhite,
     userName: baseColors.offWhite,
     countText: baseColors.offWhite,
@@ -404,6 +404,9 @@ export const GlobalColors = {
     closeIcon: baseColors.white,
     eyeIcon: baseColors.offWhite,
     border: 'transparent',
+  },
+  ModalBottom: {
+    background: baseColors.darkGray,
   },
 
   // Analytics Components

@@ -289,7 +289,25 @@ const MapContainer = () => {
         [id]: [...(prevState[id] || []), {id: Date.now(), emoji: reactEmogi}],
       }));
     });
+    socket?.on('stream-stopped', data => {
+      console.log(data, 'stream-stopped---------------------');
+      handleRemoveStoppedStreamFromMap({
+        streamId: data?.playbackId,
+      });
+    });
   }, [socket]);
+
+  const handleRemoveStoppedStreamFromMap = ({
+    streamId,
+  }: {
+    streamId: string;
+  }) => {
+    
+    const updatedFeaturesPointsData = featuresPointsData.filter(
+      feature => feature?.properties?.liveDetails?.streamId !== streamId,
+    );
+    setFeaturesPointsData(updatedFeaturesPointsData);
+  };
 
   // Calculate dynamic bounds based on user location
   const calculateDynamicBounds = useCallback(
