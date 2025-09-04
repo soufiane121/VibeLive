@@ -186,10 +186,10 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     }
   };
 
-  // Confirm end stream
-  const confirmEndStream = async () => {
+  // Confirm end stream with playback retention preference
+  const confirmEndStream = async (keepPlayback: boolean) => {
     setShowEndStreamModal(false);
-    await stopStreaming();
+    await stopStreaming(keepPlayback);
   };
 
   // Cancel end stream
@@ -570,8 +570,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     }
   };
 
-  // Stop streaming with proper MUX cleanup
-  const stopStreaming = async () => {
+  // Stop streaming with proper MUX cleanup and playback retention
+  const stopStreaming = async (keepPlayback: boolean = true) => {
     try {
       // CRITICAL: Clear all reconnect attempts and timers first
       setReconnectAttempts(0);
@@ -583,12 +583,14 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       setStreamHealth('disconnected');
       setDataFlowActive(false);
 
-      // Notify backend
+      // Notify backend with playback retention preference
       if (socketInstance) {
         socketInstance.emit('stop-streaming', {
           token: currentUser?.email,
           streamId: streamId, // Send MUX stream ID for proper termination
           playbackId: playbackId,
+          keepPlayback: keepPlayback,
+          isBoosted: !!boostData || currentUser?.isBoosted,
         });
       }
 
@@ -760,6 +762,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         onConfirm={confirmEndStream}
         viewerCount={viewerCount}
         streamDuration={streamDuration}
+        isBoosted={!!boostData || currentUser?.isBoosted}
       />
     </View>
   );

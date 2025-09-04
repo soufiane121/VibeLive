@@ -127,6 +127,8 @@ const StreamPlayer = (props: Props) => {
         setLiveCount(+data.data.liveDetails.liveViewrsCount);
       });
       socket?.on('stream-stopped', data => {
+        console.log('stream-stopped', {data});
+        
         if (data?.playbackId && data?.playbackId === streamId) {
           if (alertTimeoutId.current) {
             clearTimeout(alertTimeoutId.current);
@@ -299,7 +301,7 @@ const StreamPlayer = (props: Props) => {
 
       {/* Stream Stopped Modal */}
       <BottomModal
-        visible={true || modalVisible}
+        visible={modalVisible}
         onClose={() => {
           if (alertTimeoutId.current) {
             clearTimeout(alertTimeoutId.current);

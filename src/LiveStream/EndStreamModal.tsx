@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,15 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { CloseIcon } from '../UIComponents/Icons';
+import { CloseIcon, CheckmarkIcon } from '../UIComponents/Icons';
 
 interface EndStreamModalProps {
   visible: boolean;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: (keepPlayback: boolean) => void;
   viewerCount: number;
   streamDuration: number;
+  isBoosted?: boolean;
 }
 
 const EndStreamModal: React.FC<EndStreamModalProps> = ({
@@ -23,7 +24,9 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
   onConfirm,
   viewerCount,
   streamDuration,
+  isBoosted = false,
 }) => {
+  const [keepPlayback, setKeepPlayback] = useState(true); // Default to true
   // Format duration for display (MM:SS)
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -48,8 +51,35 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
           </View>
           
           <Text style={styles.modalSubtitle}>
-            Are you sure you want to end your live stream? This action cannot be undone.
+            Are you sure you want to end your live stream?
           </Text>
+          
+          {isBoosted && (
+            <View style={styles.playbackSection}>
+              <Text style={styles.playbackTitle}>Stream Playback</Text>
+              <Text style={styles.playbackDescription}>
+                Since this is a boosted stream, viewers can watch the playback for up to 12 hours after it ends.
+              </Text>
+              
+              <TouchableOpacity 
+                style={styles.checkboxRow} 
+                onPress={() => setKeepPlayback(!keepPlayback)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, keepPlayback && styles.checkboxChecked]}>
+                  {keepPlayback && <CheckmarkIcon size={16} color="white" />}
+                </View>
+                <Text style={styles.checkboxLabel}>Keep stream available for playback</Text>
+              </TouchableOpacity>
+              
+              <Text style={styles.playbackNote}>
+                {keepPlayback 
+                  ? "✅ Viewers will be able to watch your stream for 12 hours"
+                  : "⚠️ Stream will be immediately unavailable after ending"
+                }
+              </Text>
+            </View>
+          )}
           
           <View style={styles.modalStats}>
             <View style={styles.statRow}>
@@ -66,7 +96,10 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
             <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.endStreamButton} onPress={onConfirm}>
+            <TouchableOpacity 
+              style={styles.endStreamButton} 
+              onPress={() => onConfirm(keepPlayback)}
+            >
               <Text style={styles.endStreamButtonText}>End Stream</Text>
             </TouchableOpacity>
           </View>
@@ -154,6 +187,58 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
+  },
+  playbackSection: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  playbackTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  playbackDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  checkboxChecked: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  checkboxLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1F2937',
+    flex: 1,
+  },
+  playbackNote: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
 });
 
