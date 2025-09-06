@@ -8,24 +8,32 @@ const SwitcherContainer = () => {
   const [title, setTitle] = useState('');
   const [selectedEventType, setSelectedEventType] = useState<string | undefined>("");
   const [boostData, setBoostData] = useState<any>(null);
+  const [subcategoriesTags, setSubcategoriesTags] = useState<string[]>([]);
+  const [parentCategory, setParentCategory] = useState<string>('');
   
   const handleCompleteSelection = (args: {
     value: string;
     boostData?: any;
     title?: string;
+    subcategories?: string[];
+    parentCategory?: string;
   }) => {
-    const {value, boostData: boostInfo, title: titleValue} = args || {};
-    console.log('🔄 SwitcherContainer - Selection completed:');
-    console.log('📋 Selected value:', value);
-    console.log('🎯 Boost data received:', boostInfo);
-    console.log('📝 Title received:', titleValue);
-    console.log('🔍 Boost data type:', typeof boostInfo);
-    console.log('🔍 Boost data content:', JSON.stringify(boostInfo, null, 2));
+    const {value, boostData: boostInfo, title: titleValue, subcategories: subcategoriesValue, parentCategory: parentCategoryValue} = args || {};
+    // console.log('🔄 SwitcherContainer - Selection completed:');
+    // console.log('📋 Selected value:', value);
+    // console.log('🎯 Boost data received:', boostInfo);
+    // console.log('📝 Title received:', titleValue);
+    // console.log('🔍 Boost data type:', typeof boostInfo);
+    // console.log('🔍 Boost data content:', JSON.stringify(boostInfo, null, 2));
+    // console.log({subcategoriesValue, parentCategoryValue});
+    
     
     setSelectedEventType(value);
     setBoostData(boostInfo);
     setShowStartLive(true);
     setTitle(titleValue || "");
+    setSubcategoriesTags(subcategoriesValue || []);
+    setParentCategory(parentCategoryValue || '');
     
     console.log('✅ SwitcherContainer state updated - proceeding to LiveStreamContainer');
   };
@@ -43,6 +51,8 @@ const SwitcherContainer = () => {
           streamEventType={selectedEventType || 'default'} 
           streamTitle={title || 'default'} 
           boostData={boostData}
+          subcategoriesTags={subcategoriesTags}
+          parentCategory={parentCategory}
         />
       )}
     </SafeAreaView>

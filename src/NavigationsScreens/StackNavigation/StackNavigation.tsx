@@ -19,6 +19,8 @@ import EmailSettings from '../../Settings/EmailSettings';
 // Events Screens
 import EventDetailsScreen from '../../FeatureComponents/Events/EventDetailsScreen';
 import EventCreationFlow from '../../FeatureComponents/Events/EventCreationFlow';
+// LiveStream Screens
+import SubcategorySelection from '../../LiveStream/SubcategorySelection';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -76,6 +78,8 @@ const StackNavigation = () => {
       {/* Events Screens */}
       <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
       <Stack.Screen name="EventCreationFlow" component={EventCreationFlow} />
+      {/* LiveStream Screens */}
+      <Stack.Screen name="SubcategorySelection" component={SubcategorySelection} />
     </Stack.Navigator>
   );
 };

@@ -13,7 +13,7 @@ import {
   Easing,
 } from 'react-native';
 import React, {useState, useEffect, useRef} from 'react';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {GlobalColors} from '../styles/GlobalColors';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
 
@@ -36,13 +36,14 @@ const colors = GlobalColors.BoostFOMOFlow;
 const eventsList = [
   {key: 'nightlife', label: 'Nightlife & Parties', emoji: '🎉'},
   {key: 'bars', label: 'Bars & Lounges', emoji: '🍸'},
-  {key: 'concerts', label: 'Concerts & Music', emoji: '🎵'},
+  {key: 'concerts', label: 'Music & Concerts', emoji: '🎵'},
   {key: 'sports', label: 'Sports Events', emoji: '🏟️'},
   {key: 'festivals', label: 'Festivals & Fairs', emoji: '🎪'},
   {key: 'food', label: 'Food & Drink events', emoji: '🍽️'},
   {key: 'art', label: 'Art & Culture', emoji: '🎨'},
   {key: 'show', label: 'Show & Performances', emoji: '🎭'},
   {key: 'shopping', label: 'Markets & Pop-ups', emoji: '🛍️'},
+  {key: 'special', label: 'Special & Seasonal', emoji: '🎉'},
 ];
 
 interface BoostTier {
@@ -70,11 +71,14 @@ interface onCompleteSelection {
   value: string;
   boostData?: BoostPurchaseData;
   title?: string;
+  subcategories?: string[];
+  parentCategory?: string;
 }
 
 interface EventSelectionsProps {
   onCompleteSelection: (args: onCompleteSelection) => void;
   onTitleChange?: (title: string) => void;
+  navigation?: any;
 }
 
 type FlowStep =
@@ -133,10 +137,11 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const [title, setTitle] = useState('');
   const [currentStep, setCurrentStep] = useState<FlowStep>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [selectedTier, setSelectedTier] = useState<BoostTier | null>(null);
   const [boostData, setBoostData] = useState<BoostPurchaseData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
+  const navigation = useNavigation();
   // RTK Query mutation for boost activation
   const [boostStream, {isLoading: isBoostLoading}] = useBoostStreamMutation();
 
@@ -150,32 +155,27 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const glowAnim = useRef(new Animated.Value(0)).current;
   const countdownFlash = useRef(new Animated.Value(0)).current;
 
-  // Reset state when screen comes into focus (user returns from map or other flows)
+  // Handle returning from subcategory screen via global state
   useFocusEffect(
     React.useCallback(() => {
-      // Reset all state to initial values
-      setTitle('');
-      setCurrentStep('category');
-      setSelectedCategory('');
-      setSelectedTier(null);
-      setBoostData(null);
-      setIsProcessing(false);
-      setTimeLeft(1847); // Reset countdown timer
+      // Check for subcategory data from global state when screen focuses
+      const checkGlobalData = () => {
+        try {
+          const globalData = (global as any).subcategoryData;
+          if (globalData && globalData.timestamp) {
+            console.log('Received subcategories from global state:', globalData.subcategories);
+            setSelectedSubcategories(globalData.subcategories || []);
+            setSelectedCategory(globalData.categoryKey || '');
+            
+            // Clear the global data to avoid reprocessing
+            delete (global as any).subcategoryData;
+          }
+        } catch (error) {
+          console.log('Error handling global subcategory data:', error);
+        }
+      };
 
-      // Reset animations
-      pulseAnim.setValue(0);
-      glowAnim.setValue(0);
-      countdownFlash.setValue(0);
-
-      // Notify parent component of title reset
-      // if (onTitleChange) {
-      //   onTitleChange('');
-      // }
-
-      // Track screen focus for analytics
-      trackEvent('go_live_started', {
-        timestamp: new Date().toISOString(),
-      });
+      checkGlobalData();
     }, []),
   );
 
@@ -262,34 +262,59 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     // AnalyticsService.track(eventName, properties);
   };
 
-  const handleCategorySelection = (category: string) => {
+  const handleCategorySelection = (category: string, skipSubcategories = false) => {
     setSelectedCategory(category);
     trackEvent('category_selected', {
       category,
       title: title.trim(),
+      skipSubcategories,
       timestamp: new Date().toISOString(),
     });
 
-    // Give user choice: boost or go directly to streaming
-    setCurrentStep('boost_intro');
+    if (skipSubcategories) {
+      // Go directly to boost flow, skip subcategory selection
+      setCurrentStep('boost_intro');
+    } else {
+      // Navigate to subcategory selection screen via stack navigation
+      const selectedEvent = eventsList.find(event => event.key === category);
+      if (navigation && selectedEvent) {
+        (navigation as any).navigate('SubcategorySelection', {
+          parentCategory: selectedEvent.label,
+          categoryKey: category,
+          title: title.trim(),
+        });
+      } else {
+        console.log('Navigation not available, category selected:', category);
+      }
+    }
   };
 
   const handleGoDirectToStream = (category: string) => {
-    setSelectedCategory(category);
+    const selectedEvent = eventsList.find(event => event.key === category);
     trackEvent('direct_stream_selected', {
       category,
+      parentCategory: selectedEvent?.label,
+      subcategories: selectedSubcategories,
       title: title.trim(),
       timestamp: new Date().toISOString(),
     });
 
-    // Skip boost flow entirely
-    onCompleteSelection({value: category, title: title.trim()});
+    // Skip boost flow entirely - include subcategories and parent category
+    onCompleteSelection({
+      value: category, 
+      title: title.trim(),
+      subcategories: selectedSubcategories,
+      parentCategory: selectedEvent?.label
+    });
   };
 
   const handleSkipBoost = () => {
+    const selectedEvent = eventsList.find(event => event.key === selectedCategory);
     console.log('🚫 User skipped boost - proceeding without boost data');
     trackEvent('boost_skipped', {
       category: selectedCategory,
+      parentCategory: selectedEvent?.label,
+      subcategories: selectedSubcategories,
       title: title.trim(),
       step: currentStep,
       timestamp: new Date().toISOString(),
@@ -298,9 +323,16 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     console.log('📤 Calling onCompleteSelection without boost data:', {
       value: selectedCategory,
       title: title.trim(),
+      subcategories: selectedSubcategories,
+      parentCategory: selectedEvent?.label,
       boostData: null
     });
-    onCompleteSelection({value: selectedCategory, title: title.trim()});
+    onCompleteSelection({
+      value: selectedCategory, 
+      title: title.trim(),
+      subcategories: selectedSubcategories,
+      parentCategory: selectedEvent?.label
+    });
   };
 
   const handleBoostTierSelection = (tier: BoostTier) => {
@@ -398,15 +430,20 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   };
 
   const handleBoostConfirmation = () => {
+    const selectedEvent = eventsList.find(event => event.key === selectedCategory);
     console.log('🎉 User confirmed boost purchase - proceeding with boost data');
     console.log('📤 Calling onCompleteSelection WITH boost data:', {
       value: selectedCategory,
       boostData: boostData,
+      subcategories: selectedSubcategories,
+      parentCategory: selectedEvent?.label,
       title: title.trim()
     });
     onCompleteSelection({
       value: selectedCategory,
       boostData: boostData!,
+      subcategories: selectedSubcategories,
+      parentCategory: selectedEvent?.label,
       title: title.trim(),
     });
   };
@@ -698,7 +735,10 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
               styles.categoryTag,
               selectedCategory === item.key && styles.selectedCategoryTag,
             ]}
-            onPress={() => setSelectedCategory(item.key)}>
+            onPress={() => {
+              console.log('Category pressed:', item.key, 'Navigation available:', !!navigation);
+              handleCategorySelection(item.key, false);
+            }}>
             <Text style={styles.categoryEmoji}>{item.emoji}</Text>
             <Text style={styles.categoryLabel}>{item.label}</Text>
           </TouchableOpacity>
@@ -723,7 +763,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
           <TouchableOpacity
             style={styles.boostActionButton}
-            onPress={() => handleCategorySelection(selectedCategory)}>
+            onPress={() => handleCategorySelection(selectedCategory, true)}>
             <Animated.View
               style={{
                 transform: [

@@ -50,9 +50,11 @@ interface LiveStreamContainerProps {
   streamEventType?: string;
   streamTitle?: string;
   boostData?: BoostPurchaseData;
+  subcategoriesTags?: string[];
+  parentCategory?: string;
 }
 export default function LiveStreamContainer(props: LiveStreamContainerProps) {
-  const {streamEventType, streamTitle, boostData} = props;
+  const {streamEventType, streamTitle, boostData, subcategoriesTags, parentCategory} = props;
   const {currentUser} = useSelector((state: any) => state?.currentUser);
   const navigation = useNavigation();
 
@@ -422,6 +424,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       const streamRequestData = {
         streamEventType: streamEventType || 'general',
         streamTitle: streamTitle || 'Live Stream',
+        subcategoriesTags: subcategoriesTags || [],
+        parentCategory: parentCategory || '',
         // Include boost data if available
         ...(boostData && {
           boostTier: boostData.tier,
