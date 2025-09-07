@@ -22,11 +22,16 @@ export enum AnalyticsEventType {
   LOGOUT = 'logout',
   SIGNUP_ATTEMPT = 'signup_attempt',
   SIGNUP_SUCCESS = 'signup_success',
+  SIGNUP_FAILED = 'signup_failed',
   
   // Map interaction events
   MAP_MARKER_CLICKED = 'map_marker_clicked',
   MAP_MOVED = 'map_moved',
   MAP_ZOOMED = 'map_zoomed',
+  MAP_INTERACTION_COMPLETED = 'map_interaction_completed',
+  MAP_LOADED = 'map_loaded',
+  LOCATION_PERMISSION_GRANTED = 'location_permission_granted',
+  LOCATION_PERMISSION_DENIED = 'location_permission_denied',
   LOCATION_CHANGED = 'location_changed',
   
   // Stream discovery events
@@ -40,13 +45,30 @@ export enum AnalyticsEventType {
   STREAM_LEFT = 'stream_left',
   STREAM_WATCHED = 'stream_watched',
   VIEWER_COUNT_UPDATED = 'viewer_count_updated',
+  STREAM_SHARED = 'stream_shared',
+  STREAM_QUALITY_CHANGED = 'stream_quality_changed',
+  STREAM_BUFFERING = 'stream_buffering',
   
   // Stream creation events
   GO_LIVE_STARTED = 'go_live_started',
-  CATEGORY_SELECTED = 'category_selected',
+  STREAM_CATEGORY_SELECTED = 'stream_category_selected',
   STREAM_TITLE_SET = 'stream_title_set',
   STREAM_STARTED = 'stream_started',
   STREAM_ENDED = 'stream_ended',
+  
+  // Profile events
+  PROFILE_GO_LIVE_PRESSED = 'profile_go_live_pressed',
+  PROFILE_TAB_CHANGED = 'profile_tab_changed',
+  
+  // UI Interaction events
+  BUTTON_PRESSED = 'button_pressed',
+  TAB_CHANGED = 'tab_changed',
+  SETTINGS_OPENED = 'settings_opened',
+  SCREEN_VIEWED = 'screen_viewed',
+  
+  // Session events
+  SESSION_STARTED = 'session_started',
+  SESSION_ENDED = 'session_ended',
   
   // Boost events
   BOOST_INTRO_VIEWED = 'boost_intro_viewed',
@@ -57,11 +79,18 @@ export enum AnalyticsEventType {
   
   // Social interaction events
   MESSAGE_SENT = 'message_sent',
+  MESSAGE_RECEIVED = 'message_received',
   REACTION_SENT = 'reaction_sent',
   EMOJI_USED = 'emoji_used',
   USER_FOLLOWED = 'user_followed',
   USER_UNFOLLOWED = 'user_unfollowed',
   PROFILE_VIEWED = 'profile_viewed',
+  DIRECT_MESSAGE_STARTED = 'direct_message_started',
+  CHAT_ENGAGEMENT = 'chat_engagement',
+  SOCIAL_FEATURE_DISCOVERED = 'social_feature_discovered',
+  MODERATION_ACTION = 'moderation_action',
+  SOCIAL_NOTIFICATION_INTERACTION = 'social_notification_interaction',
+  SOCIAL_SESSION_ENDED = 'social_session_ended',
   
   // Payment events
   PAYMENT_INITIATED = 'payment_initiated',
@@ -163,7 +192,7 @@ export const getEventCategory = (eventType: AnalyticsEventType): AnalyticsEventC
     AnalyticsEventType.STREAM_WATCHED,
     AnalyticsEventType.VIEWER_COUNT_UPDATED,
     AnalyticsEventType.GO_LIVE_STARTED,
-    AnalyticsEventType.CATEGORY_SELECTED,
+    AnalyticsEventType.STREAM_CATEGORY_SELECTED,
     AnalyticsEventType.STREAM_TITLE_SET,
     AnalyticsEventType.STREAM_STARTED,
     AnalyticsEventType.STREAM_ENDED,

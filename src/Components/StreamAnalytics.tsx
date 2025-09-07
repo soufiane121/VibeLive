@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAnalytics } from '../Hooks/useAnalytics';
 import SocketAnalyticsService from '../Services/SocketAnalyticsService';
+import { AnalyticsEventType, StreamAction, SocialInteractionType } from '../types/AnalyticsEnums';
 
 interface StreamData {
   streamId: string;
@@ -46,21 +47,10 @@ export const useStreamAnalytics = () => {
       setIsWatching(true);
 
       // Track via socket for real-time analytics
-      socketAnalytics.trackStreamJoin(streamData.streamId, streamData.streamerId);
+      // socketAnalytics.trackStreamJoin(streamData.streamId, streamData.streamerId);
 
       // Track locally
-      await trackStreamInteraction('stream_joined', {
-        streamId: streamData.streamId,
-        streamerId: streamData.streamerId,
-        streamTitle: streamData.title,
-        streamCategory: streamData.category,
-        coordinates: streamData.coordinates,
-        joinMethod, // 'map_click', 'search_result', 'notification', 'direct_link'
-        viewerCount: streamData.viewerCount,
-        isBoosted: streamData.isBoosted,
-        boostedPriority: streamData.boostedPriority,
-        timestamp: startTime.toISOString()
-      });
+      await trackStreamInteraction(StreamAction.JOIN, streamData);
 
       // Start heartbeat tracking
       startHeartbeat();
@@ -89,12 +79,11 @@ export const useStreamAnalytics = () => {
       // Track via socket
       socketAnalytics.trackStreamLeave(
         currentSession.current.streamId,
-        sessionDuration,
-        currentSession.current.interactions
+        sessionDuration
       );
 
       // Track locally
-      await trackStreamInteraction('stream_left', {
+      await trackStreamInteraction(StreamAction.LEAVE, {
         streamId: currentSession.current.streamId,
         sessionDuration,
         watchTime,
@@ -119,7 +108,7 @@ export const useStreamAnalytics = () => {
         currentSession.current.interactions++;
       }
 
-      await trackSocialInteraction('message_sent', {
+      await trackSocialInteraction(SocialInteractionType.MESSAGE_SENT, {
         streamId: messageData.streamId,
         messageLength: messageData.message?.length || 0,
         messageType: messageData.type || 'text',
@@ -139,11 +128,7 @@ export const useStreamAnalytics = () => {
         currentSession.current.interactions++;
       }
 
-      await trackSocialInteraction('reaction_sent', {
-        streamId: reactionData.streamId,
-        reactionType: reactionData.emoji || reactionData.type,
-        timestamp: new Date().toISOString()
-      });
+      await trackSocialInteraction(SocialInteractionType.REACTION_SENT, reactionData);
 
       console.log('Reaction tracked:', reactionData.emoji);
     } catch (error) {
@@ -154,7 +139,7 @@ export const useStreamAnalytics = () => {
   // Track stream sharing
   const trackStreamShare = async (streamId: string, shareMethod: string) => {
     try {
-      await trackEvent('stream_shared', {
+      await trackEvent(AnalyticsEventType.STREAM_SHARED, {
         streamId,
         shareMethod, // 'social_media', 'copy_link', 'direct_message'
         timestamp: new Date().toISOString()
@@ -169,7 +154,7 @@ export const useStreamAnalytics = () => {
   // Track stream quality changes
   const trackQualityChange = async (streamId: string, newQuality: string, reason: string) => {
     try {
-      await trackEvent('stream_quality_changed', {
+      await trackEvent(AnalyticsEventType.STREAM_QUALITY_CHANGED, {
         streamId,
         newQuality, // '720p', '480p', '360p', 'auto'
         changeReason: reason, // 'user_manual', 'auto_adaptive', 'connection_poor'
@@ -185,7 +170,7 @@ export const useStreamAnalytics = () => {
   // Track stream buffering events
   const trackBuffering = async (streamId: string, bufferDuration: number) => {
     try {
-      await trackEvent('stream_buffering', {
+      await trackEvent(AnalyticsEventType.STREAM_BUFFERING, {
         streamId,
         bufferDuration,
         timestamp: new Date().toISOString()
@@ -200,7 +185,7 @@ export const useStreamAnalytics = () => {
   // Track stream errors
   const trackStreamError = async (streamId: string, errorType: string, errorMessage: string) => {
     try {
-      await trackEvent('stream_error', {
+      await trackEvent(AnalyticsEventType.ERROR_OCCURRED, {
         streamId,
         errorType, // 'connection_failed', 'playback_error', 'permission_denied'
         errorMessage,
@@ -216,7 +201,7 @@ export const useStreamAnalytics = () => {
   // Track viewer count updates
   const trackViewerCountUpdate = async (streamId: string, newCount: number, previousCount: number) => {
     try {
-      await trackEvent('viewer_count_updated', {
+      await trackEvent(AnalyticsEventType.VIEWER_COUNT_UPDATED, {
         streamId,
         newCount,
         previousCount,
@@ -231,7 +216,7 @@ export const useStreamAnalytics = () => {
   // Track stream discovery preview
   const trackStreamPreview = async (streamData: StreamData, previewDuration: number) => {
     try {
-      await trackEvent('stream_previewed', {
+      await trackEvent(AnalyticsEventType.STREAM_PREVIEW_VIEWED, {
         streamId: streamData.streamId,
         streamerId: streamData.streamerId,
         streamTitle: streamData.title,
@@ -258,11 +243,12 @@ export const useStreamAnalytics = () => {
         currentSession.current.totalWatchTime += segmentDuration;
         currentSession.current.lastHeartbeat = now;
 
-        // Send heartbeat to socket for real-time tracking
-        socketAnalytics.trackStreamHeartbeat(
-          currentSession.current.streamId,
-          currentSession.current.totalWatchTime
-        );
+        // Track stream heartbeat via general event tracking
+        trackEvent(AnalyticsEventType.STREAM_WATCHED, {
+          streamId: currentSession.current.streamId,
+          watchDuration: Math.floor((now.getTime() - currentSession.current.startTime.getTime()) / 1000),
+          timestamp: new Date().toISOString()
+        });
       }
     }, 30000); // 30-second intervals
   };

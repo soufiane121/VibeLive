@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useAnalytics } from '../Hooks/useAnalytics';
 import SocketAnalyticsService from '../Services/SocketAnalyticsService';
+import { AnalyticsEventType, MapInteractionType } from '../types/AnalyticsEnums';
 
 interface MapAnalyticsProps {
   mapRef?: any;
@@ -40,7 +41,7 @@ export const useMapAnalytics = () => {
       socketAnalytics.trackMapMarkerClick(markerData);
 
       // Track locally
-      await trackMapInteraction('marker_clicked', {
+      await trackMapInteraction(MapInteractionType.MARKER_CLICKED, {
         markerId: markerData.id,
         markerCoordinates: markerData.coordinates,
         markerType: markerData.type,
@@ -69,7 +70,7 @@ export const useMapAnalytics = () => {
         timestamp: new Date().toISOString()
       };
 
-      await trackMapInteraction('map_moved', moveData);
+      await trackMapInteraction(MapInteractionType.MAP_MOVED, moveData);
 
       // Track bounds change via socket if significantly different
       if (lastMapBounds.current && isBoundsSignificantlyDifferent(lastMapBounds.current, bounds)) {
@@ -85,7 +86,7 @@ export const useMapAnalytics = () => {
   // Track map zoom
   const trackMapZoom = async (zoomLevel: number, center: [number, number]) => {
     try {
-      await trackMapInteraction('map_zoomed', {
+      await trackMapInteraction(MapInteractionType.MAP_ZOOMED, {
         zoomLevel,
         center,
         timestamp: new Date().toISOString()
@@ -106,7 +107,7 @@ export const useMapAnalytics = () => {
       if (mapInteractionStartTime.current) {
         const interactionDuration = Date.now() - mapInteractionStartTime.current.getTime();
         
-        await trackEvent('map_interaction_completed', {
+        await trackEvent(AnalyticsEventType.MAP_INTERACTION_COMPLETED, {
           duration: Math.floor(interactionDuration / 1000),
           finalCenter,
           timestamp: new Date().toISOString()
@@ -124,7 +125,7 @@ export const useMapAnalytics = () => {
     try {
       socketAnalytics.trackCategoryFilter(category, coordinates, resultsCount);
       
-      await trackEvent('category_filter_applied', {
+      await trackEvent(AnalyticsEventType.CATEGORY_FILTER_APPLIED, {
         filterCategory: category,
         coordinates,
         resultsCount,
@@ -140,7 +141,7 @@ export const useMapAnalytics = () => {
     try {
       socketAnalytics.trackSearch(query, coordinates, resultsCount, filterCategory);
       
-      await trackEvent('search_performed', {
+      await trackEvent(AnalyticsEventType.SEARCH_PERFORMED, {
         searchQuery: query,
         coordinates,
         resultsCount,
@@ -156,7 +157,7 @@ export const useMapAnalytics = () => {
   // Track stream discovery
   const trackStreamDiscovery = async (streamData: any, discoveryMethod: string) => {
     try {
-      await trackEvent('stream_discovered', {
+      await trackEvent(AnalyticsEventType.STREAM_DISCOVERED, {
         streamId: streamData.streamId,
         streamerId: streamData.streamerId,
         streamTitle: streamData.title,
@@ -175,7 +176,7 @@ export const useMapAnalytics = () => {
   // Track location permission changes
   const trackLocationPermission = async (granted: boolean, accuracy?: string) => {
     try {
-      await trackEvent(granted ? 'location_permission_granted' : 'location_permission_denied', {
+      await trackEvent(granted ? AnalyticsEventType.LOCATION_PERMISSION_GRANTED : AnalyticsEventType.LOCATION_PERMISSION_DENIED, {
         accuracy,
         timestamp: new Date().toISOString()
       });
@@ -187,7 +188,7 @@ export const useMapAnalytics = () => {
   // Track map loading performance
   const trackMapLoadTime = async (loadTime: number, tileCount?: number) => {
     try {
-      await trackEvent('map_loaded', {
+      await trackEvent(AnalyticsEventType.MAP_LOADED, {
         loadTime,
         tileCount,
         timestamp: new Date().toISOString()

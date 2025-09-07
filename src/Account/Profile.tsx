@@ -69,7 +69,7 @@ const Profile = () => {
   }, []);
 
   const handleGoLive = () => {
-    trackEvent('profile_go_live_pressed', {
+    trackEvent(AnalyticsEventType.PROFILE_GO_LIVE_PRESSED, {
       user_id: currentUser?._id,
       username: currentUser?.userName,
     });
@@ -79,7 +79,7 @@ const Profile = () => {
 
   const handleTabPress = (tab: 'Activity' | 'Lives' | 'Highlights') => {
     setActiveTab(tab);
-    trackEvent('profile_tab_changed', {
+    trackEvent(AnalyticsEventType.PROFILE_TAB_CHANGED, {
       tab_name: tab,
       user_id: currentUser?._id,
     });

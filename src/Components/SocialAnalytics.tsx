@@ -41,7 +41,7 @@ export const useSocialAnalytics = () => {
     try {
       sessionInteractions.current++;
 
-      await trackSocialInteraction('message_sent', {
+      await trackSocialInteraction(SocialInteractionType.MESSAGE_SENT, {
         messageId: messageData.messageId,
         streamId: messageData.streamId,
         messageLength: messageData.content.length,
@@ -61,7 +61,7 @@ export const useSocialAnalytics = () => {
   // Track message received/viewed
   const trackMessageReceived = async (messageData: MessageData, viewDuration?: number) => {
     try {
-      await trackEvent('message_received', {
+      await trackEvent(AnalyticsEventType.MESSAGE_RECEIVED, {
         messageId: messageData.messageId,
         streamId: messageData.streamId,
         senderId: messageData.senderId,
@@ -137,7 +137,7 @@ export const useSocialAnalytics = () => {
   // Track direct message initiation
   const trackDirectMessageStart = async (recipientUser: UserProfile, initiationMethod: string) => {
     try {
-      await trackEvent('direct_message_started', {
+      await trackEvent(AnalyticsEventType.DIRECT_MESSAGE_STARTED, {
         recipientUserId: recipientUser.userId,
         recipientUsername: recipientUser.username,
         initiationMethod, // 'profile_view', 'stream_chat', 'search'
@@ -153,7 +153,7 @@ export const useSocialAnalytics = () => {
   // Track chat engagement patterns
   const trackChatEngagement = async (streamId: string, engagementData: any) => {
     try {
-      await trackEvent('chat_engagement', {
+      await trackEvent(AnalyticsEventType.CHAT_ENGAGEMENT, {
         streamId,
         messagesRead: engagementData.messagesRead,
         messagesScrolled: engagementData.messagesScrolled,
@@ -170,7 +170,7 @@ export const useSocialAnalytics = () => {
   // Track emoji/sticker usage
   const trackEmojiUsage = async (emoji: string, context: string, streamId?: string) => {
     try {
-      await trackEvent('emoji_used', {
+      await trackEvent(AnalyticsEventType.EMOJI_USED, {
         emoji,
         context, // 'chat_message', 'reaction', 'direct_message'
         streamId,
@@ -184,7 +184,7 @@ export const useSocialAnalytics = () => {
   // Track social feature discovery
   const trackFeatureDiscovery = async (feature: string, discoveryMethod: string) => {
     try {
-      await trackEvent('social_feature_discovered', {
+      await trackEvent(AnalyticsEventType.SOCIAL_FEATURE_DISCOVERED, {
         feature, // 'reactions', 'direct_messages', 'profile_customization', 'follow_system'
         discoveryMethod, // 'tutorial', 'exploration', 'notification', 'friend_invitation'
         timestamp: new Date().toISOString()
@@ -199,7 +199,7 @@ export const useSocialAnalytics = () => {
   // Track moderation actions
   const trackModerationAction = async (action: string, targetData: any, reason?: string) => {
     try {
-      await trackEvent('moderation_action', {
+      await trackEvent(AnalyticsEventType.MODERATION_ACTION, {
         action, // 'report_user', 'report_message', 'block_user', 'mute_user'
         targetUserId: targetData.userId,
         targetMessageId: targetData.messageId,
@@ -217,7 +217,7 @@ export const useSocialAnalytics = () => {
   // Track social notification interactions
   const trackNotificationInteraction = async (notificationType: string, action: string, notificationData: any) => {
     try {
-      await trackEvent('social_notification_interaction', {
+      await trackEvent(AnalyticsEventType.SOCIAL_NOTIFICATION_INTERACTION, {
         notificationType, // 'new_follower', 'message_received', 'mention', 'reaction_received'
         action, // 'opened', 'dismissed', 'clicked_through'
         notificationAge: notificationData.age,
@@ -234,7 +234,7 @@ export const useSocialAnalytics = () => {
     try {
       const sessionDuration = Date.now() - sessionStartTime.current.getTime();
       
-      await trackEvent('social_session_ended', {
+      await trackEvent(AnalyticsEventType.SOCIAL_SESSION_ENDED, {
         sessionDuration: Math.floor(sessionDuration / 1000),
         totalInteractions: sessionInteractions.current,
         interactionRate: sessionInteractions.current / (sessionDuration / 60000), // interactions per minute

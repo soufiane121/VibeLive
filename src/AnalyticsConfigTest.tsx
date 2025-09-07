@@ -25,12 +25,13 @@ import {
   getServiceInfo,
   AnalyticsDebug 
 } from './Config/AnalyticsConfig';
+import { AnalyticsEventType, MapInteractionType, StreamAction, SocialInteractionType, BoostEventType, ErrorType } from './types/AnalyticsEnums';
 import { GlobalColors } from './styles/GlobalColors';
 
 const colors = GlobalColors.Analytics;
 
 interface ServiceStatus {
-  serviceType: 'mock' | 'full' | null;
+  serviceType: 'mock' | 'full' | 'rtk' | null;
   isInitialized: boolean;
   configuredService: 'mock' | 'full';
   environment: string;
@@ -91,7 +92,8 @@ const AnalyticsConfigTest: React.FC = () => {
   const testBasicAnalytics = async () => {
     setIsLoading(true);
     try {
-      await trackEvent('config_test_basic', { 
+      await trackEvent(AnalyticsEventType.BUTTON_PRESSED, { 
+        buttonName: 'config_test_basic',
         testType: 'basic_analytics',
         timestamp: Date.now() 
       });
@@ -105,7 +107,7 @@ const AnalyticsConfigTest: React.FC = () => {
   const testMapAnalytics = async () => {
     setIsLoading(true);
     try {
-      await trackMapInteraction('marker_clicked', {
+      await trackMapInteraction(MapInteractionType.MARKER_CLICKED, {
         markerId: 'test-marker-123',
         coordinates: [-122.4194, 37.7749],
         streamInfo: { title: 'Test Stream', category: 'music' }
@@ -120,7 +122,7 @@ const AnalyticsConfigTest: React.FC = () => {
   const testStreamAnalytics = async () => {
     setIsLoading(true);
     try {
-      await trackStreamInteraction('join', {
+      await trackStreamInteraction(StreamAction.JOIN, {
         streamId: 'test-stream-456',
         streamTitle: 'Test Stream',
         category: 'gaming',
@@ -136,7 +138,7 @@ const AnalyticsConfigTest: React.FC = () => {
   const testSocialAnalytics = async () => {
     setIsLoading(true);
     try {
-      await trackSocialInteraction('message_sent', {
+      await trackSocialInteraction(SocialInteractionType.MESSAGE_SENT, {
         messageType: 'text',
         messageLength: 25,
         streamId: 'test-stream-789'
@@ -151,7 +153,7 @@ const AnalyticsConfigTest: React.FC = () => {
   const testBoostAnalytics = async () => {
     setIsLoading(true);
     try {
-      await trackBoostEvent('boost_tier_selected', {
+      await trackBoostEvent(BoostEventType.BOOST_TIER_SELECTED, {
         tier: 'premium',
         price: 7.99,
         duration: 6
@@ -166,7 +168,7 @@ const AnalyticsConfigTest: React.FC = () => {
   const testErrorAnalytics = async () => {
     setIsLoading(true);
     try {
-      await trackError('error_occurred', {
+      await trackError(ErrorType.ERROR_OCCURRED, {
         errorType: 'test_error',
         errorMessage: 'This is a test error',
         errorCode: 'TEST_001'

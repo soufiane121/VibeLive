@@ -16,6 +16,7 @@ import React, {useState, useEffect, useRef} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {GlobalColors} from '../styles/GlobalColors';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 
 const colors = GlobalColors.BoostFOMOFlow;
 // import { LinearGradient } from 'react-native-linear-gradient';
@@ -296,7 +297,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
   const handleCategorySelection = (category: string, skipSubcategories = false) => {
     setSelectedCategory(category);
-    trackEvent('category_selected', {
+    trackEvent(AnalyticsEventType.STREAM_CATEGORY_SELECTED, {
       category,
       title: title.trim(),
       skipSubcategories,
@@ -323,7 +324,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
   const handleGoDirectToStream = (category: string) => {
     const selectedEvent = eventsList.find(event => event.key === category);
-    trackEvent('direct_stream_selected', {
+    trackEvent(AnalyticsEventType.GO_LIVE_STARTED, {
       category,
       parentCategory: selectedEvent?.label,
       subcategories: selectedSubcategories,
@@ -343,7 +344,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const handleSkipBoost = () => {
     const selectedEvent = eventsList.find(event => event.key === selectedCategory);
     console.log('🚫 User skipped boost - proceeding without boost data');
-    trackEvent('boost_skipped', {
+    trackEvent(AnalyticsEventType.BOOST_SKIPPED, {
       category: selectedCategory,
       parentCategory: selectedEvent?.label,
       subcategories: selectedSubcategories,
@@ -369,7 +370,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
   const handleBoostTierSelection = (tier: BoostTier) => {
     setSelectedTier(tier);
-    trackEvent('boost_tier_selected', {
+    trackEvent(AnalyticsEventType.BOOST_TIER_SELECTED, {
       tier: tier.id,
       price: tier.price,
       category: selectedCategory,
@@ -430,7 +431,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
       console.log('🎉 Boost purchase completed successfully:', purchaseData);
 
-      trackEvent('boost_purchased', {
+      trackEvent(AnalyticsEventType.BOOST_PURCHASED, {
         tier: selectedTier.id,
         price: selectedTier.price,
         category: selectedCategory,
@@ -450,7 +451,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         ],
       );
 
-      trackEvent('boost_purchase_failed', {
+      trackEvent(AnalyticsEventType.PAYMENT_FAILED, {
         tier: selectedTier.id,
         category: selectedCategory,
         error: error?.data?.error || error?.message || 'Unknown error',

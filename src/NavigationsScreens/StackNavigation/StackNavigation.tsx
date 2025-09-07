@@ -39,7 +39,6 @@ const StackNavigation = () => {
     
     try {
       const res = await autoLoginFetch({coordinates}).unwrap();
-      console.log('fetchAutoLogin -------------------------------------', {res});
       if (res?.data?._id) {
         dispatch(setCurrentUser(res?.data));
       }
