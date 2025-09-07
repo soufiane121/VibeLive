@@ -155,7 +155,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const glowAnim = useRef(new Animated.Value(0)).current;
   const countdownFlash = useRef(new Animated.Value(0)).current;
 
-  // Handle returning from subcategory screen via global state
+  // Handle returning from subcategory screen and monthly limit modal via global state
   useFocusEffect(
     React.useCallback(() => {
       // Check for subcategory data from global state when screen focuses
@@ -175,7 +175,39 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         }
       };
 
+      // Check for stream selection data from monthly limit modal
+      const checkStreamSelectionData = () => {
+        try {
+          const streamData = (global as any).streamSelectionData;
+          if (streamData && streamData.timestamp) {
+            console.log('Received stream selection data from monthly limit modal:', streamData);
+            
+            // Set the stream data
+            if (streamData.streamTitle) {
+              setTitle(streamData.streamTitle);
+            }
+            if (streamData.streamEventType) {
+              setSelectedCategory(streamData.streamEventType);
+            }
+            if (streamData.subcategoriesTags) {
+              setSelectedSubcategories(streamData.subcategoriesTags);
+            }
+            
+            // Set the flow step to boost_intro to trigger boost flow
+            if (streamData.flowStep === 'boost_tiers') {
+              setCurrentStep('boost_tiers');
+            }
+            
+            // Clear the global data to avoid reprocessing
+            delete (global as any).streamSelectionData;
+          }
+        } catch (error) {
+          console.log('Error handling stream selection data:', error);
+        }
+      };
+
       checkGlobalData();
+      checkStreamSelectionData();
     }, []),
   );
 

@@ -241,7 +241,7 @@ export const GlobalColors = {
 
   // Boost FOMO Flow
   BoostFOMOFlow: {
-    cardBackground: 'rgba(242, 239, 232, 0.05)',
+    cardBackground: baseColors.cardBackground,
     background: baseColors.darkGray,
     surface: baseColors.dark_grey,
     overlay: baseColors.blackOverlay,

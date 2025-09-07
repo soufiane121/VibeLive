@@ -25,14 +25,19 @@ interface SubcategorySelectionProps {
   navigation?: any;
 }
 
-const SubcategorySelection = ({route, navigation}: SubcategorySelectionProps) => {
+const SubcategorySelection = ({
+  route,
+  navigation,
+}: SubcategorySelectionProps) => {
   const params = route?.params;
   const parentCategory = params?.parentCategory || '';
   const categoryKey = params?.categoryKey || '';
   const title = params?.title || '';
   const returnScreen = params?.returnScreen || 'EventSelections';
-  
-  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(
+    [],
+  );
 
   // Find the parent category in tags and get its children
   const parentTag = tags.find(tag => tag.parent === parentCategory);
@@ -57,7 +62,7 @@ const SubcategorySelection = ({route, navigation}: SubcategorySelectionProps) =>
         subcategories: selectedSubcategories,
         categoryKey: categoryKey,
         title: title,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
     navigation?.goBack();
@@ -69,7 +74,7 @@ const SubcategorySelection = ({route, navigation}: SubcategorySelectionProps) =>
 
   const renderSubcategoryItem = ({item}: {item: string}) => {
     const isSelected = selectedSubcategories.includes(item);
-    
+
     return (
       <TouchableOpacity
         style={[
@@ -78,10 +83,11 @@ const SubcategorySelection = ({route, navigation}: SubcategorySelectionProps) =>
         ]}
         onPress={() => handleSubcategoryToggle(item)}>
         <View style={styles.subcategoryContent}>
-          <Text style={[
-            styles.subcategoryText,
-            isSelected && styles.selectedSubcategoryText,
-          ]}>
+          <Text
+            style={[
+              styles.subcategoryText,
+              isSelected && styles.selectedSubcategoryText,
+            ]}>
             {item}
           </Text>
           {isSelected && (
@@ -98,9 +104,9 @@ const SubcategorySelection = ({route, navigation}: SubcategorySelectionProps) =>
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        {/* <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Choose Your {parentCategory}</Text>
           <Text style={styles.headerSubtitle}>Select all that apply</Text>
@@ -124,8 +130,8 @@ const SubcategorySelection = ({route, navigation}: SubcategorySelectionProps) =>
           style={styles.continueButton}
           onPress={handleContinue}>
           <Text style={styles.continueButtonText}>
-            {selectedSubcategories.length > 0 
-              ? `Back with ${selectedSubcategories.length} selected` 
+            {selectedSubcategories.length > 0
+              ? `Back with ${selectedSubcategories.length} selected`
               : 'Back'}
           </Text>
         </TouchableOpacity>
@@ -135,7 +141,7 @@ const SubcategorySelection = ({route, navigation}: SubcategorySelectionProps) =>
 };
 
 const {width} = Dimensions.get('window');
-const cardWidth = (width - 60) / 3; // 3 cards per row with margins
+const cardWidth = (width - 80) / 3; // 3 cards per row with margins
 
 const styles = StyleSheet.create({
   container: {
@@ -189,7 +195,7 @@ const styles = StyleSheet.create({
   subcategoryCard: {
     width: cardWidth,
     height: cardWidth,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,

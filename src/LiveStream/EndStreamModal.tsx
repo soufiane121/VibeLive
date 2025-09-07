@@ -8,6 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { CloseIcon, CheckmarkIcon } from '../UIComponents/Icons';
+import { GlobalColors } from '../styles/GlobalColors';
 
 interface EndStreamModalProps {
   visible: boolean;
@@ -46,7 +47,7 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>End Live Stream?</Text>
             <TouchableOpacity onPress={onCancel}>
-              <CloseIcon size={20} color="#666" />
+              <CloseIcon size={20} color={GlobalColors.Common.ghostButtonText} />
             </TouchableOpacity>
           </View>
           
@@ -114,16 +115,18 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: GlobalColors.Common.modalBackground,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: GlobalColors.Common.modalSurface,
     borderRadius: 16,
     padding: 24,
     margin: 20,
     width: width - 40,
+    borderWidth: 1,
+    borderColor: GlobalColors.Common.modalBorder,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -134,11 +137,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: GlobalColors.LiveStreamContainer.text,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: GlobalColors.Common.loadingText,
     marginBottom: 24,
     lineHeight: 20,
   },
@@ -153,12 +156,12 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: GlobalColors.Common.loadingText,
   },
   statValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1F2937',
+    color: GlobalColors.LiveStreamContainer.text,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -168,43 +171,45 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: GlobalColors.Common.secondaryButton,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: GlobalColors.Common.ghostButtonBorder,
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6B7280',
+    color: GlobalColors.Common.secondaryButtonText,
   },
   endStreamButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#EF4444',
+    backgroundColor: GlobalColors.LiveStreamContainer.endButton,
     alignItems: 'center',
   },
   endStreamButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    color: GlobalColors.LiveStreamContainer.text,
   },
   playbackSection: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: GlobalColors.Common.inputBackground,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: GlobalColors.Common.inputBorder,
   },
   playbackTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
+    color: GlobalColors.LiveStreamContainer.text,
     marginBottom: 8,
   },
   playbackDescription: {
     fontSize: 14,
-    color: '#6B7280',
+    color: GlobalColors.Common.loadingText,
     lineHeight: 20,
     marginBottom: 16,
   },
@@ -218,25 +223,25 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#D1D5DB',
-    backgroundColor: 'white',
+    borderColor: GlobalColors.Common.inputBorder,
+    backgroundColor: GlobalColors.Common.inputBackground,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   checkboxChecked: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
+    backgroundColor: GlobalColors.LiveStreamContainer.controlsActive,
+    borderColor: GlobalColors.LiveStreamContainer.controlsActive,
   },
   checkboxLabel: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1F2937',
+    color: GlobalColors.LiveStreamContainer.text,
     flex: 1,
   },
   playbackNote: {
     fontSize: 13,
-    color: '#6B7280',
+    color: GlobalColors.Common.loadingText,
     fontStyle: 'italic',
     lineHeight: 18,
   },

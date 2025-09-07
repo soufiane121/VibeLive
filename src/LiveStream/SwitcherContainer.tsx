@@ -19,14 +19,6 @@ const SwitcherContainer = () => {
     parentCategory?: string;
   }) => {
     const {value, boostData: boostInfo, title: titleValue, subcategories: subcategoriesValue, parentCategory: parentCategoryValue} = args || {};
-    // console.log('🔄 SwitcherContainer - Selection completed:');
-    // console.log('📋 Selected value:', value);
-    // console.log('🎯 Boost data received:', boostInfo);
-    // console.log('📝 Title received:', titleValue);
-    // console.log('🔍 Boost data type:', typeof boostInfo);
-    // console.log('🔍 Boost data content:', JSON.stringify(boostInfo, null, 2));
-    // console.log({subcategoriesValue, parentCategoryValue});
-    
     
     setSelectedEventType(value);
     setBoostData(boostInfo);
@@ -36,6 +28,13 @@ const SwitcherContainer = () => {
     setParentCategory(parentCategoryValue || '');
     
     console.log('✅ SwitcherContainer state updated - proceeding to LiveStreamContainer');
+  };
+
+  // Handle going back to EventSelections from LiveStreamContainer
+  const handleBackToEventSelections = () => {
+    setShowStartLive(false);
+    // Reset boost data to allow new selection
+    setBoostData(null);
   };
   const handleChangeTitle = (title: string) => {
     console.log('Title changed:', title);
@@ -53,6 +52,7 @@ const SwitcherContainer = () => {
           boostData={boostData}
           subcategoriesTags={subcategoriesTags}
           parentCategory={parentCategory}
+          onBackToEventSelections={handleBackToEventSelections}
         />
       )}
     </SafeAreaView>

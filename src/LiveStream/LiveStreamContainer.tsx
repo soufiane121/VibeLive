@@ -21,6 +21,7 @@ import {
   StopIcon,
 } from '../UIComponents/Icons';
 import EndStreamModal from './EndStreamModal';
+import MonthlyLimitModal from './MonthlyLimitModal';
 import {
   Camera,
   useCameraPermission,
@@ -52,9 +53,10 @@ interface LiveStreamContainerProps {
   boostData?: BoostPurchaseData;
   subcategoriesTags?: string[];
   parentCategory?: string;
+  onBackToEventSelections?: () => void;
 }
 export default function LiveStreamContainer(props: LiveStreamContainerProps) {
-  const {streamEventType, streamTitle, boostData, subcategoriesTags, parentCategory} = props;
+  const {streamEventType, streamTitle, boostData, subcategoriesTags, parentCategory, onBackToEventSelections} = props;
   const {currentUser} = useSelector((state: any) => state?.currentUser);
   const navigation = useNavigation();
 
@@ -76,6 +78,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const [showEndStreamModal, setShowEndStreamModal] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [isMonthlyLimitReached, setIsMonthlyLimitReached] = useState<boolean>(false);
 
   // Create RTMP streaming helper instance
   const streamingHelper = new RTMPStreamingHelper();
@@ -197,6 +200,39 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   // Cancel end stream
   const cancelEndStream = () => {
     setShowEndStreamModal(false);
+  };
+
+  // Handle monthly limit modal - Boost & Go Live
+  const handleBoostAndGoLive = async () => {
+    // Reset monthly limit state
+    setIsMonthlyLimitReached(false);
+    
+    // Store current stream data in global state for EventSelections to pick up
+    (global as any).streamSelectionData = {
+      streamEventType,
+      streamTitle,
+      subcategoriesTags,
+      parentCategory,
+      flowStep: 'boost_tiers', // This will trigger the boost flow
+      timestamp: Date.now(),
+    };
+    
+    // Use the callback from SwitcherContainer to go back to EventSelections
+    if (onBackToEventSelections) {
+      onBackToEventSelections();
+    } else {
+      // Fallback to navigation.goBack() if callback not provided
+      navigation.goBack();
+    }
+  };
+
+  // Handle monthly limit modal - Cancel & Go Back
+  const handleCancelAndGoBack = () => {
+    // Reset monthly limit state
+    setIsMonthlyLimitReached(false);
+    
+    // Navigate back using the existing close handler logic
+    handleClosePress();
   };
 
   // Cleanup effect to ensure camera is released on unmount
@@ -435,7 +471,6 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       };
 
       const response = await fetchStartStream(streamRequestData).unwrap();
-
       if (
         response?.data?.stream_key &&
         response?.data?.playback_ids?.[0]?.id &&
@@ -444,9 +479,13 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setStreamKey(response.data.stream_key);
         setPlaybackId(response.data.playback_ids[0].id);
         setStreamId(response.data.id); // Store the MUX stream ID for tracking
-      } else {
+      } 
+    } catch (error) {
+      console.log( "from error side",error);
+      if(error?.data?.code === "MONTHLY_LIMIT_REACHED"){
+        setIsMonthlyLimitReached(true);
       }
-    } catch (error) {}
+    }
   };
 
   // Boost activation is now handled in EventSelections.tsx during purchase
@@ -645,66 +684,72 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
                     ? {transform: [{rotate: '-0deg'}]}
                     : {transform: [{rotate: '0deg'}, {scaleX: 1}]},
                 ]}
-              url={
-                streamKey
-                  ? `rtmps://global-live.mux.com:443/app/${streamKey}`
-                  : ''
-              }
-              autoStart={isStreaming}
-              isPreview={!isStreaming}
-              audioParam={{
-                codecid: NodePublisher.NMC_CODEC_ID_AAC,
-                profile: NodePublisher.NMC_PROFILE_BASELINE,
-                samplerate: 44100,
-                channels: 2,
-                bitrate: 96000, // Lower audio bitrate for reduced latency
-              }}
-              videoParam={{
-                codecid: NodePublisher.NMC_CODEC_ID_H264,
-                profile: NodePublisher.NMC_PROFILE_BASELINE,
-                width: 405,  // 9:16 aspect ratio width for 720p height
-                height: 720, // 720p height
-                fps: 30,
-                bitrate: 1500000, // Adjusted bitrate for 720p
-                preset: 0, // Ultrafast preset for minimum latency
-                videoFrontMirror: false, // Disable mirror for streaming
-                videoBitrateMode: 1, // CBR mode for consistent low latency
-                bufferTime: 300, // Ultra minimal buffer (300ms)
-                keyFrameInterval: 1, // Every 1 second for quick recovery
-                bFrames: 0, // No B-frames for lowest latency
-              }}
-              frontCamera={cameraPosition === 'front' ? true : false}
-              HWAccelEnable={true}
-              denoiseEnable={false} // Disable for lower latency
-              keyFrameInterval={1} // Frequent keyframes for quick recovery
-              videoOrientation={NodePublisher.VIDEO_ORIENTATION_PORTRAIT}
-              videoFrontMirror={cameraPosition === 'front'}
-              smoothSkinEnable={false} // Disable beauty filters for speed
-              videoPreviewMirror={false} // No mirror for streaming
-              audioEnable={isMuted ? false : true} // Ensure audio capture
-              videoEnable={true} // Ensure video capture
-              lowLatencyMode={true} // Enable low latency mode if available
-              onStatus={(status: any) => {
-                // Enhanced status handling for MUX reliability with frame capture verification
-                if (status.code === 2001) {
-                  console.log('✅ Successfully connected to MUX - RTMP handshake complete');
-                  setStreamHealth('stable');
-                } else if (status.code === 2002) {
-                  console.log('🎥 Stream publishing started - Camera frames being sent to MUX');
-                  setStreamHealth('stable');
-                  setDataFlowActive(true);
-                } else if (status.code === 2004) {
-                  console.log('📡 Stream data actively flowing to MUX - Video frames confirmed');
-                  setStreamHealth('stable');
-                  setDataFlowActive(true);
-                } else if (status.code < 0) {
-                  // Error codes are negative
-                  console.error('❌ Streaming error:', status.msg);
-                  setStreamHealth('disconnected');
-                  setDataFlowActive(false);
+                url={
+                  streamKey
+                    ? `rtmps://global-live.mux.com:443/app/${streamKey}`
+                    : ''
                 }
-              }}
-            />
+                autoStart={isStreaming}
+                isPreview={!isStreaming}
+                audioParam={{
+                  codecid: NodePublisher.NMC_CODEC_ID_AAC,
+                  profile: NodePublisher.NMC_PROFILE_BASELINE,
+                  samplerate: 44100,
+                  channels: 2,
+                  bitrate: 96000, // Lower audio bitrate for reduced latency
+                }}
+                videoParam={{
+                  codecid: NodePublisher.NMC_CODEC_ID_H264,
+                  profile: NodePublisher.NMC_PROFILE_BASELINE,
+                  width: 405, // 9:16 aspect ratio width for 720p height
+                  height: 720, // 720p height
+                  fps: 30,
+                  bitrate: 1500000, // Adjusted bitrate for 720p
+                  preset: 0, // Ultrafast preset for minimum latency
+                  videoFrontMirror: false, // Disable mirror for streaming
+                  videoBitrateMode: 1, // CBR mode for consistent low latency
+                  bufferTime: 300, // Ultra minimal buffer (300ms)
+                  keyFrameInterval: 1, // Every 1 second for quick recovery
+                  bFrames: 0, // No B-frames for lowest latency
+                }}
+                frontCamera={cameraPosition === 'front' ? true : false}
+                HWAccelEnable={true}
+                denoiseEnable={false} // Disable for lower latency
+                keyFrameInterval={1} // Frequent keyframes for quick recovery
+                videoOrientation={NodePublisher.VIDEO_ORIENTATION_PORTRAIT}
+                videoFrontMirror={cameraPosition === 'front'}
+                smoothSkinEnable={false} // Disable beauty filters for speed
+                videoPreviewMirror={false} // No mirror for streaming
+                audioEnable={isMuted ? false : true} // Ensure audio capture
+                videoEnable={true} // Ensure video capture
+                lowLatencyMode={true} // Enable low latency mode if available
+                onStatus={(status: any) => {
+                  // Enhanced status handling for MUX reliability with frame capture verification
+                  if (status.code === 2001) {
+                    console.log(
+                      '✅ Successfully connected to MUX - RTMP handshake complete',
+                    );
+                    setStreamHealth('stable');
+                  } else if (status.code === 2002) {
+                    console.log(
+                      '🎥 Stream publishing started - Camera frames being sent to MUX',
+                    );
+                    setStreamHealth('stable');
+                    setDataFlowActive(true);
+                  } else if (status.code === 2004) {
+                    console.log(
+                      '📡 Stream data actively flowing to MUX - Video frames confirmed',
+                    );
+                    setStreamHealth('stable');
+                    setDataFlowActive(true);
+                  } else if (status.code < 0) {
+                    // Error codes are negative
+                    console.error('❌ Streaming error:', status.msg);
+                    setStreamHealth('disconnected');
+                    setDataFlowActive(false);
+                  }
+                }}
+              />
             </View>
           </>
         )}
@@ -716,15 +761,20 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         <TouchableOpacity
           style={[
             styles.streamButton,
-            isStreaming ? styles.stopButton : styles.startButton,
+            isStreaming || isMonthlyLimitReached
+              ? styles.stopButton
+              : styles.startButton,
           ]}
+          disabled={isMonthlyLimitReached}
           onPress={() => {
             // if (isStreaming) {
             //   handleClosePress(); // Show confirmation modal
             // } else {
             //   startStreaming();
             // }
-            startStreaming();
+            if (!isMonthlyLimitReached) {
+              startStreaming();
+            }
           }}>
           {/* {isStreaming ? (
             <StopIcon size={24} color="white" />
@@ -766,7 +816,13 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         onConfirm={confirmEndStream}
         viewerCount={viewerCount}
         streamDuration={streamDuration}
-        isBoosted={!!boostData || currentUser?.isBoosted}
+      />
+
+      {/* Monthly Limit Modal */}
+      <MonthlyLimitModal
+        visible={isMonthlyLimitReached}
+        onBoostAndGoLive={handleBoostAndGoLive}
+        onCancel={handleCancelAndGoBack}
       />
     </View>
   );
