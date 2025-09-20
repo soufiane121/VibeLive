@@ -182,6 +182,35 @@ const StreamPlayer = (props: Props) => {
 
   return (
     <>
+      {/* Stream Stopped Modal */}
+      <BottomModal
+        visible={modalVisible}
+        onClose={() => {
+          if (alertTimeoutId.current) {
+            clearTimeout(alertTimeoutId.current);
+          }
+          setModalVisible(false);
+          goBack();
+        }}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Stream Ended</Text>
+          <Text style={styles.modalMessage}>
+            The live stream has been stopped by the broadcaster.
+          </Text>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              if (alertTimeoutId.current) {
+                clearTimeout(alertTimeoutId.current);
+              }
+              setModalVisible(false);
+              goBack();
+            }}>
+            <View style={styles.modalButton}>
+              <Text style={styles.modalButtonText}>OK</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </BottomModal>
       {/* <SafeAreaView style={styles.safeHeaderArea}> */}
       <View style={styles.headerContainer}>
         <View style={styles.headerSubContainer}>
@@ -298,36 +327,6 @@ const StreamPlayer = (props: Props) => {
         coordinates={coordinates || props?.coordinates}
         parentGroupStreamId={props?.parentGroupStreamId}
       />
-
-      {/* Stream Stopped Modal */}
-      <BottomModal
-        visible={modalVisible}
-        onClose={() => {
-          if (alertTimeoutId.current) {
-            clearTimeout(alertTimeoutId.current);
-          }
-          setModalVisible(false);
-          goBack();
-        }}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Stream Ended</Text>
-          <Text style={styles.modalMessage}>
-            The live stream has been stopped by the broadcaster.
-          </Text>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              if (alertTimeoutId.current) {
-                clearTimeout(alertTimeoutId.current);
-              }
-              setModalVisible(false);
-              goBack();
-            }}>
-            <View style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>OK</Text>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </BottomModal>
       {/* </SafeAreaView> */}
     </>
   );

@@ -92,7 +92,7 @@ const BottomModal: React.FC<BottomModalProps> = ({
 
   return (
     <Modal
-      // transparent
+      transparent
       visible={visible}
       animationType="none"
       onRequestClose={onClose}
@@ -136,6 +136,11 @@ const BottomModal: React.FC<BottomModalProps> = ({
 };
 
 const styles = StyleSheet.create({
+  container: {
+    zIndex: 1,
+    position: 'absolute',
+    backgroundColor: 'transparent',
+  },
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -146,7 +151,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'transparent',
   },
   modalContainer: {
     height: MODAL_HEIGHT,
