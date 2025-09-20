@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import {useSignUpMutation} from '../../../../features/registrations/LoginSliceApi';
+import {useSignUpMutation, useValidateFieldsMutation} from '../../../../features/registrations/LoginSliceApi';
 import {useDispatch} from 'react-redux';
 import {setCurrentUser} from '../../../../features/registrations/CurrentUser';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -41,9 +41,11 @@ const SignUpContainer = ({navigation}) => {
     coordinates: [0, 0], // Default, replace with real location if available
   });
   const [loading, setLoading] = useState(false);
-  const [postSignUp, {isLoading, isSuccess, error, data}] = useSignUpMutation();
+  const [signUp, {isLoading}] = useSignUpMutation();
+  const [validateFields, {isLoading: isValidationPass}] = useValidateFieldsMutation();
   const dispatch = useDispatch();
   const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -52,6 +54,14 @@ const SignUpContainer = ({navigation}) => {
     if (missingFields.includes(key)) {
       setMissingFields(missingFields.filter(f => f !== key));
     }
+    // Clear field-specific errors when user starts typing
+    if (fieldErrors[key]) {
+      setFieldErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors[key];
+        return newErrors;
+      });
+    }
   };
 
   const handleSignUp = async () => {
@@ -59,41 +69,69 @@ const SignUpContainer = ({navigation}) => {
     setMissingFields(emptyFields);
 
     if (emptyFields.length > 0) {
-      Alert.alert('Error', 'Please fill all fields.');
       return;
     }
     if (form.password !== form.confirmPassword) {
       setMissingFields(prev => [
         ...new Set([...prev, 'password', 'confirmPassword']),
       ]);
-      Alert.alert('Error', 'Passwords do not match.');
+      setFieldErrors(prev => ({
+        ...prev,
+        confirmPassword: 'Passwords do not match'
+      }));
       return;
     }
-    setLoading(true);
+
+    // Validate unique fields before proceeding
     try {
-      const res = await postSignUp({
+      const validationResult = await validateFields({
         userName: form.userName,
         email: form.email,
-        password: form.password,
         phoneNumber: form.phoneNumber,
-        coordinates: form.coordinates,
       }).unwrap();
-      setLoading(false);
-      dispatch(setCurrentUser(res.data));
-    } catch (err) {
-      setLoading(false);
-    }
-    if (isSuccess) {
-      console.log('Sign Up Successful:', data);
-    } else if (error) {
-      console.error('Sign Up Error:', error);
+
+      if (!validationResult.isValid) {
+        const errors = validationResult.errors || {};
+        const errorFields = Object.keys(errors);
+        setMissingFields(errorFields);
+        setFieldErrors(errors);
+        return;
+      } else {
+        // If validation passes, navigate to onboarding flow
+        navigation.navigate('OnboardingAccountCreation', {
+          signupData: {
+            userName: form.userName,
+            email: form.email,
+            password: form.password,
+            phoneNumber: form.phoneNumber,
+            coordinates: form.coordinates,
+          },
+        });
+
+      }
+
+
+    } catch (error: any) {
+      console.log('Validation error:', error);
+      // Handle validation error response
+      if (error?.data?.errors) {
+        const errors = error.data.errors;
+        const errorFields = Object.keys(errors);
+        setMissingFields(errorFields);
+        setFieldErrors(errors);
+      } else {
+        setFieldErrors(prev => ({
+          ...prev,
+          general: 'Failed to validate account information. Please try again.'
+        }));
+      }
     }
   };
 
   const getInputStyle = (field: string) => [
     styles.input,
-    missingFields.includes(field) && {
-      borderColor: COLORS.error,
+    (missingFields.includes(field) || fieldErrors[field]) && {
+      borderColor: '#FF2D55',
       borderWidth: 2,
     },
   ];
@@ -107,24 +145,33 @@ const SignUpContainer = ({navigation}) => {
       </Text>
       {/* Username and Email in the same row */}
       <View style={styles.row}>
-        <TextInput
-          style={[getInputStyle('userName'), styles.halfInput]}
-          className="bg-gray-800 text-white p-4 rounded-lg mb-4"
-          placeholder="Username"
-          placeholderTextColor="#888"
-          value={form.userName}
-          onChangeText={text => handleChange('userName', text)}
-        />
-        <TextInput
-          style={[getInputStyle('email'), styles.halfInput, {marginLeft: 10}]}
-          placeholder="Email"
-          className="bg-gray-800 text-white p-4 rounded-lg mb-4"
-          placeholderTextColor="#888"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={form.email}
-          onChangeText={text => handleChange('email', text)}
-        />
+        <View style={styles.halfContainer}>
+          <TextInput
+            style={[getInputStyle('userName'), styles.halfInput]}
+            placeholder="Username"
+            placeholderTextColor="#888"
+            value={form.userName}
+            onChangeText={text => handleChange('userName', text)}
+            autoCapitalize="none"
+          />
+          {fieldErrors.userName && (
+            <Text style={styles.errorText}>{fieldErrors.userName}</Text>
+          )}
+        </View>
+        <View style={styles.halfContainer}>
+          <TextInput
+            style={[getInputStyle('email'), styles.halfInput]}
+            placeholder="Email"
+            placeholderTextColor="#888"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={form.email}
+            onChangeText={text => handleChange('email', text)}
+          />
+          {fieldErrors.email && (
+            <Text style={styles.errorText}>{fieldErrors.email}</Text>
+          )}
+        </View>
       </View>
       {/* The rest in column */}
       <TextInput
@@ -136,12 +183,20 @@ const SignUpContainer = ({navigation}) => {
         value={form.phoneNumber}
         onChangeText={text => handleChange('phoneNumber', text)}
       />
+      {fieldErrors.phoneNumber && (
+        <Text style={styles.errorText}>{fieldErrors.phoneNumber}</Text>
+      )}
       {/* Password with eye icon */}
-      <View style={styles.passwordContainer}>
+      <View style={[
+        styles.passwordContainer,
+        (missingFields.includes('password') || fieldErrors.password) && {
+          borderColor: '#FF2D55',
+          borderWidth: 2,
+        }
+      ]}>
         <TextInput
-          style={[getInputStyle('password'), styles.passwordInput]}
+          style={styles.passwordInput}
           placeholder="Password"
-          className="bg-gray-800 text-white p-4 rounded-lg mb-4"
           placeholderTextColor="#888"
           secureTextEntry={!showPassword}
           value={form.password}
@@ -157,11 +212,19 @@ const SignUpContainer = ({navigation}) => {
           />
         </TouchableOpacity>
       </View>
-      <View style={styles.passwordContainer}>
+      {fieldErrors.password && (
+        <Text style={styles.errorText}>{fieldErrors.password}</Text>
+      )}
+      <View style={[
+        styles.passwordContainer,
+        (missingFields.includes('confirmPassword') || fieldErrors.confirmPassword) && {
+          borderColor: '#FF2D55',
+          borderWidth: 2,
+        }
+      ]}>
         <TextInput
-          style={[getInputStyle('confirmPassword'), styles.passwordInput]}
+          style={styles.passwordInput}
           placeholder="Confirm Password"
-          className="bg-gray-800 text-white p-4 rounded-lg mb-4"
           placeholderTextColor="#888"
           secureTextEntry={!showConfirmPassword}
           value={form.confirmPassword}
@@ -177,12 +240,20 @@ const SignUpContainer = ({navigation}) => {
           />
         </TouchableOpacity>
       </View>
+      {fieldErrors.confirmPassword && (
+        <Text style={styles.errorText}>{fieldErrors.confirmPassword}</Text>
+      )}
+      {fieldErrors.general && (
+        <Text style={[styles.errorText, {textAlign: 'center', marginVertical: 10}]}>
+          {fieldErrors.general}
+        </Text>
+      )}
       <Button
         btnText="Sign Up"
         btnStyle="disabled:bg-slate-50 bg-yellow-500 p-4 rounded-lg items-center w-full"
         textStyle="text-black font-bold text-lg"
         onPress={handleSignUp}
-        disabled={loading}
+        disabled={isValidationPass}
       />
       <TouchableOpacity
         className="mt-6"
@@ -214,14 +285,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   halfInput: {
-    flex: 1,
+    // flex: 1,
     borderRadius: 8,
     padding: 14,
+    backgroundColor: '#1f2937',
+    color: '#ffffff',
+    // marginBottom: 16,
+    marginLeft: 0
   },
   fullInput: {
     width: '95%',
     borderRadius: 8,
     padding: 14,
+    backgroundColor: '#1f2937',
+    color: '#ffffff',
     marginBottom: 16,
   },
   passwordContainer: {
@@ -234,7 +311,9 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     padding: 14,
-    color: COLORS.text,
+    color: '#ffffff',
+    backgroundColor: '#1f2937',
+    borderRadius: 8,
   },
   eyeIcon: {
     paddingHorizontal: 10,
@@ -263,6 +342,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 0,
     borderWidth: 0,
+    backgroundColor: '#1f2937',
+    color: '#ffffff',
+    padding: 14,
   },
   linkContainer: {
     flexDirection: 'row',
@@ -271,6 +353,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     // marginTop: 16,
     fontSize: 16,
+  },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 8,
+    paddingLeft: 4,
+  },
+  halfContainer: {
+    flex: 1,
+    marginHorizontal: 5,
   },
 });
 

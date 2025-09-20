@@ -16,10 +16,7 @@ export const loginApi = createApi({
     prepareHeaders: async header => {
       const token = await getLocalData({key: 'token'});
       if (token) {
-        header.set(
-          'Authorization',
-          `${token}`,
-        );
+        header.set('Authorization', `${token}`);
       }
       return header;
     },
@@ -33,50 +30,60 @@ export const loginApi = createApi({
       }),
     }),
     autoLogin: builder.mutation({
-      query: (body) => ({
+      query: body => ({
         url: 'users/auto-login',
         credentials: 'include',
         body,
-        method: "POST"
+        method: 'POST',
       }),
       transformResponse: async response => {
         if (response?.data?.email) {
           await setLocalData({key: 'isAuthenticated', value: 'true'});
-          await setLocalData({key: "token", value: response?.data?.email})
+          await setLocalData({key: 'token', value: response?.data?.email});
         }
         return response;
       },
     }),
     signUp: builder.mutation({
-      query: (body) => ({
+      query: body => ({
         url: 'users/sign-up',
         body,
-        method: "POST"
+        method: 'POST',
       }),
       transformResponse: async response => {
         if (response?.data?.email) {
           await setLocalData({key: 'isAuthenticated', value: 'true'});
-          await setLocalData({key: "token", value: response?.data?.email})
+          await setLocalData({key: 'token', value: response?.data?.email});
         }
         return response;
       },
     }),
+    validateFields: builder.mutation({
+      query: validationData => ({
+        url: 'users/validate-fields',
+        method: 'POST',
+        body: validationData,
+      }),
+      transformErrorResponse: (response: any) => {
+        return response.data || response;
+      },
+    }),
     singOut: builder.mutation({
-      query: (body) => ({
+      query: body => ({
         url: 'users/sign-out',
         method: 'POST',
         credentials: 'include',
-        body
+        body,
       }),
     }),
     boostStream: builder.mutation({
-      query: (body) => ({
+      query: body => ({
         url: 'users/boost-stream',
         method: 'POST',
         headers: {
-          'ngrok-skip-browser-warning': 'true'
+          'ngrok-skip-browser-warning': 'true',
         },
-        body
+        body,
       }),
     }),
   }),
@@ -84,4 +91,4 @@ export const loginApi = createApi({
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const {useLoginMutation, useAutoLoginMutation, useSignUpMutation, useSingOutMutation, useBoostStreamMutation} = loginApi;
+export const {useLoginMutation, useAutoLoginMutation, useSignUpMutation, useSingOutMutation, useBoostStreamMutation, useValidateFieldsMutation} = loginApi;
