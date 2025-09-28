@@ -22,6 +22,7 @@ import {
 } from '../UIComponents/Icons';
 import EndStreamModal from './EndStreamModal';
 import MonthlyLimitModal from './MonthlyLimitModal';
+import FreeStreamLimitModal from './FreeStreamLimitModal';
 import {
   Camera,
   useCameraPermission,
@@ -30,13 +31,12 @@ import {
 import {useStartStreamingMutation} from '../../features/LiveStream/LiveStream';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
 import {NodeMediaClient, NodePublisher} from 'react-native-nodemediaclient';
-import {io} from 'socket.io-client';
-import {baseUrl} from '../../baseUrl';
 import {useSelector} from 'react-redux';
 import useGetLocation from '../CustomHooks/useGetLocation';
 import RTMPStreamingHelper from './RTMPStreamingHelper';
 import {useNavigation, CommonActions} from '@react-navigation/native';
 import ChatList from '../WatchStream/ChatList';
+import {useSocketInstance} from '../CustomHooks/useSocketInstance';
 
 interface BoostPurchaseData {
   tier: 'basic' | 'premium' | 'ultimate' | 'visibility' | 'prime' | 'viral';
@@ -56,9 +56,17 @@ interface LiveStreamContainerProps {
   onBackToEventSelections?: () => void;
 }
 export default function LiveStreamContainer(props: LiveStreamContainerProps) {
-  const {streamEventType, streamTitle, boostData, subcategoriesTags, parentCategory, onBackToEventSelections} = props;
+  const {
+    streamEventType,
+    streamTitle,
+    boostData,
+    subcategoriesTags,
+    parentCategory,
+    onBackToEventSelections,
+  } = props;
   const {currentUser} = useSelector((state: any) => state?.currentUser);
   const navigation = useNavigation();
+  const {socket} = useSocketInstance();
 
   const {coordinates} = useGetLocation();
   const [fetchStartStream, {data, isLoading, isSuccess}] =
@@ -67,18 +75,26 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const [streamKey, setStreamKey] = useState<string | null>(null);
   const [playbackId, setPlaybackId] = useState<string | null>(null);
   const [streamId, setStreamId] = useState<string | null>(null);
-  const [socketInstance, setSocketInstance] = useState<any>(null);
+  // const [socketInstance, setSocketInstance] = useState<any>(null);
   const [streamHealth, setStreamHealth] = useState<
     'connecting' | 'stable' | 'unstable' | 'disconnected'
   >('disconnected');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const [dataFlowActive, setDataFlowActive] = useState(false);
   const [streamStartTime, setStreamStartTime] = useState<number | null>(null);
-  const [streamDuration, setStreamDuration] = useState(0);
   const [showEndStreamModal, setShowEndStreamModal] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const [isMonthlyLimitReached, setIsMonthlyLimitReached] = useState<boolean>(false);
+  const [userEndedStream, setUserEndedStream] = useState(false);
+  const [isMonthlyLimitReached, setIsMonthlyLimitReached] =
+    useState<boolean>(false);
+  const [isWeeklyLimitReached, setIsWeeklyLimitReached] = useState(false);
+
+  // Free streaming limit states
+  const [showSevenMinuteWarning, setShowSevenMinuteWarning] = useState(false);
+  const [showFreeStreamLimitModal, setShowFreeStreamLimitModal] =
+    useState(false);
+  const [freeStreamingStatus, setFreeStreamingStatus] = useState<any>(null);
 
   // Create RTMP streaming helper instance
   const streamingHelper = new RTMPStreamingHelper();
@@ -96,34 +112,6 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const streamHealthTimer = useRef<NodeJS.Timeout | null>(null);
   const durationTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Format duration for display (MM:SS)
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs
-      .toString()
-      .padStart(2, '0')}`;
-  };
-
-  // Start duration timer
-  const startDurationTimer = () => {
-    if (durationTimer.current) clearInterval(durationTimer.current);
-    setStreamStartTime(Date.now());
-    setStreamDuration(0);
-
-    durationTimer.current = setInterval(() => {
-      setStreamDuration(prev => prev + 1);
-    }, 1000);
-  };
-
-  // Stop duration timer
-  const stopDurationTimer = () => {
-    if (durationTimer.current) {
-      clearInterval(durationTimer.current);
-      durationTimer.current = null;
-    }
-  };
-
   // Toggle microphone mute
   const toggleMute = () => {
     setIsMuted(!isMuted);
@@ -140,7 +128,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       setShowEndStreamModal(true);
     } else {
       // Stop duration timer if running
-      stopDurationTimer();
+      setStreamStartTime(null);
 
       // Stop RTMP publisher and camera completely
       if (rtmp.current) {
@@ -160,18 +148,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         } catch (error) {}
       }
 
-      // Cleanup socket connection
-      if (socketInstance) {
-        socketInstance.disconnect();
-        setSocketInstance(null);
-      }
-
       // Reset all streaming states
       setIsStreaming(false);
       setStreamHealth('disconnected');
       setDataFlowActive(false);
-      setStreamDuration(0);
       setReconnectAttempts(0);
+      setUserEndedStream(true); // Mark that user ended the session
       setStreamKey(null);
       setPlaybackId(null);
       setStreamId(null);
@@ -194,6 +176,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   // Confirm end stream with playback retention preference
   const confirmEndStream = async (keepPlayback: boolean) => {
     setShowEndStreamModal(false);
+    setUserEndedStream(true); // Mark that user intentionally ended the stream
     await stopStreaming(keepPlayback);
   };
 
@@ -206,7 +189,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const handleBoostAndGoLive = async () => {
     // Reset monthly limit state
     setIsMonthlyLimitReached(false);
-    
+    setIsWeeklyLimitReached(false);
+
     // Store current stream data in global state for EventSelections to pick up
     (global as any).streamSelectionData = {
       streamEventType,
@@ -216,7 +200,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       flowStep: 'boost_tiers', // This will trigger the boost flow
       timestamp: Date.now(),
     };
-    
+
     // Use the callback from SwitcherContainer to go back to EventSelections
     if (onBackToEventSelections) {
       onBackToEventSelections();
@@ -230,9 +214,60 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const handleCancelAndGoBack = () => {
     // Reset monthly limit state
     setIsMonthlyLimitReached(false);
-    
+    setIsWeeklyLimitReached(false);
+
     // Navigate back using the existing close handler logic
     handleClosePress();
+  };
+
+  // Handle 7-minute warning for free streaming
+  const handleSevenMinuteWarning = () => {
+    setShowSevenMinuteWarning(true);
+  };
+
+  // Handle 10-minute limit reached for free streaming
+  const handleTenMinuteLimit = async () => {
+    try {
+      // Use the unified stopStreaming with a reason parameter
+      await stopStreaming(false, 'FREE_STREAM_TIME_LIMIT');
+
+      // Show the free stream limit modal
+      setShowFreeStreamLimitModal(true);
+    } catch (error) {
+      console.error('Error handling 10-minute limit:', error);
+      // Still show modal even if there's an error
+      setShowFreeStreamLimitModal(true);
+    }
+  };
+
+  // Handle free stream limit modal actions
+  const handleFreeStreamBoostAndGoLive = () => {
+    setShowFreeStreamLimitModal(false);
+    handleBoostAndGoLive(); // Reuse existing boost flow
+  };
+
+  const handleFreeStreamCancel = () => {
+    setShowFreeStreamLimitModal(false);
+    handleClosePress(); // Navigate back
+  };
+
+  // Dismiss 7-minute warning
+  const dismissSevenMinuteWarning = () => {
+    setShowSevenMinuteWarning(false);
+  };
+
+  // Check free streaming status
+  const checkFreeStreamingStatus = async () => {
+    try {
+      if (socket && currentUser?._id) {
+        socket.emit('check-free-streaming-status', {
+          token: currentUser?.email,
+          userId: currentUser._id,
+        });
+      }
+    } catch (error) {
+      console.error('Error checking free streaming status:', error);
+    }
   };
 
   // Cleanup effect to ensure camera is released on unmount
@@ -252,12 +287,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       }
 
       // Stop timers
-      stopDurationTimer();
-
-      // Disconnect socket
-      if (socketInstance) {
-        socketInstance.disconnect();
-      }
+      setStreamStartTime(null);
     };
   }, []);
 
@@ -265,6 +295,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     const initializeStreaming = async () => {
       // Request permissions first
       await requestPermissions();
+
+      // Check free streaming status
+      await checkFreeStreamingStatus();
 
       // Initialize NodeMediaClient properly with authorization
       try {
@@ -318,14 +351,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   }, [device]); // Re-initialize when device changes
 
   useEffect(() => {
-    if (!isSuccess) {
-      const socket = io(baseUrl + '/liveStream', {
-        query: {
-          userId: currentUser._id,
-          token: currentUser.email,
-        },
-      });
-
+    if (socket) {
       // Handle stop-all-streams event
       socket.on('stop-all-streams', data => {
         // Force stop streaming immediately
@@ -416,6 +442,34 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setStreamKey(null);
       });
 
+      // Handle free streaming limit reached event
+      socket.on('free-stream-limit-reached', data => {
+        console.log('Free stream limit reached:', data);
+
+        // Immediately stop streaming
+        if (isStreaming) {
+          stopStreaming(false);
+        }
+
+        // Force stop RTMP publisher
+        if (rtmp.current) {
+          try {
+            rtmp.current.stop();
+            rtmp.current.release();
+          } catch (error) {}
+        }
+
+        // Clear streaming state
+        setIsStreaming(false);
+        setStreamHealth('disconnected');
+        setStreamKey(null);
+        setStreamStartTime(null);
+
+        // Show the free stream limit modal
+        setFreeStreamingStatus(data.freeStreamingStatus);
+        setShowFreeStreamLimitModal(true);
+      });
+
       // Handle stream-start-blocked event
       socket.on('stream-start-blocked', data => {
         Alert.alert(
@@ -425,13 +479,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setIsStreaming(false);
         setStreamHealth('disconnected');
       });
-
-      setSocketInstance(socket);
     }
-    return () => {
-      socketInstance?.disconnect();
-    };
-  }, [isSuccess]); // Removed isStreaming dependency to prevent reconnection
+  }, [socket]); // Removed isStreaming dependency to prevent reconnection
 
   // Request camera and microphone permissions
   const requestPermissions = async () => {
@@ -479,11 +528,13 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setStreamKey(response.data.stream_key);
         setPlaybackId(response.data.playback_ids[0].id);
         setStreamId(response.data.id); // Store the MUX stream ID for tracking
-      } 
+      }
     } catch (error) {
-      console.log( "from error side",error);
-      if(error?.data?.code === "MONTHLY_LIMIT_REACHED"){
+      console.log('from error side', error);
+      if (error?.data?.code === 'MONTHLY_LIMIT_REACHED') {
         setIsMonthlyLimitReached(true);
+      } else if (error?.data?.code === 'FREE_STREAMING_LIMIT_REACHED') {
+        setIsWeeklyLimitReached(true);
       }
     }
   };
@@ -500,6 +551,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
 
   // Production MUX streaming with comprehensive data flow validation
   const startStreaming = async () => {
+    // Reset user ended flag when starting a new stream
+    setUserEndedStream(false);
+    
     // Activate boost first if available
     let boostActivated = false;
     try {
@@ -579,13 +633,13 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       const success = await streamingHelper.startStreaming(streamConfig);
 
       if (success) {
-        startDurationTimer(); // Start the duration timer when stream starts
+        setStreamStartTime(Date.now()); // Set the start time for the timer
 
         // Notify backend
-        if (socketInstance) {
-          console.log("we sent data to backed ");
-          
-          socketInstance.emit('start-streaming', {
+        if (socket) {
+          console.log('we sent data to backed ');
+
+          socket.emit('start-streaming', {
             token: currentUser?.email,
             streamId: streamId, // Send MUX stream ID for proper tracking
             playbackId: playbackId, // Send MUX playback ID for streaming
@@ -614,10 +668,15 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   };
 
   // Stop streaming with proper MUX cleanup and playback retention
-  const stopStreaming = async (keepPlayback: boolean = true) => {
+  const stopStreaming = async (keepPlayback: boolean = true, reason?: string) => {
     try {
       // CRITICAL: Clear all reconnect attempts and timers first
       setReconnectAttempts(0);
+      
+      // Mark that streaming has been stopped (prevents auto-restart)
+      if (reason !== 'FREE_STREAM_TIME_LIMIT') {
+        setUserEndedStream(true);
+      }
 
       // Use streaming helper to stop
       await streamingHelper.stopStreaming();
@@ -627,17 +686,23 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       setDataFlowActive(false);
 
       // Notify backend with playback retention preference
-      if (socketInstance) {
-        socketInstance.emit('stop-streaming', {
+      if (socket) {
+        const streamDuration = streamStartTime 
+          ? Math.floor((Date.now() - streamStartTime) / 1000 / 60)
+          : 0;
+          
+        socket.emit('stop-streaming', {
           token: currentUser?.email,
           streamId: streamId, // Send MUX stream ID for proper termination
           playbackId: playbackId,
           keepPlayback: keepPlayback,
           isBoosted: !!boostData || currentUser?.isBoosted,
+          reason: reason || 'USER_INITIATED', // Include the reason
+          streamDuration: streamDuration, // Include actual duration
         });
       }
 
-      stopDurationTimer(); // Stop the duration timer when stream stops
+      setStreamStartTime(null); // Stop the duration timer when stream stops
     } catch (error) {
       setIsStreaming(false);
       setStreamHealth('disconnected');
@@ -656,7 +721,13 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           <Text style={styles.viewerCount}>{viewerCount}K</Text>
         </View>
 
-        <Text style={styles.timer}>{formatDuration(streamDuration)}</Text>
+        <StreamTimer
+          streamStartTime={streamStartTime}
+          isStreaming={isStreaming}
+          isBoosted={!!boostData || !!currentUser?.isBoosted}
+          onSevenMinuteWarning={handleSevenMinuteWarning}
+          onTenMinuteLimit={handleTenMinuteLimit}
+        />
 
         <TouchableOpacity style={styles.closeButton} onPress={handleClosePress}>
           <CloseIcon size={24} color="white" />
@@ -689,7 +760,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
                     ? `rtmps://global-live.mux.com:443/app/${streamKey}`
                     : ''
                 }
-                autoStart={isStreaming}
+                autoStart={isStreaming && !userEndedStream}
                 isPreview={!isStreaming}
                 audioParam={{
                   codecid: NodePublisher.NMC_CODEC_ID_AAC,
@@ -815,15 +886,62 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         onCancel={cancelEndStream}
         onConfirm={confirmEndStream}
         viewerCount={viewerCount}
-        streamDuration={streamDuration}
+        streamDuration={
+          streamStartTime
+            ? Math.floor((Date.now() - streamStartTime) / 1000)
+            : 0
+        }
       />
 
       {/* Monthly Limit Modal */}
       <MonthlyLimitModal
-        visible={isMonthlyLimitReached}
+        labelsData={{
+          title: "You're Missing Out on Live Viewers!",
+          subTitle: `Your spotlight just dimmed, the audience is still watching. 
+  Boost now to jump back in before the moment slips away.`,
+          boostButtonLabel: 'Boost Now & Reclaim Your Spot 🚀',
+          cancelButtonLabel: 'Wait… I’ll Miss Out',
+        }}
+        visible={isMonthlyLimitReached || isWeeklyLimitReached}
         onBoostAndGoLive={handleBoostAndGoLive}
         onCancel={handleCancelAndGoBack}
       />
+
+      {/* Free Stream Limit Modal */}
+      <FreeStreamLimitModal
+        visible={showFreeStreamLimitModal}
+        onBoostAndGoLive={handleFreeStreamBoostAndGoLive}
+        onCancel={handleFreeStreamCancel}
+        freeStreamingStatus={freeStreamingStatus}
+      />
+
+      {/* 7-Minute Warning Alert */}
+      {showSevenMinuteWarning && (
+        <View style={styles.warningOverlay}>
+          <View style={styles.warningContainer}>
+            <Text style={styles.warningTitle}>⚠️ Stream Ending Soon</Text>
+            <Text style={styles.warningMessage}>
+              Your free stream will end in 3 minutes. Boost your stream to
+              continue streaming unlimited!
+            </Text>
+            <View style={styles.warningActions}>
+              <TouchableOpacity
+                style={styles.boostWarningButton}
+                onPress={() => {
+                  dismissSevenMinuteWarning();
+                  handleBoostAndGoLive();
+                }}>
+                <Text style={styles.boostWarningButtonText}>Boost Stream</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.continueWarningButton}
+                onPress={dismissSevenMinuteWarning}>
+                <Text style={styles.continueWarningButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -882,7 +1000,7 @@ const styles = StyleSheet.create({
   },
   cameraAspectContainer: {
     width: '100%',
-    aspectRatio: 9/16, // 9:16 aspect ratio container
+    aspectRatio: 9 / 16, // 9:16 aspect ratio container
     maxHeight: '100%',
     backgroundColor: '#000',
     overflow: 'hidden',
@@ -970,4 +1088,159 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  // 7-minute warning alert styles
+  warningOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  warningContainer: {
+    backgroundColor: '#1F2937',
+    margin: 20,
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+    shadowColor: '#F59E0B',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  warningTitle: {
+    color: '#F59E0B',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  warningMessage: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  warningActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  boostWarningButton: {
+    flex: 1,
+    backgroundColor: '#FFD700',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  boostWarningButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  continueWarningButton: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  continueWarningButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
 });
+
+// Enhanced StreamTimer component with free streaming limits
+interface StreamTimerProps {
+  streamStartTime: number | null;
+  isStreaming: boolean;
+  isBoosted: boolean;
+  onSevenMinuteWarning: () => void;
+  onTenMinuteLimit: () => void;
+}
+
+const StreamTimer = React.memo(
+  ({
+    streamStartTime,
+    isStreaming,
+    isBoosted,
+    onSevenMinuteWarning,
+    onTenMinuteLimit,
+  }: StreamTimerProps) => {
+    const [duration, setDuration] = useState(0);
+    const sevenMinWarningShown = useRef(false);
+    const tenMinLimitReached = useRef(false);
+
+    useEffect(() => {
+      if (!streamStartTime) {
+        setDuration(0);
+        sevenMinWarningShown.current = false;
+        tenMinLimitReached.current = false;
+        return;
+      }
+
+      const timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - streamStartTime) / 1000);
+        setDuration(elapsed);
+
+        // Only enforce limits for non-boosted users
+        if (!isBoosted && isStreaming) {
+          // 7-minute warning (420 seconds)
+          if (elapsed >= 60 && !sevenMinWarningShown.current) {
+            sevenMinWarningShown.current = true;
+            onSevenMinuteWarning();
+          }
+
+          // 10-minute limit (600 seconds)
+          if (elapsed >= 120 && !tenMinLimitReached.current) {
+            tenMinLimitReached.current = true;
+            onTenMinuteLimit();
+          }
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }, [
+      streamStartTime,
+      isStreaming,
+      isBoosted,
+      onSevenMinuteWarning,
+      onTenMinuteLimit,
+    ]);
+
+    const formatDuration = (seconds: number): string => {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs
+        .toString()
+        .padStart(2, '0')}`;
+    };
+
+    // Color coding for free streaming limits
+    const getTimerColor = (): string => {
+      if (isBoosted) return 'white'; // Normal color for boosted users
+      if (duration >= 600) return '#EF4444'; // Red when limit reached
+      if (duration >= 420) return '#F59E0B'; // Amber when warning shown
+      return 'white'; // Normal color
+    };
+
+    return (
+      <Text style={[styles.timer, {color: getTimerColor()}]}>
+        {formatDuration(duration)}
+      </Text>
+    );
+  },
+);

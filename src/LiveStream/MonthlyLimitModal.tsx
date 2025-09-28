@@ -15,12 +15,19 @@ interface MonthlyLimitModalProps {
   visible: boolean;
   onBoostAndGoLive: () => void;
   onCancel: () => void;
+  labelsData: {
+    title: string;
+    subTitle: string;
+    boostButtonLabel: string;
+    cancelButtonLabel: string;
+  };
 }
 
 const MonthlyLimitModal: React.FC<MonthlyLimitModalProps> = ({
   visible,
   onBoostAndGoLive,
   onCancel,
+  labelsData,
 }) => {
   return (
     <Modal
@@ -32,14 +39,11 @@ const MonthlyLimitModal: React.FC<MonthlyLimitModalProps> = ({
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             {/* Title */}
-            <Text style={styles.title}>You've hit your free limit.</Text>
-            
+            <Text style={styles.title}>{labelsData?.title}</Text>
+
             {/* Subtitle */}
-            <Text style={styles.subtitle}>
-              You've used up your free 30 minutes.{'\n'}
-              Boost to go live instantly.
-            </Text>
-            
+            <Text style={styles.subtitle}>{labelsData?.subTitle}</Text>
+
             {/* Buttons */}
             <View style={styles.buttonContainer}>
               {/* Primary Button - Boost & Go Live */}
@@ -47,15 +51,19 @@ const MonthlyLimitModal: React.FC<MonthlyLimitModalProps> = ({
                 style={styles.boostButton}
                 onPress={onBoostAndGoLive}
                 activeOpacity={0.8}>
-                <Text style={styles.boostButtonText}>Boost & Go Live 🚀</Text>
+                <Text style={styles.boostButtonText}>
+                  {labelsData?.boostButtonLabel}
+                </Text>
               </TouchableOpacity>
-              
+
               {/* Secondary Button - Cancel & Go Back */}
               <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={onCancel}
                 activeOpacity={0.8}>
-                <Text style={styles.cancelButtonText}>Cancel & Go Back</Text>
+                <Text style={styles.cancelButtonText}>
+                  {labelsData?.cancelButtonLabel}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -62,6 +62,37 @@ const baseColors = {
   goldOverlay: 'rgba(255, 215, 0, 0.1)',
 };
 
+// Type definitions for color schemes
+export interface ColorScheme {
+  // Background and surfaces
+  background?: string;
+  overlay?: string;
+  
+  // Text colors
+  text?: string;
+  textSecondary?: string;
+  buttonText?: string;
+  
+  // Interactive elements
+  primary?: string;
+  highlight?: string;
+  error?: string;
+  
+  // Borders and dividers
+  border?: string;
+  
+  // Special backgrounds
+  infoBackground?: string;
+  infoBorder?: string;
+  infoText?: string;
+  highlightBackground?: string;
+  highlightBorder?: string;
+  
+  // UI elements
+  dragHandle?: string;
+  shadow?: string;
+}
+
 // Screen-specific color configurations
 export const GlobalColors = {
   // Events List Screen
@@ -406,8 +437,34 @@ export const GlobalColors = {
     border: 'transparent',
   },
   ModalBottom: {
+    // Background and surfaces
     background: baseColors.darkGray,
-  },
+    overlay: baseColors.blackOverlay,
+
+    // Text colors
+    text: baseColors.white_ivory,
+    textSecondary: baseColors.offWhite,
+    buttonText: baseColors.black,
+
+    // Interactive elements
+    primary: baseColors.gold_accent,
+    highlight: baseColors.gold_accent,
+    error: baseColors.error,
+
+    // Borders and dividers
+    border: baseColors.whiteOverlay,
+
+    // Special backgrounds
+    infoBackground: baseColors.cardBackground,
+    infoBorder: baseColors.mutedGray,
+    infoText: baseColors.white_ivory,
+    highlightBackground: baseColors.cardBackground,
+    highlightBorder: baseColors.mutedGray,
+
+    // UI elements
+    dragHandle: baseColors.whiteOverlay,
+    shadow: baseColors.black,
+  } satisfies ColorScheme,
 
   // Analytics Components
   Analytics: {
