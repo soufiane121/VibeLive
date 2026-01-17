@@ -6,22 +6,32 @@
  */
 
 // import './gesture-handler';
-import React from 'react';
-import {SafeAreaView, useColorScheme} from 'react-native';
+import React, { useEffect } from 'react';
+import { useColorScheme} from 'react-native';
 import Main from './src/Main';
 import {Provider} from 'react-redux';
 import {store} from './redux/store';
-import LiveStreamContainer from './src/LiveStream/LiveStreamContainer';
-import RadarMap from './radarMap';
+import { initOneSignal } from './notifications/IniNotification';
+import { AnalyticsProvider } from './src/Providers/AnalyticsProvider';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
+  useEffect(() => {
+    handleInitOneSignal();
+  }, [])
+
+  const handleInitOneSignal =async  ()=> {
+    // await initOneSignal();
+  }
+  
 
   return (
     <Provider store={store}>
-      <Main />
-      {/* <LiveStreamContainer /> */}
-      {/* <RadarMap  /> */}
+      <AnalyticsProvider>
+        <Main />
+        {/* <LiveStreamContainer /> */}
+        {/* <RadarMap  /> */}
+      </AnalyticsProvider>
     </Provider>
   );
 }

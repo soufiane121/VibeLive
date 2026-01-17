@@ -1,19 +1,23 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import MapContainer from '../../FeatureComponents/Map/MapContainer';
-import {LiveStreamIcon, mapIcon} from '../../UIComponents/Icons';
+import {
+  LiveStreamIcon,
+  mapIcon,
+  ProfileIcon,
+  SettingsIcon,
+  EventsIcon,
+} from '../../UIComponents/Icons';
 import {Text, View} from 'react-native';
 import tw from '../../../tw';
 import LiveStreamContainer from '../../LiveStream/LiveStreamContainer';
 import SwitcherContainer from '../../LiveStream/SwitcherContainer';
+import Settings from '../../Settings/Settings';
+import Profile from '../../Account/Profile';
+import EventsListScreen from '../../FeatureComponents/Events/EventsListScreen';
+import {GlobalColors} from '../../styles/GlobalColors';
 
-function HomeScreen() {
-  return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Home!</Text>
-    </View>
-  );
-}
+const colors = GlobalColors.BottomNavigation;
 
 const BottomTap = createBottomTabNavigator();
 
@@ -24,8 +28,9 @@ export default function BottomNavigation() {
       initialRouteName="Bottom"
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: '#292929',
+          backgroundColor: colors.background,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -45,7 +50,7 @@ export default function BottomNavigation() {
           tabBarIcon: mapIcon,
           title: 'Map',
           // tabBarIconStyle: tw`primaryIconColor`,
-          tabBarActiveTintColor: '#faf8ff',
+          tabBarActiveTintColor: colors.tabActive,
           tabBarLabelStyle: {
             fontSize: 14,
           },
@@ -58,18 +63,43 @@ export default function BottomNavigation() {
         options={{
           tabBarIcon: LiveStreamIcon,
           title: 'GO Live',
-          tabBarActiveTintColor: '#faf8ff',
+          tabBarActiveTintColor: colors.tabActive,
           tabBarLabelStyle: {
             fontSize: 14,
           },
         }}
       />
       <BottomTap.Screen
-        name="Home"
-        component={HomeScreen}
+        name="Events"
+        component={EventsListScreen}
         options={{
-          title: 'Home',
-          tabBarActiveTintColor: '#faf8ff',
+          tabBarIcon: EventsIcon,
+          title: 'Events',
+          tabBarActiveTintColor: colors.tabActive,
+          tabBarLabelStyle: {
+            fontSize: 14,
+          },
+        }}
+      />
+      <BottomTap.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          tabBarIcon: ProfileIcon,
+          title: 'Profile',
+          tabBarActiveTintColor: colors.tabActive,
+          tabBarLabelStyle: {
+            fontSize: 14,
+          },
+        }}
+      />
+      <BottomTap.Screen
+        name="Settings"
+        component={Settings}
+        options={{
+          tabBarIcon: SettingsIcon,
+          title: 'Settings',
+          tabBarActiveTintColor: colors.tabActive,
           tabBarLabelStyle: {
             fontSize: 14,
           },

@@ -4,6 +4,9 @@ import {loginSlice} from '../features/registrations/LoginSlice';
 import {loginApi} from '../features/registrations/LoginSliceApi';
 import {liveStream} from '../features/LiveStream/LiveStream';
 import {LiveStreamSlice} from '../features/LiveStream/LiveStreamSlice';
+import {settingsApi} from '../features/settings/SettingsSliceApi';
+import {analyticsApi} from '../src/Services/AnalyticsApi';
+import {eventsApi} from '../features/Events/EventsApi';
 
 
 export const store = configureStore({
@@ -13,10 +16,19 @@ export const store = configureStore({
     // login: loginSlice,
     [loginApi.reducerPath]: loginApi.reducer,
     [liveStream.reducerPath]: liveStream.reducer,
+    [settingsApi.reducerPath]: settingsApi.reducer,
+    [analyticsApi.reducerPath]: analyticsApi.reducer,
+    [eventsApi.reducerPath]: eventsApi.reducer,
   },
   // adding the api middleware enables caching, invalidation, polling and other features of `rtk-query`
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware().concat([loginApi.middleware, liveStream.middleware]),
+    getDefaultMiddleware().concat([
+      loginApi.middleware, 
+      liveStream.middleware, 
+      settingsApi.middleware,
+      analyticsApi.middleware,
+      eventsApi.middleware
+    ]),
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

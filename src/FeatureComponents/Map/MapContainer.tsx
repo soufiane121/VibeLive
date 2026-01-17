@@ -37,38 +37,125 @@ import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
 import {PartialState, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
-// import {FloatingEmoji} from '../../FloatingAction/EmojiAnimation';
 import {
-  addReaction,
-  clearReactions,
-} from '../../../features/LiveStream/LiveStreamSlice';
+  eventsApi,
+  Event,
+  useGetMapEventsQuery,
+} from '../../../features/Events/EventsApi';
+// import {FloatingEmoji} from '../../FloatingAction/EmojiAnimation';
 import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {GlobalColors} from '../../styles/GlobalColors';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
+const eventIcon = require('../../../assests/yawning.png'); // We'll need to add this icon
 
 setAccessToken(PUB_MAPBOX_KEY);
 
-// Generate 10,000+ random markers
-const generateFeatures = count => {
-  return Array.from({length: count}, (_, index) => ({
-    id: `${index + 1}`,
-    isLive: index % 3 === 0,
-    coordinates: [
-      -80.718976 + Math.random() * 0.1,
-      35.15989 + Math.random() * 0.1,
-    ],
-  }));
-};
+// Memoized event marker component
+const EventIcon = memo(
+  ({event, trackMapInteraction}: {event: Event; trackMapInteraction: any}) => {
+    const {navigate} =
+      useNavigation<NativeStackNavigationProp<PartialState<any>>>();
+
+    const getEventTypeColor = (eventType: string) => {
+      const colors = {
+        music: '#9333ea', // Purple
+        sports: '#059669', // Green
+        nightlife: '#dc2626', // Red
+        festival: '#ea580c', // Orange
+        conference: '#0284c7', // Blue
+        comedy: '#ca8a04', // Yellow
+        theater: '#7c3aed', // Violet
+        art: '#db2777', // Pink
+        food: '#16a34a', // Green
+        other: '#6b7280', // Gray
+      };
+      return colors[eventType as keyof typeof colors] || colors.other;
+    };
+
+    const isPromoted =
+      event.promotionStatus === 'map' || event.promotionStatus === 'both';
+
+    return (
+      <ShapeSource
+        key={`event-${event._id}`}
+        id={`event-${event._id}`}
+        shape={point(event.location.coordinates)}
+        onPress={e => {
+          // Track event marker click analytics
+          trackMapInteraction('event_marker_clicked', {
+            eventId: event._id,
+            eventTitle: event.title,
+            eventType: event.eventType,
+            eventCoordinates: event.location.coordinates,
+            isPromoted: isPromoted,
+            rsvpCount: event.rsvpCount,
+            attendeeCount: event.attendeeCount,
+            isFree: event.ticketing.isFree,
+            price: event.ticketing.price,
+            startDate: event.startDate,
+            timestamp: new Date().toISOString(),
+          });
+
+          navigate('EventDetails', {
+            eventId: event._id,
+          });
+        }}>
+        {isPromoted && (
+          <CircleLayer
+            id={`event-promotion-${event._id}`}
+            style={{
+              circleRadius: 25,
+              circleColor: getEventTypeColor(event.eventType),
+              circleOpacity: 0.3,
+              circleStrokeWidth: 2,
+              circleStrokeColor: getEventTypeColor(event.eventType),
+              circleStrokeOpacity: 0.8,
+            }}
+          />
+        )}
+        <CircleLayer
+          id={`event-circle-${event._id}`}
+          style={{
+            circleRadius: 15,
+            circleColor: getEventTypeColor(event.eventType),
+            circleOpacity: 0.9,
+            circleStrokeWidth: 2,
+            circleStrokeColor: '#ffffff',
+            circleStrokeOpacity: 1,
+          }}
+        />
+        <SymbolLayer
+          id={`event-icon-${event._id}`}
+          style={{
+            iconImage: 'event-icon',
+            iconSize: 0.8,
+            iconColor: '#ffffff',
+          }}
+        />
+      </ShapeSource>
+    );
+  },
+  (prevProps, nextProps) => prevProps.event._id === nextProps.event._id,
+);
 
 // Memoized marker component to avoid unnecessary re-renders
 const LiveIcon = memo(
-  ({feature, circleLayerRef}) => {
+  ({
+    feature,
+    circleLayerRef,
+    trackMapInteraction,
+  }: {
+    feature: any;
+    circleLayerRef: any;
+    trackMapInteraction: any;
+  }) => {
     const {navigate} =
       useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     if (!feature.isLive) return null;
-console.log({feature}, 'feature in live icon');
 
     return (
       <ShapeSource
@@ -77,13 +164,42 @@ console.log({feature}, 'feature in live icon');
         shape={point(feature.coordinates)}
         {...feature}
         onPress={e => {
-          if (feature.properties?.liveDetails?.isLive && !feature.hasNestedMarkers) {
+          // Track marker click analytics
+          trackMapInteraction('map_marker_clicked', {
+            markerId: feature.id,
+            markerCoordinates: feature.coordinates,
+            markerType: feature.properties?.liveDetails?.isLive
+              ? 'live_stream'
+              : 'marker',
+            streamId: feature.properties?.streamId,
+            streamerId: feature.properties?.userId,
+            streamCategory:
+              feature.properties?.category ||
+              feature.properties?.liveDetails?.category ||
+              'unknown',
+            streamTitle:
+              feature.properties?.title ||
+              feature.properties?.liveDetails?.title ||
+              '',
+            isLive: feature.properties?.liveDetails?.isLive || false,
+            viewerCount: feature.properties?.liveDetails?.viewerCount || 0,
+            isBoosted: feature.properties?.isBoosted || false,
+            timestamp: new Date().toISOString(),
+          });
+          if (
+            feature.properties?.liveDetails?.isLive &&
+            !feature.hasNestedMarkers
+          ) {
             navigate('StreamPlayer', {
-              properties: {...feature.properties},
+              parentData: feature,
+              from: 'for stream derictly',
             });
           } else {
+            const {groupedFeatures, ...rest} = feature;
             navigate('carrouselSwiper', {
-              properties: {...feature.properties},
+              groupedData: groupedFeatures,
+              parentData: {...rest},
+              from: 'carrouselSwiper',
             });
           }
         }}>
@@ -106,7 +222,8 @@ console.log({feature}, 'feature in live icon');
       </ShapeSource>
     );
   },
-  (prevProps, nextProps) => prevProps.feature.id === nextProps.feature.id,
+  (prevProps: any, nextProps: any) =>
+    prevProps.feature.id === nextProps.feature.id,
 );
 const USA_BOUNDS = [
   [-125.0, 24.0], // Southwest corner [longitude, latitude]
@@ -121,6 +238,14 @@ const MapContainer = () => {
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
   const [featuresPointsData, setFeaturesPointsData] = useState([]);
+
+  // Fetch events for map
+  const {data: eventsData} = useGetMapEventsQuery({
+    coordinates: `${coordinates[1]},${coordinates[0]}`,
+    useDB: true, // Use database for testing
+  });
+
+  const [mapEvents, setMapEvents] = useState<Event[]>([]);
   const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
@@ -129,8 +254,15 @@ const MapContainer = () => {
   const throttleUpdate = useRef(false); // Ref for throttling updates
   const cameraRef = useRef<Camera | null>(null);
   const pulseAnimation = useRef(new Animated.Value(0)).current;
+
+  // Analytics integration - using powerful useAnalytics for all tracking
+  const {trackEvent, trackMapInteraction} = useAnalytics({
+    screenName: 'MapContainer',
+    trackScreenView: true,
+  });
+
   const [clusters, setClusters] = React.useState([]);
-  const [bounds, setBounds] = React.useState([-80.9, 35.2, -81.8, 36.3]);
+  const [bounds, setBounds] = React.useState([-180, -90, 180, 90]); // Initialize with world bounds
   const [zoomLevel, setZoomLevel] = useState(14);
   const {socket, isConnected} = useSocketInstance();
   const [emojis, setEmojis] = useState<EmojisState>({});
@@ -157,13 +289,61 @@ const MapContainer = () => {
         [id]: [...(prevState[id] || []), {id: Date.now(), emoji: reactEmogi}],
       }));
     });
+    socket?.on('stream-stopped', data => {
+      console.log(data, 'stream-stopped---------------------');
+      handleRemoveStoppedStreamFromMap({
+        streamId: data?.playbackId,
+      });
+    });
   }, [socket]);
+
+  const handleRemoveStoppedStreamFromMap = ({
+    streamId,
+  }: {
+    streamId: string;
+  }) => {
+    
+    const updatedFeaturesPointsData = featuresPointsData.filter(
+      feature => feature?.properties?.liveDetails?.streamId !== streamId,
+    );
+    setFeaturesPointsData(updatedFeaturesPointsData);
+  };
+
+  // Calculate dynamic bounds based on user location
+  const calculateDynamicBounds = useCallback(
+    (userCoords: number[], radiusKm: number = 10) => {
+      if (userCoords.length < 2) return [-180, -90, 180, 90];
+
+      const [longitude, latitude] = userCoords;
+      // Convert km to degrees (rough approximation)
+      const latDelta = radiusKm / 111; // 1 degree lat ≈ 111km
+      const lonDelta = radiusKm / (111 * Math.cos((latitude * Math.PI) / 180)); // Adjust for latitude
+
+      return [
+        longitude - lonDelta, // west
+        latitude - latDelta, // south
+        longitude + lonDelta, // east
+        latitude + latDelta, // north
+      ];
+    },
+    [],
+  );
 
   useEffect(() => {
     if (coordinates.length > 0) {
+      // Update bounds based on user location
+      const dynamicBounds = calculateDynamicBounds(coordinates, 15); // 15km radius
+      setBounds(dynamicBounds);
       handleGetMapsPoints();
     }
-  }, [coordinates.length]);
+  }, [coordinates.length, calculateDynamicBounds]);
+
+  // Update map events when data changes
+  useEffect(() => {
+    if (eventsData?.success && eventsData.data) {
+      setMapEvents(eventsData.data);
+    }
+  }, [eventsData]);
 
   // Register dynamic images using URLs
   const images = useMemo(() => {
@@ -175,6 +355,10 @@ const MapContainer = () => {
         imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};
       });
     }
+    // Add event icon - using a simple text-based icon for now
+    imageRegistry['event-icon'] = {
+      uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
+    }; // Base64 encoded calendar SVG
     return imageRegistry;
   }, [featuresPointsData]);
 
@@ -205,7 +389,9 @@ const MapContainer = () => {
   useEffect(() => {
     const debouncedFetchClusters = debounce(() => {
       if (bounds && zoomLevel && featuresPointsData.length > 0) {
+        // Use dynamic bounds based on user location
         const newClusters = supercluster.getClusters(bounds, zoomLevel);
+
         setClusters(newClusters);
       }
     }, 300);
@@ -295,9 +481,28 @@ const MapContainer = () => {
       setBounds(newBounds);
 
       const zoom = await map.getZoom();
+      const previousZoom = zoomLevel;
       setZoomLevel(zoom);
+
+      // Track map movement analytics
+      trackMapInteraction('map_moved', {
+        bounds: newBounds,
+        center: [(sw.lng + ne.lng) / 2, (sw.lat + ne.lat) / 2],
+        timestamp: new Date().toISOString(),
+      });
+
+      // Track zoom change analytics if zoom level changed significantly
+      if (Math.abs(zoom - previousZoom) > 0.5) {
+        trackMapInteraction('map_zoomed', {
+          previousZoom,
+          newZoom: zoom,
+          zoomDelta: zoom - previousZoom,
+          bounds: newBounds,
+          timestamp: new Date().toISOString(),
+        });
+      }
     }, 300),
-    [],
+    [zoomLevel, trackMapInteraction],
   );
 
   const radarBeam = useMemo(
@@ -336,24 +541,38 @@ const MapContainer = () => {
             {/* still need to copy radar animation to here
              */}
             <LocationPuck puckBearingEnabled puckBearing="course" />
-            <ShapeSource id="radarSource" data={radarBeam} ref={radarRef}>
-              <FillLayer
-                id="radarBeam"
-                style={{
-                  fillColor: '#cbd5e1', // Radar beam color (orange, semi-transparent)
-                  fillOpacity: 0.2,
-                }}
-              />
-            </ShapeSource>
+            {radarBeam && (
+              <ShapeSource
+                id="radarSource"
+                shape={radarBeam as any}
+                ref={radarRef}>
+                <FillLayer
+                  id="radarBeam"
+                  style={{
+                    fillColor: '#cbd5e1', // Radar beam color (orange, semi-transparent)
+                    fillOpacity: 0.2,
+                  }}
+                />
+              </ShapeSource>
+            )}
             <Images
               images={
                 !images.hasOwnProperty('undefined')
-                  ? images
-                  : {tw: twIcon, in: inIcon}
+                  ? {...images, 'event-icon': eventIcon}
+                  : {tw: twIcon, in: inIcon, 'event-icon': eventIcon}
               }
-              // images={{tw: twIcon, in: inIcon}}
             />
 
+            {/* Render event markers */}
+            {shouldRenderMarkers &&
+              mapEvents.map(event => (
+                <EventIcon
+                  key={`event-${event._id}`}
+                  event={event}
+                  trackMapInteraction={trackMapInteraction}
+                />
+              ))}
+            {/* Render live stream markers */}
             {shouldRenderMarkers &&
               clusters.map(cluster => {
                 const isCluster = cluster.properties.cluster;
@@ -364,8 +583,6 @@ const MapContainer = () => {
                   : `marker-${cluster.properties.id}`;
                 const hasNestedMarkers =
                   cluster?.hasOwnProperty('groupedFeatures');
-                  console.log({cluster});
-
 
                 return !isCluster ? (
                   <ShapeSource
@@ -395,12 +612,14 @@ const MapContainer = () => {
                           ...cluster?.properties,
                         },
                         hasNestedMarkers: hasNestedMarkers,
+                        groupedFeatures: cluster?.groupedFeatures,
                       }}
                       circleLayerRef={ref => {
                         circleLayerRefs.current[
                           `pulse-${cluster.properties.id}`
                         ] = ref;
                       }}
+                      trackMapInteraction={trackMapInteraction}
                     />
 
                     {emojis[cluster?.properties?.streamId] && (

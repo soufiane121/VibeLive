@@ -9,7 +9,7 @@ interface UseSocketOptions {
 }
 
 export const useSocketInstance = () => {
-  const {currentUser} = useSelector(state => state?.currentUser);
+  const {currentUser} = useSelector((state: any) => state?.currentUser);
   const socketRef = useRef<Socket | null>(null); // Persistent reference to socket instance
   const [isConnected, setIsConnected] = useState(false); // Track connection status
 
@@ -42,6 +42,13 @@ export const useSocketInstance = () => {
       socket.on('disconnect', () => {
         setIsConnected(false);
         console.log('Disconnected from socket server');
+      });
+
+      // Handle stop-all-streams event
+      socket.on('stop-all-streams', (data) => {
+        console.log('🚨 STOP ALL STREAMS EVENT RECEIVED:', data);
+        // This will be handled by individual streaming components
+        // The event data contains: reason, message, limitMinutes, timestamp
       });
     }
 

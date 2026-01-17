@@ -1,4 +1,12 @@
 # OSX
+
+
+# Dependencies
+package-lock.json
+
+# Project specific folders
+archived_ffmpeg/
+
 #
 .DS_Store
 
@@ -37,6 +45,7 @@ local.properties
 # node.js
 #
 node_modules/
+node_modules_old/
 npm-debug.log
 yarn-error.log
 

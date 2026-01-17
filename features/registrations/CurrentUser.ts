@@ -14,6 +14,41 @@ export type CurrentUserTypes = {
     userName: string;
     password: string;
     createdAt: string;
+    // Enhanced settings fields
+    profilePicture?: string;
+    bio?: string;
+    followers?: string[];
+    following?: string[];
+    highlights?: any[];
+    // Notification preferences
+    notificationSettings?: {
+      pushNotifications: boolean;
+      emailNotifications: boolean;
+      liveStreamAlerts: boolean;
+      followNotifications: boolean;
+      commentNotifications: boolean;
+    };
+    // Privacy settings
+    privacySettings?: {
+      profileVisibility: 'public' | 'private' | 'friends';
+      locationSharing: boolean;
+      showOnlineStatus: boolean;
+      allowDirectMessages: boolean;
+    };
+    // Streaming preferences
+    streamingPreferences?: {
+      defaultCategory: string;
+      autoRecord: boolean;
+      chatModeration: 'open' | 'followers' | 'disabled';
+      qualityPreference: 'auto' | 'high' | 'medium' | 'low';
+    };
+    // Account settings
+    accountSettings?: {
+      twoFactorEnabled: boolean;
+      emailVerified: boolean;
+      phoneVerified: boolean;
+      dataDownloadRequested?: string; // ISO date string
+    };
 };
 
 interface CurrentUserInterface {

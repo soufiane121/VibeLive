@@ -49,11 +49,17 @@ const newCreateRadarBeam = (
 
   coordinates.push(center); // Close the polygon
 
+  // Validate coordinates structure
+  if (!coordinates || coordinates.length < 3) {
+    console.warn('Invalid radar beam coordinates:', coordinates);
+    return null;
+  }
+
   return {
     type: 'Feature',
     geometry: {
       type: 'Polygon',
-      coordinates,
+      coordinates: [coordinates],
     },
   };
 };
