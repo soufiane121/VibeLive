@@ -165,6 +165,26 @@ class RTMPStreamingHelper {
   }
 
   /**
+   * Stop the RTMP publisher directly (alias for stopStreaming)
+   */
+  stopPublisher(): void {
+    try {
+      if (this.rtmpRef) {
+        this.rtmpRef.stop();
+      }
+      this.isStreaming = false;
+      this.streamStartTime = null;
+      this.updateStatus({
+        isStreaming: false,
+        isConnected: false,
+        duration: 0
+      });
+    } catch (error: any) {
+      console.error('❌ Stop publisher error:', error);
+    }
+  }
+
+  /**
    * Get current stream status
    */
   getStatus(): StreamStatus {

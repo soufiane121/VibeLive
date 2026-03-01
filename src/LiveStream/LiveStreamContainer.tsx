@@ -86,6 +86,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const [viewerCount, setViewerCount] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [userEndedStream, setUserEndedStream] = useState(false);
+  const userEndedStreamRef = useRef(false);
   const [isMonthlyLimitReached, setIsMonthlyLimitReached] =
     useState<boolean>(false);
   const [isWeeklyLimitReached, setIsWeeklyLimitReached] = useState(false);
@@ -96,8 +97,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     useState(false);
   const [freeStreamingStatus, setFreeStreamingStatus] = useState<any>(null);
 
-  // Create RTMP streaming helper instance
-  const streamingHelper = new RTMPStreamingHelper();
+  // Create RTMP streaming helper instance (persisted across renders)
+  const streamingHelperRef = useRef(new RTMPStreamingHelper());
+  const streamingHelper = streamingHelperRef.current;
   const {hasPermission} = useCameraPermission();
   const devices = useCameraDevices();
   const [cameraPosition, setCameraPosition] = useState<'front' | 'back'>(
@@ -153,6 +155,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       setStreamHealth('disconnected');
       setDataFlowActive(false);
       setReconnectAttempts(0);
+      userEndedStreamRef.current = true;
       setUserEndedStream(true); // Mark that user ended the session
       setStreamKey(null);
       setPlaybackId(null);
@@ -176,7 +179,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   // Confirm end stream with playback retention preference
   const confirmEndStream = async (keepPlayback: boolean) => {
     setShowEndStreamModal(false);
-    setUserEndedStream(true); // Mark that user intentionally ended the stream
+    // CRITICAL: Set ref immediately so NodePublisher autoStart is false before any async work
+    userEndedStreamRef.current = true;
+    setUserEndedStream(true);
     await stopStreaming(keepPlayback);
   };
 
@@ -354,6 +359,10 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     if (socket) {
       // Handle stop-all-streams event
       socket.on('stop-all-streams', data => {
+        // CRITICAL: Prevent NodePublisher reconnection
+        userEndedStreamRef.current = true;
+        setUserEndedStream(true);
+
         // Force stop streaming immediately
         if (isStreaming) {
           stopStreaming();
@@ -371,6 +380,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setIsStreaming(false);
         setStreamHealth('disconnected');
         setDataFlowActive(false);
+        setStreamKey(null);
 
         // Show alert to user
         Alert.alert(
@@ -381,6 +391,10 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
 
       // Handle force-stream-stop event (sent before socket disconnect)
       socket.on('force-stream-stop', data => {
+        // CRITICAL: Prevent NodePublisher reconnection
+        userEndedStreamRef.current = true;
+        setUserEndedStream(true);
+
         // Immediately stop RTMP publisher
         if (rtmp.current) {
           try {
@@ -394,18 +408,25 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setStreamHealth('disconnected');
         setDataFlowActive(false);
         setStreamStartTime(null);
+        setStreamKey(null);
       });
 
       // Handle boost-limit-reached event
       socket.on('boost-limit-reached', data => {
+        // CRITICAL: Prevent NodePublisher reconnection
+        userEndedStreamRef.current = true;
+        setUserEndedStream(true);
+
         // Force stop streaming immediately
         if (isStreaming) {
           stopStreaming();
         }
 
         // Force stop RTMP publisher
-        if (streamingHelper) {
-          streamingHelper.stopPublisher();
+        if (rtmp.current) {
+          try {
+            rtmp.current.stop();
+          } catch (error) {}
         }
 
         // Clear streaming state
@@ -426,14 +447,20 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
 
       // Handle explicit camera stop event
       socket.on('stop-camera', data => {
+        // CRITICAL: Prevent NodePublisher reconnection
+        userEndedStreamRef.current = true;
+        setUserEndedStream(true);
+
         // Force stop streaming and camera
         if (isStreaming) {
           stopStreaming();
         }
 
         // Force stop RTMP publisher
-        if (streamingHelper) {
-          streamingHelper.stopPublisher();
+        if (rtmp.current) {
+          try {
+            rtmp.current.stop();
+          } catch (error) {}
         }
 
         // Clear all streaming state
@@ -445,6 +472,10 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       // Handle free streaming limit reached event
       socket.on('free-stream-limit-reached', data => {
         console.log('Free stream limit reached:', data);
+
+        // CRITICAL: Prevent NodePublisher reconnection
+        userEndedStreamRef.current = true;
+        setUserEndedStream(true);
 
         // Immediately stop streaming
         if (isStreaming) {
@@ -552,6 +583,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   // Production MUX streaming with comprehensive data flow validation
   const startStreaming = async () => {
     // Reset user ended flag when starting a new stream
+    userEndedStreamRef.current = false;
     setUserEndedStream(false);
     
     // Activate boost first if available
@@ -670,12 +702,20 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   // Stop streaming with proper MUX cleanup and playback retention
   const stopStreaming = async (keepPlayback: boolean = true, reason?: string) => {
     try {
+      // CRITICAL: Mark stream as intentionally ended IMMEDIATELY (ref for sync access)
+      userEndedStreamRef.current = true;
+      setUserEndedStream(true);
+      
       // CRITICAL: Clear all reconnect attempts and timers first
       setReconnectAttempts(0);
-      
-      // Mark that streaming has been stopped (prevents auto-restart)
-      if (reason !== 'FREE_STREAM_TIME_LIMIT') {
-        setUserEndedStream(true);
+
+      // CRITICAL: Stop the NodePublisher directly to prevent any reconnection
+      if (rtmp.current) {
+        try {
+          rtmp.current.stop();
+        } catch (e) {
+          console.log('Error stopping NodePublisher directly:', e);
+        }
       }
 
       // Use streaming helper to stop
@@ -703,10 +743,18 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       }
 
       setStreamStartTime(null); // Stop the duration timer when stream stops
+      
+      // CRITICAL: Clear stream key AFTER notifying backend so NodePublisher URL becomes empty
+      // This prevents NodePublisher from having a valid RTMP endpoint to reconnect to
+      setStreamKey(null);
     } catch (error) {
       setIsStreaming(false);
       setStreamHealth('disconnected');
       setReconnectAttempts(0); // Ensure no restart even on error
+      // Still clear the stream key on error to prevent reconnection
+      userEndedStreamRef.current = true;
+      setUserEndedStream(true);
+      setStreamKey(null);
     }
   };
 
@@ -760,7 +808,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
                     ? `rtmps://global-live.mux.com:443/app/${streamKey}`
                     : ''
                 }
-                autoStart={isStreaming && !userEndedStream}
+                autoStart={isStreaming && !userEndedStream && !userEndedStreamRef.current}
                 isPreview={!isStreaming}
                 audioParam={{
                   codecid: NodePublisher.NMC_CODEC_ID_AAC,
@@ -795,6 +843,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
                 videoEnable={true} // Ensure video capture
                 lowLatencyMode={true} // Enable low latency mode if available
                 onStatus={(status: any) => {
+                  // CRITICAL: If user ended stream, ignore all status events to prevent reconnection
+                  if (userEndedStreamRef.current) {
+                    console.log('🛑 Ignoring NodePublisher status - user ended stream:', status.code);
+                    return;
+                  }
+                  
                   // Enhanced status handling for MUX reliability with frame capture verification
                   if (status.code === 2001) {
                     console.log(
