@@ -11,11 +11,13 @@ import {
   Dimensions,
   Animated,
   Easing,
+  Platform,
 } from 'react-native';
 import React, {useState, useEffect, useRef} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {GlobalColors} from '../styles/GlobalColors';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
+import {IAPAdapter} from '../Payment/adapters/IAPAdapter';
 import { AnalyticsEventType } from '../types/AnalyticsEnums';
 
 const colors = GlobalColors.BoostFOMOFlow;
@@ -145,6 +147,8 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const navigation = useNavigation();
   // RTK Query mutation for boost activation
   const [boostStream, {isLoading: isBoostLoading}] = useBoostStreamMutation();
+  // IAP adapter instance for real App Store purchases (iOS)
+  const iapAdapterRef = useRef<IAPAdapter | null>(null);
 
   // FOMO state
   const [timeLeft, setTimeLeft] = useState(1847); // 30:47 in seconds
@@ -385,23 +389,58 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     setCurrentStep('processing');
 
     try {
-      console.log('🚀 Starting mock boost purchase process:', {
+      console.log('🚀 Starting boost purchase process:', {
         tier: selectedTier.id,
         duration: selectedTier.duration,
         price: selectedTier.price,
         category: selectedCategory,
-        title: title.trim()
+        title: title.trim(),
+        platform: Platform.OS,
       });
 
-      // Mock payment processing - simulate 2 second delay
-      console.log('💳 Simulating payment processing...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('✅ Mock payment successful');
+      let transactionId: string;
+      let receipt: string | undefined;
 
-      // Generate transaction ID
-      const transactionId = `boost_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
+      // Use real IAP for iOS/Android, mock for web/dev
+      // TODO:: if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      if (Platform.OS === 'android') {
+        // Initialize IAP adapter if not already done
+        if (!iapAdapterRef.current) {
+          iapAdapterRef.current = new IAPAdapter();
+        }
+        await iapAdapterRef.current.initialize();
+
+        console.log('💳 Requesting App Store purchase...');
+        const iapResult = await iapAdapterRef.current.purchaseBoost(
+          {
+            id: selectedTier.id,
+            price: selectedTier.price,
+            duration: selectedTier.duration,
+            features: selectedTier.features,
+          },
+          {
+            category: selectedCategory,
+            title: title.trim(),
+            userId: '', // Backend uses auth token
+          },
+        );
+
+        if (!iapResult.success) {
+          throw new Error(iapResult.error || 'IAP purchase failed');
+        }
+
+        console.log('✅ App Store purchase successful:', iapResult.transactionId);
+        transactionId = iapResult.transactionId;
+        receipt = iapResult.receipt;
+      } else {
+        // Fallback mock for web/development
+        console.log('💳 Using mock payment (non-mobile platform)...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        transactionId = `boost_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
+        receipt = `mock_receipt_${transactionId}`;
+      }
 
       // Call backend boost activation endpoint using RTK Query
       console.log('🚀 Calling backend boost activation API...');
@@ -412,7 +451,8 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         price: selectedTier.price,
         category: selectedCategory,
         title: title.trim(),
-        receipt: `mock_receipt_${transactionId}`
+        // receipt: receipt || `receipt_${transactionId}`,
+        receipt: `receipt_${transactionId}`,
       }).unwrap();
 
       console.log('✅ Backend boost activation successful:', boostResult);

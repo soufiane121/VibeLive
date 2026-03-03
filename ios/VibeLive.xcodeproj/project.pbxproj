@@ -15,6 +15,7 @@
 		166FAAF884544F647780CD45 /* Pods_VibeLive.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A153C12842CB58B6F1322C00 /* Pods_VibeLive.framework */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		90EC970904B06F575ACCD069 /* Pods_VibeLive_VibeLiveTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63029DBD9A185D1A4A02F834 /* Pods_VibeLive_VibeLiveTests.framework */; };
+		A70971382F552B4E008D5198 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A70971372F552B4E008D5198 /* StoreKit.framework */; };
 		A70BD8C82E3C0A690014C36E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A70BD8C72E3C0A690014C36E /* GoogleService-Info.plist */; };
 		A7BC4D152E45919600EA3001 /* OneSignalNotificationServiceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A7BC4D0E2E45919600EA3001 /* OneSignalNotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CCD89B9E56784D4EC57845ED /* Pods_OneSignalNotificationServiceExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E899C8A6DE94EA8E1C3B74D /* Pods_OneSignalNotificationServiceExtension.framework */; };
@@ -72,6 +73,7 @@
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = VibeLive/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-VibeLive-VibeLiveTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VibeLive-VibeLiveTests.release.xcconfig"; path = "Target Support Files/Pods-VibeLive-VibeLiveTests/Pods-VibeLive-VibeLiveTests.release.xcconfig"; sourceTree = "<group>"; };
 		A153C12842CB58B6F1322C00 /* Pods_VibeLive.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VibeLive.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A70971372F552B4E008D5198 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		A70BD8C72E3C0A690014C36E /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A736F59E2F5147B10033964B /* VibeLiveRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = VibeLiveRelease.entitlements; path = VibeLive/VibeLiveRelease.entitlements; sourceTree = "<group>"; };
 		A7BC4D092E45901200EA3001 /* VibeLive.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = VibeLive.entitlements; path = VibeLive/VibeLive.entitlements; sourceTree = "<group>"; };
@@ -108,6 +110,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				166FAAF884544F647780CD45 /* Pods_VibeLive.framework in Frameworks */,
+				A70971382F552B4E008D5198 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -159,6 +162,7 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A70971372F552B4E008D5198 /* StoreKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				A153C12842CB58B6F1322C00 /* Pods_VibeLive.framework */,
 				63029DBD9A185D1A4A02F834 /* Pods_VibeLive_VibeLiveTests.framework */,

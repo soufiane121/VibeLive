@@ -1793,6 +1793,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNIap (12.15.5):
+    - React-Core
   - rnmapbox-maps (10.1.31):
     - MapboxMaps (~> 10.18.2)
     - React
@@ -1938,6 +1940,7 @@ DEPENDENCIES:
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - RNIap (from `../node_modules/react-native-iap`)
   - "rnmapbox-maps (from `../node_modules/@rnmapbox/maps`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
@@ -2124,6 +2127,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/messaging"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNIap:
+    :path: "../node_modules/react-native-iap"
   rnmapbox-maps:
     :path: "../node_modules/@rnmapbox/maps"
   RNScreens:
@@ -2232,6 +2237,7 @@ SPEC CHECKSUMS:
   RNFBApp: 90cf0209fb8f0460ab069a7de857d7ec851c8476
   RNFBMessaging: 37dd861b8600ec2ae9a06ba42ae4285cb707a731
   RNGestureHandler: f15c35ef64e8985a5e1e69fc16ccde3ffe8d8aa7
+  RNIap: eb6a85872948010da81ad0ab8aca18a130566d2d
   rnmapbox-maps: f6efaeb1eddbff2aaafe27a1ff0ba01992e82398
   RNScreens: 929d5858d322a2ae0cb272511f992c0acec69208
   RNVectorIcons: d629dbc9c0c9ec0fcb6aea868d4d66c5a34e9312
