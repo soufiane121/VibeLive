@@ -29,6 +29,11 @@ import EventDetailsScreen from '../../FeatureComponents/Events/EventDetailsScree
 import EventCreationFlow from '../../FeatureComponents/Events/EventCreationFlow';
 // LiveStream Screens
 import SubcategorySelection from '../../LiveStream/SubcategorySelection';
+// Voting Screens
+import VenueSelectionScreen from '../../FeatureComponents/Voting/VenueSelectionScreen';
+import VenueOwnerDashboard from '../../FeatureComponents/Voting/VenueOwnerDashboard';
+import VotingPreferences from '../../FeatureComponents/Voting/VotingPreferences';
+import VotingInitializer from '../../FeatureComponents/Voting/VotingInitializer';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -63,6 +68,8 @@ const StackNavigation = () => {
   };
 
   return (
+    <>
+    <VotingInitializer />
     <Stack.Navigator
       screenOptions={{
         animation: 'fade',
@@ -103,6 +110,10 @@ const StackNavigation = () => {
         name="SubcategorySelection"
         component={SubcategorySelection}
       />
+      {/* Voting Screens */}
+      <Stack.Screen name="VenueSelection" component={VenueSelectionScreen} />
+      <Stack.Screen name="VenueOwnerDashboard" component={VenueOwnerDashboard} />
+      <Stack.Screen name="VotingPreferences" component={VotingPreferences} />
       {/* Onboarding Screens */}
       <Stack.Screen
         name="OnboardingAccountCreation"
@@ -121,6 +132,7 @@ const StackNavigation = () => {
         component={OnboardingNotifications}
       />
     </Stack.Navigator>
+    </>
   );
 };
 export default StackNavigation;

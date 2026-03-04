@@ -7,6 +7,7 @@ import {LiveStreamSlice} from '../features/LiveStream/LiveStreamSlice';
 import {settingsApi} from '../features/settings/SettingsSliceApi';
 import {analyticsApi} from '../src/Services/AnalyticsApi';
 import {eventsApi} from '../features/Events/EventsApi';
+import {votingApi} from '../features/voting/VotingApi';
 
 
 export const store = configureStore({
@@ -19,6 +20,7 @@ export const store = configureStore({
     [settingsApi.reducerPath]: settingsApi.reducer,
     [analyticsApi.reducerPath]: analyticsApi.reducer,
     [eventsApi.reducerPath]: eventsApi.reducer,
+    [votingApi.reducerPath]: votingApi.reducer,
   },
   // adding the api middleware enables caching, invalidation, polling and other features of `rtk-query`
   middleware: getDefaultMiddleware =>
@@ -27,7 +29,8 @@ export const store = configureStore({
       liveStream.middleware, 
       settingsApi.middleware,
       analyticsApi.middleware,
-      eventsApi.middleware
+      eventsApi.middleware,
+      votingApi.middleware
     ]),
 });
 

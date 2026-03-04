@@ -47,6 +47,11 @@ import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
 import {useAnalytics} from '../../Hooks/useAnalytics';
 import {GlobalColors} from '../../styles/GlobalColors';
+import {
+  useGetHeatmapQuery,
+  VenueData,
+} from '../../../features/voting/VotingApi';
+import HeatMapComponentStyles from './helperMap';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -246,6 +251,55 @@ const MapContainer = () => {
   });
 
   const [mapEvents, setMapEvents] = useState<Event[]>([]);
+
+  // Voting heatmap data
+  const {data: heatmapData, error: heatmapError, isLoading: heatmapLoading} = useGetHeatmapQuery(
+    {
+      latitude: coordinates[1],
+      longitude: coordinates[0],
+      radius: 10,
+    },
+    {
+      skip: coordinates.length < 2,
+      pollingInterval: 45000,
+    },
+  );
+
+  useEffect(() => {
+    console.log('[Heatmap Debug] coordinates:', coordinates);
+    console.log('[Heatmap Debug] query params:', {latitude: coordinates[1], longitude: coordinates[0], radius: 10});
+    console.log('[Heatmap Debug] skip:', coordinates.length < 2);
+    console.log('[Heatmap Debug] loading:', heatmapLoading);
+    console.log('[Heatmap Debug] error:', heatmapError);
+    console.log('[Heatmap Debug] data:', heatmapData ? `${heatmapData.heatmap?.length || 0} venues` : 'null');
+  }, [coordinates, heatmapData, heatmapError, heatmapLoading]);
+
+  const heatmapGeoJSON = useMemo(() => {
+    const venues = heatmapData?.heatmap || [];
+    if (venues.length === 0) return null;
+
+    return {
+      type: 'FeatureCollection' as const,
+      features: venues.map((v: VenueData) => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: v.coordinates,
+        },
+        properties: {
+          id: v.id,
+          name: v.name,
+          vibeScore: v.vibeScore,
+          hotVotes: v.hotVotes,
+          deadVotes: v.deadVotes,
+          totalVotes: v.totalVotes,
+          isBoosted: v.isBoosted ? 1 : 0,
+          intensity: Math.min(Math.abs(v.vibeScore) / 100, 1),
+        },
+      })),
+    };
+  }, [heatmapData]);
+
   const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
@@ -267,6 +321,16 @@ const MapContainer = () => {
   const {socket, isConnected} = useSocketInstance();
   const [emojis, setEmojis] = useState<EmojisState>({});
   const mapRef = useRef<MapView>(null);
+
+  // Listen for real-time vibe updates via socket
+  useEffect(() => {
+    socket?.on('vibe-update', (_vibeData: any) => {
+      // Heatmap will refresh via polling; this is for future instant updates
+    });
+    return () => {
+      socket?.off('vibe-update');
+    };
+  }, [socket]);
 
   useEffect(() => {
     // socket?.emit('get-updated-user', {}, (resp)=>{
@@ -297,12 +361,7 @@ const MapContainer = () => {
     });
   }, [socket]);
 
-  const handleRemoveStoppedStreamFromMap = ({
-    streamId,
-  }: {
-    streamId: string;
-  }) => {
-    
+  const handleRemoveStoppedStreamFromMap = ({streamId}: {streamId: string}) => {
     const updatedFeaturesPointsData = featuresPointsData.filter(
       feature => feature?.properties?.liveDetails?.streamId !== streamId,
     );
@@ -562,6 +621,11 @@ const MapContainer = () => {
                   : {tw: twIcon, in: inIcon, 'event-icon': eventIcon}
               }
             />
+
+            {/* Voting heatmap layer */}
+            {heatmapGeoJSON && heatmapGeoJSON.features.length > 0 && (
+              <HeatMapComponentStyles heatmapGeoJSON={heatmapGeoJSON} />
+            )}
 
             {/* Render event markers */}
             {shouldRenderMarkers &&
