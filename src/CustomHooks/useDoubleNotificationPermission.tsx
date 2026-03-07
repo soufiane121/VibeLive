@@ -1,6 +1,11 @@
 import {useState} from 'react';
 import {Alert, Platform} from 'react-native';
-import messaging from '@react-native-firebase/messaging';
+import {
+  getMessaging,
+  hasPermission as fcmHasPermission,
+  requestPermission as fcmRequestPermission,
+  AuthorizationStatus,
+} from '@react-native-firebase/messaging';
 
 export const useDoubleNotificationPermission = () => {
   const [permissionAsked, setPermissionAsked] = useState(false);
@@ -12,13 +17,12 @@ export const useDoubleNotificationPermission = () => {
       return true;
     }
 
-    let authStatus = (await messaging().hasPermission)
-      ? await messaging().hasPermission()
-      : await messaging().requestPermission();
+    const msg = getMessaging();
+    let authStatus = await fcmHasPermission(msg) || await fcmRequestPermission(msg);
 
     if (
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL
+      authStatus === AuthorizationStatus.AUTHORIZED ||
+      authStatus === AuthorizationStatus.PROVISIONAL
     ) {
       setGranted(true);
       return true;
@@ -42,10 +46,10 @@ export const useDoubleNotificationPermission = () => {
       return false;
     } else {
       // Ask the second time
-      authStatus = await messaging().requestPermission();
+      authStatus = await fcmRequestPermission(msg);
       if (
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL
+        authStatus === AuthorizationStatus.AUTHORIZED ||
+        authStatus === AuthorizationStatus.PROVISIONAL
       ) {
         setGranted(true);
         return true;

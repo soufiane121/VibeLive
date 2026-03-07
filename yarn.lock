@@ -7023,10 +7023,10 @@ react-native-linear-gradient@^2.8.3:
   resolved "https://registry.npmjs.org/react-native-linear-gradient/-/react-native-linear-gradient-2.8.3.tgz"
   integrity sha512-KflAXZcEg54PXkLyflaSZQ3PJp4uC4whM7nT/Uot9m0e/qxFV3p6uor1983D1YOBJbJN7rrWdqIjq0T42jOJyA==
 
-react-native-nodemediaclient@^0.3.5:
-  version "0.3.5"
-  resolved "https://registry.npmjs.org/react-native-nodemediaclient/-/react-native-nodemediaclient-0.3.5.tgz"
-  integrity sha512-+AsmmpLvYDdQ/fmczgSQDwZl+XQt4n9jGtO6TQnP7NSVsH0wm4GvrZJs7ea4t9pOOtLk7bc7g0OY4JbEsO/Ylg==
+react-native-nodemediaclient@^0.3.6:
+  version "0.3.6"
+  resolved "https://registry.npmjs.org/react-native-nodemediaclient/-/react-native-nodemediaclient-0.3.6.tgz"
+  integrity sha512-MX45g/9sH/hzaHKvtA/LP6T5gaYG6+BCmrJiD73+wLlgX7W0q9obEAp3iZ3FJWvWoOSn3xfOS1OtKcuCQfe9xQ==
 
 react-native-onesignal@^5.2.13:
   version "5.2.13"

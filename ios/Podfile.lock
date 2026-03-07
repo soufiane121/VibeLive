@@ -103,7 +103,7 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
-  - NodeMediaClient (3.2.9)
+  - NodeMediaClient (3.2.10)
   - OneSignalXCFramework (5.2.14):
     - OneSignalXCFramework/OneSignalComplete (= 5.2.14)
   - OneSignalXCFramework/OneSignal (5.2.14):
@@ -1404,11 +1404,11 @@ PODS:
     - Yoga
   - react-native-netinfo (11.4.1):
     - React-Core
-  - react-native-nodemediaclient (0.3.5):
+  - react-native-nodemediaclient (0.3.6):
     - DoubleConversion
     - glog
     - hermes-engine
-    - NodeMediaClient (= 3.2.9)
+    - NodeMediaClient (= 3.2.10)
     - RCT-Folly (= 2024.01.01.00)
     - RCTRequired
     - RCTTypeSafety
@@ -2165,7 +2165,7 @@ SPEC CHECKSUMS:
   MapboxMaps: e76b14f52c54c40b76ddecd04f40448e6f35a864
   MapboxMobileEvents: de50b3a4de180dd129c326e09cd12c8adaaa46d6
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  NodeMediaClient: 0174ed9bf88db94f7d429b263125f9fb71873d2d
+  NodeMediaClient: 0df928e923d2d585319cca83a933f2fb4e7362c2
   OneSignalXCFramework: 7112f3e89563e41ebc23fe807788f11985ac541c
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCT-Folly: 34124ae2e667a0e5f0ea378db071d27548124321
@@ -2199,7 +2199,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 94f7e35c4984282f04f946fb1be1d008aff4bdf0
   react-native-geolocation: 4e579df11fd10f90eae937e6040d71523fc6addc
   react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
-  react-native-nodemediaclient: 65f005d022d6fdc77d0d93e9b9394ac1f0482f62
+  react-native-nodemediaclient: 0e985a503d7d7f448b0cb589c5bdab0f2fddeaa2
   react-native-onesignal: 0829ce2a504db26dd80eaf14d4e0211ea626fe62
   react-native-rtmp-publisher: e78c306da289ea67cf11caa3005d698156fb077c
   react-native-safe-area-context: 758e894ca5a9bd1868d2a9cfbca7326a2b6bf9dc
@@ -2246,6 +2246,6 @@ SPEC CHECKSUMS:
   VisionCamera: 9a8f98ae344fe5d148f84bb45829f9e4caab9d2f
   Yoga: a9ef4f5c2cd79ad812110525ef61048be6a582a4
 
-PODFILE CHECKSUM: 4e26aa898bc8139ed719e54fcbe17a2b1b2ffd5e
+PODFILE CHECKSUM: 5012bdc69affd1d2c65c6b977d11a8e3ecf3d91c
 
 COCOAPODS: 1.16.2

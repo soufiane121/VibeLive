@@ -3,7 +3,7 @@ import Geolocation from '@react-native-community/geolocation';
 import {baseUrl} from '../../baseUrl';
 import {getLocalData} from '../Utils/LocalStorageHelper';
 
-const LOCATION_UPDATE_INTERVAL_MS = 15000;
+const LOCATION_UPDATE_INTERVAL_MS = 5000; // TODO:: MAKE IT 15000
 const MIN_DISTANCE_CHANGE_METERS = 3;
 const BATTERY_CHECK_INTERVAL_MS = 60000;
 

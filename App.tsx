@@ -11,13 +11,13 @@ import { useColorScheme} from 'react-native';
 import Main from './src/Main';
 import {Provider} from 'react-redux';
 import {store} from './redux/store';
-import { initOneSignal } from './notifications/IniNotification';
+import { initFCM } from './src/Services/FCMNotificationService';
 import { AnalyticsProvider } from './src/Providers/AnalyticsProvider';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   useEffect(() => {
-    handleInitOneSignal();
+    initFCM();
   }, [])
 
   const handleInitOneSignal =async  ()=> {

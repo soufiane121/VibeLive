@@ -257,7 +257,7 @@ const MapContainer = () => {
     {
       latitude: coordinates[1],
       longitude: coordinates[0],
-      radius: 10,
+      radius: 20,
     },
     {
       skip: coordinates.length < 2,
@@ -267,7 +267,7 @@ const MapContainer = () => {
 
   useEffect(() => {
     console.log('[Heatmap Debug] coordinates:', coordinates);
-    console.log('[Heatmap Debug] query params:', {latitude: coordinates[1], longitude: coordinates[0], radius: 10});
+    console.log('[Heatmap Debug] query params:', {latitude: coordinates[1], longitude: coordinates[0], radius: 20});
     console.log('[Heatmap Debug] skip:', coordinates.length < 2);
     console.log('[Heatmap Debug] loading:', heatmapLoading);
     console.log('[Heatmap Debug] error:', heatmapError);
