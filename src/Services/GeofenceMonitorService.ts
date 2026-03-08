@@ -51,6 +51,7 @@ class GeofenceMonitorService {
     this.onVenuesDetected = onVenuesDetected;
     this.onError = onError || null;
     this.isMonitoring = true;
+    console.log('we start MONITORING');
 
     this.appStateSubscription = AppState.addEventListener(
       'change',
@@ -133,10 +134,16 @@ class GeofenceMonitorService {
             timestamp: position.timestamp,
           };
 
-          if (this._hasMovedEnough(update)) {
-            this.lastLocation = update;
-            this._sendLocationUpdate(update);
-          }
+          //TODO: BEFORE IT WAS LIKE THIS TO CHECK IF SUER MOVED ENOUGH BEFORE SEND UPDATE LOCATION
+          // if (this._hasMovedEnough(update)) {
+          //   this.lastLocation = update;
+          //   this._sendLocationUpdate(update);
+          // }
+          
+          // Always send to server — server has its own drift/dwell detection.
+          // Stationary users ARE the target (dwelling at a venue).
+          this.lastLocation = update;
+          this._sendLocationUpdate(update);
         },
         (error: any) => {
           console.log('[GeofenceMonitor] Location error:', error.message);
