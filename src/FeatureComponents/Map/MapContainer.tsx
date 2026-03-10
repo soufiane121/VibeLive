@@ -586,7 +586,7 @@ const MapContainer = () => {
             ref={mapRef}
             style={styles.map}
             onCameraChanged={handleRegionChange}
-            styleURL="mapbox://styles/mapbox/dark-v11"
+            styleURL="mapbox://styles/test-121/cmmi3vwu8000901qp6q0554cd" // original dark mode map"mapbox://styles/mapbox/dark-v11"
             scaleBarEnabled={false}
             logoEnabled={false}>
             <Camera

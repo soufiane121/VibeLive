@@ -1,5 +1,5 @@
 import {CircleLayer, ShapeSource, SymbolLayer} from '@rnmapbox/maps';
- const HeatMapComponentStyles = ({heatmapGeoJSON}: {heatmapGeoJSON: any}) => {
+ const  HeatMapComponentStyles = ({heatmapGeoJSON}: {heatmapGeoJSON: any}) => {
   return (
     <ShapeSource id="vibe-heatmap-source" shape={heatmapGeoJSON}>
       {/* Outer glow — large soft ring showing area activity */}
@@ -32,11 +32,11 @@ import {CircleLayer, ShapeSource, SymbolLayer} from '@rnmapbox/maps';
             0,
             '#555555',
             10,
-            '#C48A93',
+            '#7055b9',
             50,
-            '#AE445A',
+            '#6e51bd',
             100,
-            '#8B1A30',
+            '#6C4FBB',
           ],
           circleOpacity: [
             'interpolate',
@@ -84,11 +84,11 @@ import {CircleLayer, ShapeSource, SymbolLayer} from '@rnmapbox/maps';
             0,
             '#666666',
             10,
-            '#BF7A87',
+            '#7055b9',
             50,
-            '#AE445A',
+            '#6e51bd',
             100,
-            '#8B1A30',
+            '#6C4FBB',
           ],
           circleOpacity: [
             'interpolate',
@@ -134,9 +134,9 @@ import {CircleLayer, ShapeSource, SymbolLayer} from '@rnmapbox/maps';
             0,
             '#777777',
             40,
-            '#C46577',
+            '#7055b9',
             100,
-            '#AE445A',
+            '#6C4FBB',
           ],
           circleOpacity: [
             'interpolate',
@@ -155,13 +155,13 @@ import {CircleLayer, ShapeSource, SymbolLayer} from '@rnmapbox/maps';
           circleStrokeColor: [
             'case',
             ['==', ['get', 'isBoosted'], 1],
-            '#FFD700',
+            '#D4AF37',
             'rgba(255,255,255,0.3)',
           ],
         }}
       />
       {/* Venue name labels at higher zoom levels */}
-      <SymbolLayer
+      {/* <SymbolLayer
         id="vibe-heatmap-labels"
         minZoomLevel={13}
         style={{
@@ -175,7 +175,7 @@ import {CircleLayer, ShapeSource, SymbolLayer} from '@rnmapbox/maps';
           textMaxWidth: 8,
           textFont: ['DIN Pro Medium', 'Arial Unicode MS Regular'],
         }}
-      />
+      /> */}
     </ShapeSource>
   );
 };

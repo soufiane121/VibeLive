@@ -27,6 +27,7 @@ const baseColors = {
   black: '#000000',
   deepBlack: '#0a0a0a',
   darkGray: '#1a1a1a',
+  newBackGroundColor: '#121217',
   gray: '#2a2a2a',
   mediumGray: '#374151',
   lightGray: '#4b5563',
@@ -61,6 +62,8 @@ const baseColors = {
   pinkOverlay: 'rgba(255, 20, 147, 0.1)',
   goldOverlay: 'rgba(255, 215, 0, 0.1)',
 };
+baseColors.deepBlack = baseColors.newBackGroundColor;
+
 
 // Type definitions for color schemes
 export interface ColorScheme {
@@ -97,7 +100,7 @@ export interface ColorScheme {
 export const GlobalColors = {
   // Events List Screen
   EventsListScreen: {
-    background: baseColors.darkGray,
+    background: baseColors.newBackGroundColor,
     surface: baseColors.darkGray,
     surfaceVariant: baseColors.cardBackground,
     primary: baseColors.gold_accent,
@@ -147,7 +150,7 @@ export const GlobalColors = {
 
   // Profile Screen
   Profile: {
-    background: baseColors.darkGray,
+    background: baseColors.deepBlack,
     surface: baseColors.darkGray,
     text: baseColors.white,
     textSecondary: baseColors.offWhite,
@@ -273,7 +276,7 @@ export const GlobalColors = {
   // Boost FOMO Flow
   BoostFOMOFlow: {
     cardBackground: baseColors.cardBackground,
-    background: baseColors.darkGray,
+    background: baseColors.deepBlack,
     surface: baseColors.dark_grey,
     overlay: baseColors.blackOverlay,
     text: baseColors.white_ivory,
@@ -316,7 +319,7 @@ export const GlobalColors = {
 
   // Event Selections
   EventSelections: {
-    background: baseColors.darkGray,
+    background: baseColors.deepBlack,
     surface: baseColors.darkGray,
     text: baseColors.white,
     textSecondary: baseColors.offWhite,
@@ -334,7 +337,7 @@ export const GlobalColors = {
 
   // Live Stream Container
   LiveStreamContainer: {
-    background: baseColors.darkGray,
+    background: baseColors.deepBlack,
     overlay: baseColors.blackOverlay,
     text: baseColors.white,
     controls: baseColors.darkGray,
@@ -366,18 +369,18 @@ export const GlobalColors = {
 
   // Bottom Navigation
   BottomNavigation: {
-    background: baseColors.darkGray,
+    background: baseColors.deepBlack,
     border: baseColors.mediumGray,
     tabActive: baseColors.gold_accent,
     tabInactive: baseColors.mutedGray,
-    tabBackground: baseColors.darkGray,
+    tabBackground: baseColors.newBackGroundColor,
     badge: baseColors.error,
     badgeText: baseColors.white,
   },
 
   // Event Creation Flow
   EventCreationFlow: {
-    background: baseColors.darkGray,
+    background: baseColors.deepBlack,
     surface: baseColors.darkGray,
     text: baseColors.white_ivory,
     textSecondary: baseColors.offWhite,
@@ -398,7 +401,7 @@ export const GlobalColors = {
 
   // Event Details Screen
   EventDetailsScreen: {
-    background: baseColors.darkGray,
+    background: baseColors.deepBlack,
     surface: baseColors.darkGray,
     surfaceVariant: baseColors.gray,
     text: baseColors.white_ivory,
@@ -438,7 +441,7 @@ export const GlobalColors = {
   },
   ModalBottom: {
     // Background and surfaces
-    background: baseColors.darkGray,
+    background: baseColors.deepBlack,
     overlay: baseColors.blackOverlay,
 
     // Text colors
