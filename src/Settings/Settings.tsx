@@ -80,6 +80,13 @@ const Settings = () => {
     navigation.navigate('StreamingPreferences' as never);
   };
 
+  const handleVotingPreferences = () => {
+    trackEvent('settings_voting_preferences_pressed', {
+      user_id: currentUser?._id,
+    });
+    navigation.navigate('VotingPreferences' as never);
+  };
+
   const handlePrivacySecurity = () => {
     trackEvent('settings_privacy_pressed', {
       user_id: currentUser?._id,
@@ -200,6 +207,20 @@ const Settings = () => {
           icon="videocam-outline"
           title="Streaming Preferences"
           onPress={handleStreamingPreferences}
+        />
+
+        {/* Voting Section */}
+        <SettingsItem
+          icon="flame-outline"
+          title="Voting Preferences"
+          subtitle={
+            currentUser?.votingPreferences?.permanentOptOut
+              ? 'Opted out'
+              : currentUser?.votingPreferences?.enabled === false
+              ? 'Disabled'
+              : 'Enabled'
+          }
+          onPress={handleVotingPreferences}
         />
 
         {/* Privacy Section */}
