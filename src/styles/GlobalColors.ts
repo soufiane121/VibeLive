@@ -485,6 +485,46 @@ export const GlobalColors = {
     chartArea: baseColors.cyanOverlay,
   },
 
+  // Squad Mode
+  SquadMode: {
+    background: baseColors.newBackGroundColor,
+    surface: baseColors.darkGray,
+    surfaceElevated: baseColors.gray,
+    text: baseColors.white_ivory,
+    textSecondary: baseColors.offWhite,
+    textMuted: baseColors.mutedWhite,
+    primary: baseColors.cyan,
+    primaryMuted: 'rgba(0, 255, 255, 0.15)',
+    accent: baseColors.deepPink,
+    accentMuted: 'rgba(255, 20, 147, 0.15)',
+    gold: baseColors.gold_accent,
+    goldMuted: 'rgba(212, 175, 55, 0.15)',
+    border: baseColors.mediumGray,
+    borderLight: baseColors.lightGray,
+    // Squad-specific
+    inviteButton: baseColors.cyan,
+    vetoButton: baseColors.deepPink,
+    confirmButton: baseColors.success,
+    cancelButton: baseColors.error,
+    memberBadge: baseColors.purple,
+    memberBadgeGuest: baseColors.mutedGray,
+    matchScore: baseColors.gold_accent,
+    vibeIndicator: baseColors.cyan,
+    capacityGood: baseColors.success,
+    capacityWarning: baseColors.warning,
+    capacityFull: baseColors.error,
+    tagSelected: baseColors.cyan,
+    tagUnselected: baseColors.gray,
+    tagBorder: baseColors.lightGray,
+    emptyStateIcon: baseColors.mutedGray,
+    emptyStateText: baseColors.mutedWhite,
+    countdownWarning: baseColors.warning,
+    statusForming: baseColors.cyan,
+    statusActive: baseColors.gold_accent,
+    statusConfirmed: baseColors.success,
+    statusExpired: baseColors.mutedGray,
+  },
+
   // Common UI Elements
   Common: {
     // Loading states

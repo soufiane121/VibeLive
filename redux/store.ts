@@ -8,6 +8,7 @@ import {settingsApi} from '../features/settings/SettingsSliceApi';
 import {analyticsApi} from '../src/Services/AnalyticsApi';
 import {eventsApi} from '../features/Events/EventsApi';
 import {votingApi} from '../features/voting/VotingApi';
+import {squadApi} from '../features/squad/SquadApi';
 
 
 export const store = configureStore({
@@ -21,6 +22,7 @@ export const store = configureStore({
     [analyticsApi.reducerPath]: analyticsApi.reducer,
     [eventsApi.reducerPath]: eventsApi.reducer,
     [votingApi.reducerPath]: votingApi.reducer,
+    [squadApi.reducerPath]: squadApi.reducer,
   },
   // adding the api middleware enables caching, invalidation, polling and other features of `rtk-query`
   middleware: getDefaultMiddleware =>
@@ -30,7 +32,8 @@ export const store = configureStore({
       settingsApi.middleware,
       analyticsApi.middleware,
       eventsApi.middleware,
-      votingApi.middleware
+      votingApi.middleware,
+      squadApi.middleware,
     ]),
 });
 

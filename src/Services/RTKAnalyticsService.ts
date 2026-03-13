@@ -464,6 +464,11 @@ class RTKAnalyticsService {
       ],
       [ANALYTICS_CONFIG.categories.technical]: [
         'error_occurred', 'crash_reported', 'network_error', 'permission_denied'
+      ],
+      squad: [
+        'squad_created', 'squad_joined', 'squad_cancelled', 'squad_expired',
+        'squad_recommendation_generated', 'squad_recommendation_confirmed',
+        'squad_veto_cast', 'squad_outcome_submitted', 'squad_invite_link_opened'
       ]
     };
 

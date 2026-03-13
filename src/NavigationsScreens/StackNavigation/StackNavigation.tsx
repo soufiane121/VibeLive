@@ -34,6 +34,10 @@ import VenueSelectionScreen from '../../FeatureComponents/Voting/VenueSelectionS
 import VenueOwnerDashboard from '../../FeatureComponents/Voting/VenueOwnerDashboard';
 import VotingPreferences from '../../FeatureComponents/Voting/VotingPreferences';
 import VotingInitializer from '../../FeatureComponents/Voting/VotingInitializer';
+// Squad Screens
+import SquadJoinScreen from '../../FeatureComponents/Squad/SquadJoinScreen';
+// Settings main screen (moved from bottom nav to stack)
+import Settings from '../../Settings/Settings';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -114,6 +118,10 @@ const StackNavigation = () => {
       <Stack.Screen name="VenueSelection" component={VenueSelectionScreen} />
       <Stack.Screen name="VenueOwnerDashboard" component={VenueOwnerDashboard} />
       <Stack.Screen name="VotingPreferences" component={VotingPreferences} />
+      {/* Squad Screens */}
+      <Stack.Screen name="SquadJoin" component={SquadJoinScreen} />
+      {/* Settings main screen (accessible from Profile) */}
+      <Stack.Screen name="Settings" component={Settings} />
       {/* Onboarding Screens */}
       <Stack.Screen
         name="OnboardingAccountCreation"

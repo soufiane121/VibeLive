@@ -5,17 +5,19 @@ import {
   LiveStreamIcon,
   mapIcon,
   ProfileIcon,
-  SettingsIcon,
+  SquadIcon,
   EventsIcon,
+  SettingsIcon,
 } from '../../UIComponents/Icons';
 import {Text, View} from 'react-native';
 import tw from '../../../tw';
 import LiveStreamContainer from '../../LiveStream/LiveStreamContainer';
 import SwitcherContainer from '../../LiveStream/SwitcherContainer';
-import Settings from '../../Settings/Settings';
+import SquadScreen from '../../FeatureComponents/Squad/SquadScreen';
 import Profile from '../../Account/Profile';
 import EventsListScreen from '../../FeatureComponents/Events/EventsListScreen';
 import {GlobalColors} from '../../styles/GlobalColors';
+import Settings from '../../Settings/Settings';
 
 const colors = GlobalColors.BottomNavigation;
 
@@ -87,6 +89,18 @@ export default function BottomNavigation() {
         options={{
           tabBarIcon: ProfileIcon,
           title: 'Profile',
+          tabBarActiveTintColor: colors.tabActive,
+          tabBarLabelStyle: {
+            fontSize: 14,
+          },
+        }}
+      />
+      <BottomTap.Screen
+        name="Squad"
+        component={SquadScreen}
+        options={{
+          tabBarIcon: SquadIcon,
+          title: 'Squad',
           tabBarActiveTintColor: colors.tabActive,
           tabBarLabelStyle: {
             fontSize: 14,

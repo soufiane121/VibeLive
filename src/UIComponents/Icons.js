@@ -148,6 +148,23 @@ const StopIcon = (props) => {
   return <Ionicons name="stop" {...props} />;
 }
 
+// Squad Mode Icons
+const SquadIcon = (props) => {
+  return <Ionicons name="people" {...props} />;
+}
+
+const ShareIcon = (props) => {
+  return <Ionicons name="share-social" {...props} />;
+}
+
+const VetoIcon = (props) => {
+  return <Ionicons name="close-circle" {...props} />;
+}
+
+const NavigateIcon = (props) => {
+  return <Ionicons name="navigate" {...props} />;
+}
+
 export {
   mapIcon,
   LocationIcon,
@@ -179,6 +196,11 @@ export {
   EventsIcon,
   CommonMaterialCommunityIcons,
   CommonMaterialIcons,
+  // Squad Mode Icons
+  SquadIcon,
+  ShareIcon,
+  VetoIcon,
+  NavigateIcon,
   // Live Stream Icons
   CameraIcon,
   CameraReverseIcon,

@@ -103,6 +103,17 @@ export enum AnalyticsEventType {
   CRASH_REPORTED = 'crash_reported',
   NETWORK_ERROR = 'network_error',
   PERMISSION_DENIED = 'permission_denied',
+
+  // Squad Mode events
+  SQUAD_CREATED = 'squad_created',
+  SQUAD_JOINED = 'squad_joined',
+  SQUAD_CANCELLED = 'squad_cancelled',
+  SQUAD_EXPIRED = 'squad_expired',
+  SQUAD_RECOMMENDATION_GENERATED = 'squad_recommendation_generated',
+  SQUAD_RECOMMENDATION_CONFIRMED = 'squad_recommendation_confirmed',
+  SQUAD_VETO_CAST = 'squad_veto_cast',
+  SQUAD_OUTCOME_SUBMITTED = 'squad_outcome_submitted',
+  SQUAD_INVITE_LINK_OPENED = 'squad_invite_link_opened',
 }
 
 // Event Categories
@@ -112,6 +123,7 @@ export enum AnalyticsEventCategory {
   MONETIZATION = 'monetization',
   SOCIAL = 'social',
   TECHNICAL = 'technical',
+  SQUAD = 'squad',
 }
 
 // Map Interaction Types
