@@ -525,6 +525,33 @@ export const GlobalColors = {
     statusExpired: baseColors.mutedGray,
   },
 
+  // Venue Claim Onboarding
+  VenueClaim: {
+    background: baseColors.newBackGroundColor,
+    surface: baseColors.darkGray,
+    surfaceVariant: baseColors.gray,
+    text: baseColors.white,
+    textSecondary: baseColors.offWhite,
+    textMuted: baseColors.mutedWhite,
+    textGray: baseColors.textGray,
+    lightTextGray: baseColors.lightTextGray,
+    primary: baseColors.gold_accent,
+    primaryMuted: 'rgba(212, 175, 55, 0.12)',
+    accent: baseColors.gold_accent,
+    border: baseColors.mediumGray,
+    borderLight: 'rgba(255,255,255,0.06)',
+    borderGold: 'rgba(212,175,55,0.15)',
+    inputBackground: baseColors.gray,
+    inputBorder: 'rgba(255,255,255,0.08)',
+    success: baseColors.success,
+    error: baseColors.error,
+    warning: baseColors.warning,
+    cardBackground: 'rgba(255,255,255,0.04)',
+    disabledOpacity: 0.4,
+    mutedGray: baseColors.mutedGray,
+    black: baseColors.black,
+  },
+
   // Common UI Elements
   Common: {
     // Loading states

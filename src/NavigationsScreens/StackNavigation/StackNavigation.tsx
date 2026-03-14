@@ -38,6 +38,16 @@ import VotingInitializer from '../../FeatureComponents/Voting/VotingInitializer'
 import SquadJoinScreen from '../../FeatureComponents/Squad/SquadJoinScreen';
 // Settings main screen (moved from bottom nav to stack)
 import Settings from '../../Settings/Settings';
+// Venue Claim Screens
+import VenueSearchScreen from '../../FeatureComponents/VenueClaim/VenueSearchScreen';
+import VenueClaimDetailsScreen from '../../FeatureComponents/VenueClaim/VenueClaimDetailsScreen';
+import VenueClaimPathSelectionScreen from '../../FeatureComponents/VenueClaim/VenueClaimPathSelectionScreen';
+import VenueClaimVerificationScreen from '../../FeatureComponents/VenueClaim/VenueClaimVerificationScreen';
+import VenueClaimTierSelectionScreen from '../../FeatureComponents/VenueClaim/VenueClaimTierSelectionScreen';
+import VenueClaimReviewScreen from '../../FeatureComponents/VenueClaim/VenueClaimReviewScreen';
+import VenueClaimConfirmationScreen from '../../FeatureComponents/VenueClaim/VenueClaimConfirmationScreen';
+import VenueClaimStatusScreen from '../../FeatureComponents/VenueClaim/VenueClaimStatusScreen';
+import VenueTaggingScreen from '../../FeatureComponents/VenueClaim/VenueTaggingScreen';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -122,6 +132,16 @@ const StackNavigation = () => {
       <Stack.Screen name="SquadJoin" component={SquadJoinScreen} />
       {/* Settings main screen (accessible from Profile) */}
       <Stack.Screen name="Settings" component={Settings} />
+      {/* Venue Claim Screens */}
+      <Stack.Screen name="VenueSearch" component={VenueSearchScreen} />
+      <Stack.Screen name="VenueClaimDetails" component={VenueClaimDetailsScreen} />
+      <Stack.Screen name="VenueClaimPathSelection" component={VenueClaimPathSelectionScreen} />
+      <Stack.Screen name="VenueClaimVerification" component={VenueClaimVerificationScreen} />
+      <Stack.Screen name="VenueClaimTierSelection" component={VenueClaimTierSelectionScreen} />
+      <Stack.Screen name="VenueClaimReview" component={VenueClaimReviewScreen} />
+      <Stack.Screen name="VenueClaimConfirmation" component={VenueClaimConfirmationScreen} />
+      <Stack.Screen name="VenueClaimStatus" component={VenueClaimStatusScreen} />
+      <Stack.Screen name="VenueTagging" component={VenueTaggingScreen} />
       {/* Onboarding Screens */}
       <Stack.Screen
         name="OnboardingAccountCreation"
