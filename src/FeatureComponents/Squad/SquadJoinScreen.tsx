@@ -88,14 +88,19 @@ const SquadJoinScreen: React.FC = () => {
         timing_preference: timingPreference,
       }).unwrap();
 
-      // Navigate to the squad tab with the joined squad
-      // Store guest token for WebSocket auth
+      // Navigate to the squad tab with the joined squad data
       Alert.alert('You\'re In!', `Joined ${result.creator_display_name}'s squad`, [
         {
           text: 'Continue',
           onPress: () => {
-            // Navigate to Squad tab
-            (navigation as any).navigate('Bottom', {screen: 'Squad'});
+            (navigation as any).navigate('Bottom', {
+              screen: 'Squad',
+              params: {
+                joined_squad_code: result.squad_code,
+                joined_squad_id: result.squad_id,
+                joined_guest_token: result.guest_token,
+              },
+            });
           },
         },
       ]);

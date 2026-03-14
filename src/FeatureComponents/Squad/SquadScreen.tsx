@@ -10,6 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import {useSelector} from 'react-redux';
+import {useRoute} from '@react-navigation/native';
 import {GlobalColors} from '../../styles/GlobalColors';
 import {SquadIcon, ShareIcon} from '../../UIComponents/Icons';
 import useGetLocation from '../../CustomHooks/useGetLocation';
@@ -38,11 +39,14 @@ const SquadScreen: React.FC = () => {
   const currentUser = useSelector((state: any) => state.currentUser);
   const {coordinates} = useGetLocation();
   const {trackEvent} = useAnalytics({screenName: 'SquadScreen'});
+  const route = useRoute();
+  const routeParams = (route.params as any) || {};
 
   // Local state
   const [activeSquadCode, setActiveSquadCode] = useState<string | null>(null);
   const [activeSquadId, setActiveSquadId] = useState<string | null>(null);
   const [guestToken, setGuestToken] = useState<string | null>(null);
+  const [isCreator, setIsCreator] = useState(true);
   const [members, setMembers] = useState<SquadMember[]>([]);
   const [currentRecommendation, setCurrentRecommendation] =
     useState<SquadRecommendation | null>(null);
@@ -72,6 +76,17 @@ const SquadScreen: React.FC = () => {
     skip: !activeSquadCode,
     pollingInterval: 0, // We use WebSocket, not polling
   });
+
+  // Initialize state from join flow navigation params
+  useEffect(() => {
+    if (routeParams.joined_squad_code && routeParams.joined_guest_token && routeParams.joined_squad_id) {
+      setActiveSquadCode(routeParams.joined_squad_code);
+      setActiveSquadId(routeParams.joined_squad_id);
+      setGuestToken(routeParams.joined_guest_token);
+      setIsCreator(false);
+      setSquadStatus('forming');
+    }
+  }, [routeParams.joined_squad_code, routeParams.joined_guest_token, routeParams.joined_squad_id]);
 
   // Sync RTK Query data to local state
   useEffect(() => {
@@ -222,6 +237,7 @@ console.log({result});
     setActiveSquadCode(null);
     setActiveSquadId(null);
     setGuestToken(null);
+    setIsCreator(true);
     setMembers([]);
     setCurrentRecommendation(null);
     setConfirmedVenue(null);
@@ -270,7 +286,7 @@ console.log({result});
           squadData={squadData}
           members={members}
           isConnected={isConnected}
-          isCreator={true}
+          isCreator={isCreator}
           webJoinUrl={webJoinUrl}
           onReset={handleReset}
         />
@@ -286,7 +302,7 @@ console.log({result});
           squadCode={activeSquadCode!}
           recommendation={currentRecommendation}
           members={members}
-          isCreator={true}
+          isCreator={isCreator}
           autoConfirmWarning={autoConfirmWarning}
           creatorFinalSayOptions={creatorFinalSayOptions}
         />
