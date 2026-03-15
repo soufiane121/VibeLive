@@ -51,6 +51,7 @@ const SquadJoinScreen: React.FC = () => {
   const [displayName, setDisplayName] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [timingPreference, setTimingPreference] = useState('anytime');
+  const [conviction, setConviction] = useState<'important_to_me' | 'flexible' | null>(null);
   const [step, setStep] = useState<'preview' | 'preferences'>('preview');
 
   // RTK Query
@@ -86,6 +87,7 @@ const SquadJoinScreen: React.FC = () => {
         display_name: displayName.trim(),
         venue_type_tags: selectedTags,
         timing_preference: timingPreference,
+        conviction: conviction,
       }).unwrap();
 
       // Navigate to the squad tab with the joined squad data
@@ -107,7 +109,7 @@ const SquadJoinScreen: React.FC = () => {
     } catch (err: any) {
       Alert.alert('Error', err?.data?.error || 'Failed to join squad');
     }
-  }, [squadCode, displayName, selectedTags, timingPreference, joinSquad, navigation]);
+  }, [squadCode, displayName, selectedTags, timingPreference, conviction, joinSquad, navigation]);
 
   // ── Loading State ───────────────────────────────────────────────────
   if (isLoadingInvite) {
@@ -295,6 +297,48 @@ const SquadJoinScreen: React.FC = () => {
           );
         })}
       </View>
+
+      {/* Dealbreaker / Conviction Question */}
+      {selectedTags.length > 0 && (
+        <>
+          <Text style={styles.fieldLabel}>How important are these choices?</Text>
+          <Text style={styles.convictionHint}>
+            If these are dealbreakers, we'll make sure the recommendation matches.
+          </Text>
+          <View style={styles.convictionRow}>
+            <TouchableOpacity
+              style={[
+                styles.convictionChip,
+                conviction === 'important_to_me' && styles.convictionChipImportant,
+              ]}
+              onPress={() => setConviction(conviction === 'important_to_me' ? null : 'important_to_me')}
+              activeOpacity={0.7}>
+              <Text
+                style={[
+                  styles.convictionChipText,
+                  conviction === 'important_to_me' && styles.convictionChipTextImportant,
+                ]}>
+                These are dealbreakers
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.convictionChip,
+                conviction === 'flexible' && styles.convictionChipFlexible,
+              ]}
+              onPress={() => setConviction(conviction === 'flexible' ? null : 'flexible')}
+              activeOpacity={0.7}>
+              <Text
+                style={[
+                  styles.convictionChipText,
+                  conviction === 'flexible' && styles.convictionChipTextFlexible,
+                ]}>
+                I'm flexible
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
 
       {/* Submit */}
       <TouchableOpacity
@@ -498,6 +542,48 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   timingChipTextSelected: {
+    color: colors.gold,
+    fontWeight: '600',
+  },
+  // Conviction / Dealbreaker
+  convictionHint: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginBottom: 10,
+    marginTop: -4,
+  },
+  convictionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 28,
+  },
+  convictionChip: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: colors.tagUnselected,
+    borderWidth: 1,
+    borderColor: colors.tagBorder,
+    alignItems: 'center',
+  },
+  convictionChipImportant: {
+    backgroundColor: 'rgba(255, 59, 48, 0.12)',
+    borderColor: '#FF3B30',
+  },
+  convictionChipFlexible: {
+    backgroundColor: colors.goldMuted,
+    borderColor: colors.gold,
+  },
+  convictionChipText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  convictionChipTextImportant: {
+    color: '#FF3B30',
+    fontWeight: '600',
+  },
+  convictionChipTextFlexible: {
     color: colors.gold,
     fontWeight: '600',
   },

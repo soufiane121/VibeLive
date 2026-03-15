@@ -158,6 +158,7 @@ export const squadApi = createApi({
         venue_type_tags: string[];
         timing_preference?: string;
         location?: {lat: number; lng: number};
+        conviction?: 'important_to_me' | 'flexible' | null;
       }
     >({
       query: ({squad_code, ...body}) => ({
