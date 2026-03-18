@@ -98,6 +98,10 @@ export interface ColorScheme {
 
 // Screen-specific color configurations
 export const GlobalColors = {
+  VenueSelectionScreen: {
+    background: "red"
+
+  },
   // Events List Screen
   EventsListScreen: {
     background: baseColors.newBackGroundColor,
