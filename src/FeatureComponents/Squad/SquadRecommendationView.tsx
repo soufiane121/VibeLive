@@ -9,7 +9,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {GlobalColors} from '../../styles/GlobalColors';
-import {VetoIcon, CheckmarkIcon, ChevronForwardIcon} from '../../UIComponents/Icons';
+import {
+  VetoIcon,
+  CheckmarkIcon,
+  ChevronForwardIcon,
+  ClockIcon,
+  CloseIcon,
+} from '../../UIComponents/Icons';
 import {
   useCastVetoMutation,
   useConfirmVenueMutation,
@@ -49,27 +55,20 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
   // ── Veto ────────────────────────────────────────────────────────────
   const handleVeto = useCallback(
     (reason: string) => {
-      Alert.alert(
-        'Veto this spot?',
-        getVetoMessage(reason),
-        [
-          {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Veto',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await castVeto({squad_code: squadCode, reason}).unwrap();
-              } catch (err: any) {
-                Alert.alert(
-                  'Error',
-                  err?.data?.error || 'Failed to cast veto',
-                );
-              }
-            },
+      Alert.alert('Veto this spot?', getVetoMessage(reason), [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Veto',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await castVeto({squad_code: squadCode, reason}).unwrap();
+            } catch (err: any) {
+              Alert.alert('Error', err?.data?.error || 'Failed to cast veto');
+            }
           },
-        ],
-      );
+        },
+      ]);
     },
     [squadCode, castVeto],
   );
@@ -127,12 +126,19 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
       showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Your Spot Tonight</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.eyebrow}>Squad pick</Text>
+          <View style={styles.roundPill}>
+            <Text style={styles.roundPillText}>
+              Round {recommendation.round} of 2
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.title}>Your spot tonight</Text>
         <Text style={styles.subtitle}>
-          Round {recommendation.round} of 2
           {recommendation.round === 1
-            ? ' — veto once if it\'s not right'
-            : ' — final round'}
+            ? "Veto once if it's not right for everyone"
+            : 'Creator decides if this is vetoed'}
         </Text>
       </View>
 
@@ -146,22 +152,25 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
       {/* Primary Recommendation Card */}
       <View style={styles.primaryCard}>
         <VenueCardContent venue={primary} />
-
+        <View style={styles.devider} />
         {/* Action Buttons */}
         <View style={styles.actions}>
           {/* Confirm (Creator only) */}
           {isCreator && (
             <TouchableOpacity
-              style={[styles.confirmButton, isConfirming && styles.buttonDisabled]}
-              onPress={() => handleConfirm()}
+              style={[
+                styles.confirmButton,
+                isConfirming && styles.buttonDisabled,
+              ]}
+              // onPress={() => handleConfirm()}
               disabled={isConfirming}
               activeOpacity={0.8}>
               {isConfirming ? (
                 <ActivityIndicator color={colors.background} size="small" />
               ) : (
                 <>
-                  <CheckmarkIcon size={18} color={colors.background} />
-                  <Text style={styles.confirmButtonText}>Let's Go Here</Text>
+                  <CheckmarkIcon size={22} color={colors.text} />
+                  <Text style={styles.confirmButtonText}>Let's go here</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -195,25 +204,36 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
       {/* Alternatives Toggle */}
       {alternatives.length > 0 && (
         <View style={styles.alternativesSection}>
-          <TouchableOpacity
-            style={styles.alternativesToggle}
-            onPress={() => setShowAlternatives(!showAlternatives)}>
-            <Text style={styles.alternativesToggleText}>
-              {showAlternatives
-                ? 'Hide alternatives'
-                : `${alternatives.length} alternative${alternatives.length > 1 ? 's' : ''} available`}
-            </Text>
-            <ChevronForwardIcon
-              size={14}
-              color={colors.textMuted}
-              style={showAlternatives ? {transform: [{rotate: '90deg'}]} : {}}
-            />
-          </TouchableOpacity>
+          <View style={styles.alternativesHeader}>
+            <Text style={styles.alternativesTitle}>Alternatives</Text>
+            <TouchableOpacity
+              style={styles.alternativesButton}
+              onPress={() => setShowAlternatives(prev => !prev)}
+              activeOpacity={0.8}>
+              <Text style={styles.alternativesButtonText}>
+                {showAlternatives ? 'Hide' : 'Open'}
+              </Text>
+              <ChevronForwardIcon
+                size={14}
+                color={colors.recommendationRoundPillText}
+                style={showAlternatives ? {transform: [{rotate: '90deg'}]} : {}}
+              />
+            </TouchableOpacity>
+          </View>
 
           {showAlternatives &&
             alternatives.map((alt, i) => (
               <View key={alt.venue_id} style={styles.altCard}>
-                <VenueCardContent venue={alt} compact />
+                <View style={styles.altOrderBadge}>
+                  <Text style={styles.altOrderText}>{i + 2}</Text>
+                </View>
+                <View style={styles.altContent}>
+                  <VenueCardContent
+                    venue={alt}
+                    compact
+                    handleConfirm={handleConfirm}
+                  />
+                </View>
               </View>
             ))}
         </View>
@@ -223,7 +243,9 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
       <Text style={styles.memberInfo}>
         {members.length === 2
           ? 'Matched to both your vibes'
-          : `Based on ${members.length} ${members.length === 1 ? 'person' : 'people'}'s preferences`}
+          : `Based on ${members.length} ${
+              members.length === 1 ? 'person' : 'people'
+            }'s preferences`}
       </Text>
     </ScrollView>
   );
@@ -234,7 +256,8 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
 const VenueCardContent: React.FC<{
   venue: VenueRecommendation;
   compact?: boolean;
-}> = ({venue, compact}) => {
+  handleConfirm?: (arg: string) => void;
+}> = ({venue, compact, handleConfirm}) => {
   const matchPct = Math.round(venue.match_score * 100);
   const capacityPct = Math.round(venue.estimated_capacity_pct * 100);
 
@@ -242,84 +265,96 @@ const VenueCardContent: React.FC<{
     capacityPct > 70
       ? colors.capacityWarning
       : capacityPct > 85
-        ? colors.capacityFull
-        : colors.capacityGood;
+      ? colors.capacityFull
+      : colors.capacityGood;
 
   return (
-    <View style={compact ? styles.venueCompact : styles.venueContent}>
+    <TouchableOpacity
+      style={compact ? styles.venueCompact : styles.venueContent}
+      onPress={() => handleConfirm(venue.venue_id)}>
       {/* Venue Name + Score */}
       <View style={styles.venueHeader}>
-        <Text
-          style={[styles.venueName, compact && styles.venueNameCompact]}
-          numberOfLines={1}>
-          {venue.venue_name}
-        </Text>
-        <View style={styles.matchBadge}>
-          <Text style={styles.matchText}>{matchPct}%</Text>
+        <View style={{gap: 10}}>
+          <Text
+            style={[styles.venueName, compact && styles.venueNameCompact]}
+            numberOfLines={1}>
+            {venue.venue_name}
+          </Text>
+          <View style={{flexDirection: 'column'}}>
+            {/* Status Row */}
+            {!compact && (
+              <View style={styles.statusRow}>
+                {venue.current_status?.vibeshift_state && (
+                  <StatusChip
+                    label={formatVibeState(
+                      venue.current_status?.vibeshift_state,
+                    )}
+                    color={colors.vibeIndicator}
+                  />
+                )}
+                <StatusChip
+                  label={`${capacityPct}% full`}
+                  color={capacityColor}
+                />
+                {venue.distance_from_center != null && (
+                  <StatusChip
+                    label={formatDistance(venue.distance_from_center)}
+                    color={colors.textMuted}
+                  />
+                )}
+                {venue.attraction_window_min != null && (
+                  <StatusChip
+                    label={`Peak in ~${venue.attraction_window_min}min`}
+                    color={colors.gold}
+                  />
+                )}
+              </View>
+            )}
+            {/* V2: Data quality indicator */}
+            {!compact && venue.data_quality_label && (
+              <View style={styles.qualityRow}>
+                <View
+                  style={[
+                    styles.qualityDot,
+                    {
+                      backgroundColor:
+                        venue.data_quality_label === 'strong'
+                          ? colors.capacityGood
+                          : venue.data_quality_label === 'limited'
+                          ? colors.gold
+                          : colors.textMuted,
+                    },
+                  ]}
+                />
+                <Text style={styles.qualityText}>
+                  {venue.data_quality_message || venue.data_quality_label}
+                </Text>
+              </View>
+            )}
+          </View>
+          {/* Match Reasons */}
+          {venue.match_reasons.length > 0 && (
+            <View style={styles.reasonsRow}>
+              {venue.match_reasons.map((reason, i) => (
+                <View key={i} style={styles.reasonChip}>
+                  <ClockIcon
+                    size={14}
+                    color={colors.recommendationRoundPillText}
+                  />
+                  <Text style={styles.reasonText}>{reason}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </View>
-
-      {/* Match Reasons */}
-      {venue.match_reasons.length > 0 && (
-        <View style={styles.reasonsRow}>
-          {venue.match_reasons.map((reason, i) => (
-            <View key={i} style={styles.reasonChip}>
-              <Text style={styles.reasonText}>{reason}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Status Row */}
-      {!compact && (
-        <View style={styles.statusRow}>
-          {venue.current_status?.vibeshift_state && (
-            <StatusChip
-              label={formatVibeState(venue.current_status?.vibeshift_state)}
-              color={colors.vibeIndicator}
-            />
-          )}
-          <StatusChip
-            label={`${capacityPct}% full`}
-            color={capacityColor}
-          />
-          {venue.distance_from_center != null && (
-            <StatusChip
-              label={formatDistance(venue.distance_from_center)}
-              color={colors.textMuted}
-            />
-          )}
-          {venue.attraction_window_min != null && (
-            <StatusChip
-              label={`Peak in ~${venue.attraction_window_min}min`}
-              color={colors.gold}
-            />
-          )}
-        </View>
-      )}
-
-      {/* V2: Data quality indicator */}
-      {!compact && venue.data_quality_label && (
-        <View style={styles.qualityRow}>
-          <View
-            style={[
-              styles.qualityDot,
-              {
-                backgroundColor:
-                  venue.data_quality_label === 'strong'
-                    ? colors.capacityGood
-                    : venue.data_quality_label === 'limited'
-                      ? colors.gold
-                      : colors.textMuted,
-              },
-            ]}
-          />
-          <Text style={styles.qualityText}>
-            {venue.data_quality_message || venue.data_quality_label}
-          </Text>
-        </View>
-      )}
-    </View>
+      <View style={!compact ? styles.matchBadge : styles.compactMatchBadge}>
+        <Text style={!compact ? styles.matchText : styles.compactMatchText}>
+          {matchPct}%
+        </Text>
+        {!compact && <Text style={styles.matchTextSub}>MATCH</Text>}
+      </View>
+    </TouchableOpacity>
   );
 };
 
@@ -336,7 +371,7 @@ const VetoButton: React.FC<{
     onPress={() => onPress(reason)}
     disabled={isLoading}
     activeOpacity={0.7}>
-    <VetoIcon size={14} color={colors.vetoButton} />
+    <CloseIcon size={16} color={colors.recommendationVetoText} />
     <Text style={styles.vetoButtonText}>{label}</Text>
   </TouchableOpacity>
 );
@@ -392,66 +427,103 @@ function formatDistance(meters: number): string {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    marginTop: 6,
+    backgroundColor: colors.recommendationBackground,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 56,
-    paddingBottom: 40,
+    paddingHorizontal: 24,
+    paddingTop: 48,
+    paddingBottom: 48,
   },
   // Header
   header: {
-    marginBottom: 20,
+    marginBottom: 24,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  eyebrow: {
+    fontSize: 12,
+    letterSpacing: 2,
+    color: colors.recommendationLabel,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    opacity: 0.7,
+  },
+  roundPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: colors.recommendationRoundPillBg,
+  },
+  roundPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.recommendationRoundPillText,
+    textTransform: 'uppercase',
   },
   title: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 30,
+    fontWeight: '800',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
-    color: colors.textMuted,
+    color: colors.recommendationLabel,
+    fontWeight: '600',
+    opacity: 0.8,
   },
   // Warning banner
   warningBanner: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 16,
+    backgroundColor: colors.recommendationWarningBg,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 20,
     borderLeftWidth: 3,
-    borderLeftColor: colors.countdownWarning,
+    borderLeftColor: colors.recommendationWarningBorder,
   },
   warningText: {
     fontSize: 13,
-    color: colors.countdownWarning,
-    fontWeight: '500',
+    color: colors.recommendationWarningText,
+    fontWeight: '600',
   },
   // Primary card
   primaryCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
+    backgroundColor: colors.recommendationCard,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.recommendationBorder,
     overflow: 'hidden',
-    marginBottom: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: {width: 0, height: 8},
+    elevation: 8,
   },
   venueContent: {
-    padding: 20,
+    padding: 24,
+    flexDirection: 'row',
+    marginBottom: -10,
   },
   venueCompact: {
     padding: 14,
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   venueHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
+    maxWidth: '77%',
   },
   venueName: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '800',
     color: colors.text,
     flex: 1,
     marginRight: 10,
@@ -459,16 +531,49 @@ const styles = StyleSheet.create({
   venueNameCompact: {
     fontSize: 17,
   },
+  devider: {
+    borderBottomColor: colors.border,
+    borderWidth: 1,
+    width: '86%',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
   matchBadge: {
-    backgroundColor: colors.goldMuted,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: colors.recommendationMatchBadgeBg,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderColor: colors.recommendationMatchBadgeText,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    maxHeight: '33%',
+  },
+  compactMatchBadge: {
+    backgroundColor: colors.recommendationMatchBadgeBg,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderColor: colors.recommendationMatchBadgeText,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    maxHeight: '43%',
   },
   matchText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.matchScore,
+    fontSize: 17,
+    fontWeight: '800',
+    color: colors.recommendationMatchBadgeText,
+  },
+  compactMatchText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.recommendationMatchBadgeText,
+  },
+  matchTextSub: {
+    fontWeight: '600',
+    fontSize: 10,
+    color: colors.recommendationMatchBadgeText,
   },
   // Reasons
   reasonsRow: {
@@ -476,17 +581,26 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginBottom: 12,
     gap: 6,
+
+    borderRadius: 4,
   },
   reasonChip: {
-    backgroundColor: colors.primaryMuted,
+    backgroundColor: colors.recommendationReasonChipBg,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 4,
+    borderColor: colors.border,
+    borderWidth: 1,
+    maxWidth: '99%',
+    paddingRight: 22,
+    // flexWrap: 'wrap',
   },
   reasonText: {
     fontSize: 12,
-    color: colors.primary,
-    fontWeight: '500',
+    color: colors.recommendationReasonChipText,
+    fontWeight: '600',
   },
   // Status
   statusRow: {
@@ -498,9 +612,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderColor: colors.recommendationStatusChipBorder,
   },
   statusChipDot: {
     width: 6,
@@ -510,89 +625,137 @@ const styles = StyleSheet.create({
   },
   statusChipText: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
+    // opacity: 0.7
   },
   // Actions
   actions: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 20,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: colors.recommendationDivider,
   },
   confirmButton: {
-    backgroundColor: colors.confirmButton,
+    backgroundColor: colors.recommendationPrimaryActionBg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 12,
     marginBottom: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
+    borderColor: colors.border,
+    borderWidth: 2,
+    // opacity: 0.5
   },
   confirmButtonText: {
-    color: colors.background,
+    color: colors.recommendationPrimaryActionText,
     fontSize: 16,
     fontWeight: '700',
     marginLeft: 6,
+    // opacity: 16
   },
   vetoLabel: {
-    fontSize: 13,
-    color: colors.textMuted,
+    fontSize: 12,
+    color: colors.recommendationLabel,
     marginBottom: 8,
     textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    opacity: 0.5,
+    fontWeight: '700',
   },
   vetoRow: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 8,
+    maxWidth: '90%',
+    marginLeft: 12,
+    // flexWrap: 'wrap',
   },
   vetoButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.accentMuted,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: colors.recommendationVetoBg,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 20, 147, 0.25)',
+    borderColor: colors.recommendationVetoBorder,
+    // flexWrap: 'wrap'
+    maxWidth: '40%',
+    minHeight: 50,
   },
   vetoButtonText: {
     fontSize: 12,
-    color: colors.vetoButton,
-    fontWeight: '500',
-    marginLeft: 4,
+    color: colors.recommendationVetoText,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   // Alternatives
   alternativesSection: {
-    marginBottom: 20,
+    marginBottom: 24,
+    borderTopColor: colors.border,
+    borderTopWidth: 2,
+    paddingTop: 16,
   },
-  alternativesToggle: {
+  alternativesHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
-  alternativesToggleText: {
+  alternativesTitle: {
     fontSize: 13,
-    color: colors.textMuted,
-    marginRight: 4,
+    letterSpacing: 2,
+    color: colors.recommendationLabel,
+    textTransform: 'uppercase',
+  },
+  alternativesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  alternativesButtonText: {
+    color: colors.recommendationRoundPillText,
+    fontWeight: '700',
+    fontSize: 13,
   },
   altCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    backgroundColor: colors.recommendationAltCardBg,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: 10,
+    borderColor: colors.recommendationBorder,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  altOrderBadge: {
+    width: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // borderRightWidth: 1,
+    // borderRightColor: colors.recommendationDivider,
+  },
+  altOrderText: {
+    color: colors.recommendationLabel,
+    fontWeight: '700',
+    fontSize: 16,
+    opacity: 0.4,
+  },
+  altContent: {
+    flex: 1,
   },
   // Final say
   finalSayCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.recommendationCard,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.recommendationBorder,
     marginBottom: 12,
     overflow: 'hidden',
   },
@@ -600,11 +763,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.confirmButton,
+    backgroundColor: colors.recommendationPrimaryActionBg,
     paddingVertical: 12,
   },
   selectButtonText: {
-    color: colors.background,
+    color: colors.recommendationPrimaryActionText,
     fontSize: 14,
     fontWeight: '600',
     marginRight: 4,
@@ -623,13 +786,13 @@ const styles = StyleSheet.create({
   },
   qualityText: {
     fontSize: 11,
-    color: colors.textMuted,
+    color: colors.recommendationLabel,
     fontStyle: 'italic',
   },
   // Footer
   memberInfo: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.recommendationLabel,
     textAlign: 'center',
   },
 });

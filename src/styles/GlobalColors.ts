@@ -1,3 +1,5 @@
+import {premiumColors} from './premuimColors';
+
 // Global Colors Configuration for VibeLive
 // Centralized color management with screen-specific organization
 // Usage: import { GlobalColors } from '../styles/GlobalColors';
@@ -64,6 +66,14 @@ const baseColors = {
 };
 baseColors.deepBlack = baseColors.newBackGroundColor;
 
+let premiumDark;
+
+if (false) {
+  premiumDark = premiumColors.light;
+} else {
+  premiumDark = premiumColors.dark;
+}
+
 
 // Type definitions for color schemes
 export interface ColorScheme {
@@ -99,8 +109,7 @@ export interface ColorScheme {
 // Screen-specific color configurations
 export const GlobalColors = {
   VenueSelectionScreen: {
-    background: "red"
-
+    background: 'red',
   },
   // Events List Screen
   EventsListScreen: {
@@ -491,42 +500,135 @@ export const GlobalColors = {
 
   // Squad Mode
   SquadMode: {
-    background: baseColors.newBackGroundColor,
-    surface: baseColors.darkGray,
-    surfaceElevated: baseColors.gray,
-    text: baseColors.white_ivory,
-    textSecondary: baseColors.offWhite,
-    textMuted: baseColors.mutedWhite,
-    primary: baseColors.cyan,
-    primaryMuted: 'rgba(0, 255, 255, 0.15)',
-    accent: baseColors.deepPink,
-    accentMuted: 'rgba(255, 20, 147, 0.15)',
+    background: premiumDark.primaryBackground,
+    secondaryBackground: premiumDark.secondaryBackground,
+    connecting: premiumDark.hotPrimary,
+    surface: premiumDark.primarySurface,
+    surfaceElevated: premiumDark.secondarySurface,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.secondaryText,
+    primary: premiumDark.accentPrimary,
+    primaryMuted: premiumDark.accentSurface,
+    accent: premiumDark.accentPrimary,
+    accentMuted: premiumDark.accentSubtle,
     gold: baseColors.gold_accent,
     goldMuted: 'rgba(212, 175, 55, 0.15)',
-    border: baseColors.mediumGray,
-    borderLight: baseColors.lightGray,
+    border: premiumDark.primaryBorder,
+    borderLight: premiumDark.secondaryBorder,
+    divider: premiumDark.separator,
+    heroIconBg: premiumDark.accentSurface,
+    heroBadgeBg: premiumDark.accentPrimary,
+    heroBadgeText: premiumDark.primaryText,
+    heroOutline: premiumDark.accentBorder,
+    sectionLabel: premiumDark.secondaryText,
+    stepNumberBg: premiumDark.accentSurface,
+    stepNumberBorder: premiumDark.accentBorder,
+    stepLine: premiumDark.separator,
+    ctaButtonBg: premiumDark.accentPrimary,
+    ctaButtonBorder: premiumDark.accentBorder,
+    ctaButtonText: premiumDark.primaryText,
+    outlineButtonBg: premiumDark.primaryBackground,
+    outlineButtonBorder: premiumDark.primaryBorder,
+    outlineButtonText: premiumDark.primaryText,
+    link: premiumDark.accentPrimary,
+    mutedLink: premiumDark.secondaryText,
     // Squad-specific
-    inviteButton: baseColors.cyan,
+    inviteButton: premiumDark.accentPrimary,
     vetoButton: baseColors.deepPink,
     confirmButton: baseColors.success,
     cancelButton: baseColors.error,
-    memberBadge: baseColors.purple,
+    memberBadge: premiumDark.accentPrimary,
     memberBadgeGuest: baseColors.mutedGray,
     matchScore: baseColors.gold_accent,
-    vibeIndicator: baseColors.cyan,
+    vibeIndicator: premiumDark.accentPrimary,
     capacityGood: baseColors.success,
     capacityWarning: baseColors.warning,
     capacityFull: baseColors.error,
-    tagSelected: baseColors.cyan,
-    tagUnselected: baseColors.gray,
-    tagBorder: baseColors.lightGray,
+    tagSelected: premiumDark.accentPrimary,
+    tagUnselected: premiumDark.secondarySurface,
+    tagBorder: premiumDark.secondaryBorder,
     emptyStateIcon: baseColors.mutedGray,
-    emptyStateText: baseColors.mutedWhite,
+    emptyStateText: premiumDark.tertiaryText,
     countdownWarning: baseColors.warning,
-    statusForming: baseColors.cyan,
+    statusForming: premiumDark.accentPrimary,
     statusActive: baseColors.gold_accent,
     statusConfirmed: baseColors.success,
     statusExpired: baseColors.mutedGray,
+    // Squad forming detail colors
+    formingHeaderTitle: premiumDark.primaryText,
+    formingStatusLive: premiumDark.successPrimary,
+    formingStatusWaiting: premiumDark.secondaryText,
+    formingStatusDot: premiumDark.successPrimary,
+    formingSectionDivider: premiumDark.separator,
+    formingCardBackground: premiumDark.secondarySurface,
+    formingCardBorder: premiumDark.primaryBorder,
+    formingCardShadow: 'rgba(0, 0, 0, 0.4)',
+    formingCodeLabel: premiumDark.secondaryText,
+    formingCodeText: premiumDark.accentPrimary,
+    formingCodeHint: premiumDark.secondaryText,
+    formingShareButtonBg: premiumDark.primarySurface,
+    formingShareButtonBorder: premiumDark.primaryBorder,
+    formingShareButtonText: premiumDark.primaryText,
+    formingMemberCardBg: premiumDark.primarySurface,
+    formingMemberCardBorder: premiumDark.primaryBorder,
+    formingMemberName: premiumDark.primaryText,
+    formingMemberMeta: premiumDark.secondaryText,
+    formingMemberStatusReady: premiumDark.successPrimary,
+    formingMemberStatusPending: premiumDark.secondaryText,
+    formingMemberBadgeBg: premiumDark.accentSurface,
+    formingMemberBadgeText: premiumDark.accentPrimary,
+    formingWaitingCardBg: premiumDark.secondarySurface,
+    formingWaitingCardBorder: premiumDark.primaryBorder,
+    formingWaitingText: premiumDark.secondaryText,
+    formingActionButtonBg: premiumDark.primarySurface,
+    formingActionButtonBorder: premiumDark.primaryBorder,
+    formingActionButtonText: premiumDark.primaryText,
+    formingActionSubtext: premiumDark.secondaryText,
+    // Squad recommendation detail colors
+    recommendationBackground: premiumDark.primaryBackground,
+    recommendationSurface: premiumDark.primarySurface,
+    recommendationCard: premiumDark.secondarySurface,
+    recommendationBorder: premiumDark.primaryBorder,
+    recommendationDivider: premiumDark.separator,
+    recommendationLabel: premiumDark.secondaryText,
+    recommendationRoundPillBg: premiumDark.accentSurface,
+    recommendationRoundPillText: premiumDark.accentPrimary,
+    recommendationMatchBadgeBg: premiumDark.hotSurface,
+    recommendationMatchBadgeText: premiumDark.hotPrimary,
+    recommendationReasonChipBg: premiumDark.accentSurface,
+    recommendationReasonChipText: premiumDark.accentPrimary,
+    recommendationStatusChipBorder: premiumDark.secondaryBorder,
+    recommendationQualityBackground: premiumDark.secondarySurface,
+    recommendationWarningBg: premiumDark.hotSurface,
+    recommendationWarningBorder: premiumDark.hotBorder,
+    recommendationWarningText: premiumDark.hotPrimary,
+    recommendationPrimaryActionBg: premiumDark.primarySurface,
+    recommendationPrimaryActionText: premiumDark.primaryText,
+    recommendationSecondaryActionBorder: premiumDark.secondaryBorder,
+    recommendationVetoBg: premiumDark.hotSurface,
+    recommendationVetoBorder: premiumDark.hotBorder,
+    recommendationVetoText: premiumDark.hotPrimary,
+    recommendationAltCardBg: premiumDark.primarySurface,
+    recommendationAltBadgeBg: premiumDark.secondarySurface,
+    recommendationAltBadgeText: premiumDark.secondaryText,
+    confirmBadgeText: premiumDark.successPrimary,
+    confirmBadgeIcon: premiumDark.successPrimary,
+    confirmMetaText: premiumDark.secondaryText,
+    confirmPrimaryButtonBg: premiumDark.successPrimary,
+    confirmPrimaryButtonText: premiumDark.primaryText,
+    confirmSecondaryButtonBg: premiumDark.primarySurface,
+    confirmSecondaryButtonBorder: premiumDark.accentBorder,
+    confirmSecondaryButtonText: premiumDark.primaryText,
+    confirmMemberCountBg: premiumDark.accentSurface,
+    confirmMemberCountText: premiumDark.accentPrimary,
+    confirmTipCardBackground: premiumDark.secondarySurface,
+    confirmTipCardBorder: premiumDark.primaryBorder,
+    confirmTipBadgeBg: premiumDark.accentSurface,
+    confirmTipBadgeText: premiumDark.accentPrimary,
+    confirmTipNumberBg: premiumDark.accentSurface,
+    confirmTipNumberText: premiumDark.primaryText,
+    confirmationDevider: premiumDark.accentPrimary,
   },
 
   // Venue Claim Onboarding

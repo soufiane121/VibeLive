@@ -353,9 +353,17 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
       showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={styles.emptyHeader}>
-        <View style={styles.iconCircle}>
-          <SquadIcon size={48} color={colors.primary} />
+        <View style={styles.heroIconWrap}>
+          <View style={styles.liveBadge}>
+            <Text style={styles.liveBadgeText}>Live</Text>
+          </View>
+          <View style={styles.largerIconCircle}>
+          <View style={styles.iconCircle}>
+            <SquadIcon size={35} color={colors.primary} />
+          </View>
+          </View>
         </View>
+        <Text style={styles.heroLabel}>Group Feature</Text>
         <Text style={styles.emptyTitle}>Squad Mode</Text>
         <Text style={styles.emptySubtitle}>
           Date night or group outing — one confident recommendation for
@@ -383,25 +391,30 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
       {/* How it works */}
       <View style={styles.howItWorks}>
         <Text style={styles.sectionTitle}>How it works</Text>
+        <View style={styles.sectionDivider} />
         <StepItem
           number="1"
           title="Create & invite"
           description="Start a squad and share the link — no app required for friends"
+          isLast={false}
         />
         <StepItem
           number="2"
           title="Everyone picks their vibe"
           description="Each person selects venue types they're into tonight"
+          isLast={false}
         />
         <StepItem
           number="3"
           title="Get your recommendation"
           description="We find the one spot that works for everyone"
+          isLast={false}
         />
         <StepItem
           number="4"
           title="Veto or confirm"
           description="Not feeling it? One tap veto gets you a new suggestion"
+          isLast
         />
       </View>
 
@@ -412,9 +425,9 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
         disabled={isCreating}
         activeOpacity={0.8}>
         {isCreating ? (
-          <ActivityIndicator color={colors.background} />
+          <ActivityIndicator color={colors.ctaButtonText} />
         ) : (
-          <Text style={styles.createButtonText}>Start a Squad</Text>
+          <Text style={styles.createButtonText}>Start a squad  +</Text>
         )}
       </TouchableOpacity>
 
@@ -432,10 +445,14 @@ const StepItem: React.FC<{
   number: string;
   title: string;
   description: string;
-}> = ({number, title, description}) => (
+  isLast?: boolean;
+}> = ({number, title, description, isLast}) => (
   <View style={styles.stepItem}>
-    <View style={styles.stepNumber}>
-      <Text style={styles.stepNumberText}>{number}</Text>
+    <View style={styles.stepNumberWrapper}>
+      <View style={styles.stepNumber}>
+        <Text style={styles.stepNumberText}>{number}</Text>
+      </View>
+      {!isLast && <View style={styles.stepConnector} />}
     </View>
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>{title}</Text>
@@ -471,14 +488,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: colors.primaryMuted,
+  heroIconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  liveBadge: {
+    backgroundColor: colors.heroBadgeBg,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.heroOutline,
+    marginBottom: 12,
+  },
+  liveBadgeText: {
+    color: colors.heroBadgeText,
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  largerIconCircle: {
+    width: 98,
+    height: 98,
+    borderRadius: 17,
+    backgroundColor: colors.secondaryBackground,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.heroOutline,
+  },
+  iconCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 17,
+    backgroundColor: colors.heroIconBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.heroOutline,
+  },
+  heroLabel: {
+    color: colors.sectionLabel,
+    fontSize: 13,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   emptyTitle: {
     fontSize: 28,
@@ -512,34 +568,51 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 16,
+    marginBottom: 6,
+  },
+  sectionDivider: {
+    height: 1,
+    width: '100%',
+    backgroundColor: colors.divider,
+    marginBottom: 18,
   },
   stepItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 16,
   },
+  stepNumberWrapper: {
+    alignItems: 'center',
+    marginRight: 12,
+  },
   stepNumber: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primaryMuted,
+    borderRadius: 9,
+    backgroundColor: colors.stepNumberBg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
+    borderWidth: 1,
+    borderColor: colors.stepNumberBorder,
   },
   stepNumberText: {
     color: colors.primary,
     fontSize: 14,
     fontWeight: '700',
   },
+  stepConnector: {
+    width: 2,
+    flex: 1,
+    backgroundColor: colors.stepLine,
+    marginTop: 6,
+    marginBottom: -6,
+  },
   stepContent: {
     flex: 1,
   },
   stepTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 2,
   },
@@ -547,27 +620,46 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
     lineHeight: 18,
+    fontWeight: '600'
   },
   // Create button
   createButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.secondaryBackground,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.ctaButtonBorder,
   },
   createButtonDisabled: {
     opacity: 0.6,
   },
   createButtonText: {
-    color: colors.background,
-    fontSize: 17,
+    color: colors.ctaButtonText,
+    fontSize: 18,
     fontWeight: '700',
   },
   tagline: {
     fontSize: 12,
     color: colors.textMuted,
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  linkPrompt: {
+    color: colors.textMuted,
+    fontSize: 13,
+  },
+  linkText: {
+    color: colors.link,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
 

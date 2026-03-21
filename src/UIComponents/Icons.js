@@ -6,7 +6,8 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialDesignIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
+import SimpleLineIcons from "react-native-vector-icons/SimpleLineIcons"
+import Octicons from "react-native-vector-icons/Octicons"
 const mapIcon = props => {
   return <Icon name="map" {...props} size={20} />;
 };
@@ -18,6 +19,7 @@ const LocationIcon = props => {
 const LiveStreamIcon = props => {
   return <AntDesign name="videocamera" {...props} />;
 };
+
 
 const EyeViewsIcon = props => {
   return <AntDesign  name="eyeo" {...props} />
@@ -68,7 +70,7 @@ const ShieldCheckmarkIcon = (props) => {
 }
 
 const PersonIcon = (props) => {
-  return <Ionicons name="person" {...props} />;
+  return <Octicons name="person" {...props} />;
 }
 
 const CheckmarkIcon = (props) => {
@@ -150,7 +152,7 @@ const StopIcon = (props) => {
 
 // Squad Mode Icons
 const SquadIcon = (props) => {
-  return <Ionicons name="people" {...props} />;
+  return <SimpleLineIcons name="people" {...props} />;
 }
 
 const ShareIcon = (props) => {
@@ -165,7 +167,12 @@ const NavigateIcon = (props) => {
   return <Ionicons name="navigate" {...props} />;
 }
 
+const ClockIcon = (props)=>{
+  return <Feather name="clock" {...props} />;
+}
+
 export {
+  ClockIcon,
   mapIcon,
   LocationIcon,
   LiveStreamIcon,
