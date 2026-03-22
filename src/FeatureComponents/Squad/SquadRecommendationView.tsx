@@ -162,7 +162,7 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
                 styles.confirmButton,
                 isConfirming && styles.buttonDisabled,
               ]}
-              // onPress={() => handleConfirm()}
+              onPress={() => handleConfirm()}
               disabled={isConfirming}
               activeOpacity={0.8}>
               {isConfirming ? (
@@ -271,7 +271,7 @@ const VenueCardContent: React.FC<{
   return (
     <TouchableOpacity
       style={compact ? styles.venueCompact : styles.venueContent}
-      onPress={() => handleConfirm(venue.venue_id)}>
+      onPress={() => handleConfirm && handleConfirm(venue.venue_id)}>
       {/* Venue Name + Score */}
       <View style={styles.venueHeader}>
         <View style={{gap: 10}}>
@@ -307,6 +307,31 @@ const VenueCardContent: React.FC<{
                     label={`Peak in ~${venue.attraction_window_min}min`}
                     color={colors.gold}
                   />
+                )}
+              </View>
+            )}
+            {/* Venue Tags */}
+            {/* TODO:: IT NOT BE NEEDED */}
+            {!compact && venue.venue_tags && venue.venue_tags.length > 0 && (
+              <View style={styles.tagsRow}>
+                {venue.venue_tags.slice(0, 3).map((tag, i) => (
+                  <View key={i} style={styles.tagChip}>
+                    <Text style={styles.tagText}>{formatTagName(tag)}</Text>
+                  </View>
+                ))}
+                {venue.venue_tags.length > 3 && (
+                  <Text style={styles.moreTagsText}>+{venue.venue_tags.length - 3}</Text>
+                )}
+              </View>
+            )}
+            {/* Address and Rating */}
+            {!compact && (venue.address || venue.rating) && (
+              <View style={styles.metadataRow}>
+                {venue.address && (
+                  <Text style={styles.addressText}>{venue.address}</Text>
+                )}
+                {venue.rating && (
+                  <Text style={styles.ratingText}>★ {venue.rating}</Text>
                 )}
               </View>
             )}
@@ -420,6 +445,11 @@ function formatVibeState(state: string): string {
 function formatDistance(meters: number): string {
   if (meters < 1000) return `${Math.round(meters)}m away`;
   return `${(meters / 1000).toFixed(1)}km away`;
+}
+
+function formatTagName(tag: string): string {
+  // Convert snake_case to readable format
+  return tag.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 // ── Styles ──────────────────────────────────────────────────────────────────
@@ -648,6 +678,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     // opacity: 0.5
   },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
   confirmButtonText: {
     color: colors.recommendationPrimaryActionText,
     fontSize: 16,
@@ -794,6 +827,54 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.recommendationLabel,
     textAlign: 'center',
+  },
+  // TODO:: if the above todo is removed this also not needed 
+  // NEW: Venue tags and metadata
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  tagChip: {
+    backgroundColor: colors.recommendationReasonChipBg,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.recommendationStatusChipBorder,
+  },
+  tagText: {
+    fontSize: 11,
+    color: colors.recommendationReasonChipText,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  moreTagsText: {
+    fontSize: 11,
+    color: colors.recommendationReasonChipText,
+    fontWeight: '600',
+    fontStyle: 'italic',
+    alignSelf: 'center',
+  },
+  metadataRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  addressText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    flex: 1,
+    marginRight: 8,
+  },
+  ratingText: {
+    fontSize: 12,
+    color: colors.gold,
+    fontWeight: '600',
   },
 });
 

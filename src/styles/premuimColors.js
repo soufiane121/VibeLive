@@ -25,6 +25,7 @@ export const premiumColors = {
     successPrimary: '#4CAF50',
     successSurface: 'rgba(76, 175, 80, 0.12)',
     successBorder: 'rgba(76, 175, 80, 0.18)',
+    lightGreenBG: 'rgba(74, 99, 76, 0.22)',
 
     separator: 'rgba(255, 255, 255, 0.05)',
   },
@@ -57,5 +58,7 @@ export const premiumColors = {
     successBorder: 'rgba(46, 125, 50, 0.15)',
 
     separator: 'rgba(0, 0, 0, 0.05)',
+
+    lightGreenBG: 'rgba(208, 241, 210, 0.22)',
   },
 };

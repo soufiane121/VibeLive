@@ -42,6 +42,13 @@ export interface VenueRecommendation {
   vibeshift_confidence?: number | null;
   data_quality_label?: 'strong' | 'limited' | 'preference_only';
   data_quality_message?: string | null;
+  // NEW: Venue tags and metadata
+  // TODO:: it not be needed 
+  venue_tags?: string[];
+  category?: string;
+  rating?: number;
+  price_level?: number;
+  address?: string;
 }
 
 export interface SquadRecommendation {

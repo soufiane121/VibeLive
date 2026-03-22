@@ -10,7 +10,7 @@ import {
   Share,
 } from 'react-native';
 import {GlobalColors} from '../../styles/GlobalColors';
-import {NavigateIcon, ShareIcon, CheckmarkIcon} from '../../UIComponents/Icons';
+import {NavigateIcon, ShareIcon, CheckmarkIcon, ClockIcon} from '../../UIComponents/Icons';
 import type {ConfirmedVenue, SquadMember} from '../../../features/squad/SquadApi';
 
 const colors = GlobalColors.SquadMode;
@@ -82,7 +82,7 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
       <View style={styles.successHeader}>
         <View style={styles.heroIconWrapper}>
           <View style={styles.heroIconInner}>
-            <CheckmarkIcon size={32} color={colors.confirmHeroLabel} />
+            <CheckmarkIcon size={32} color={colors.primary} />
           </View>
         </View>
         <Text style={styles.headerLabel}>SQUAD CONFIRMED</Text>
@@ -103,9 +103,7 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
         </View>
 
         {confirmedTime && (
-          <Text style={styles.confirmedAt}>
-            Confirmed · {confirmedTime}
-          </Text>
+          <Text style={styles.confirmedAt}>Confirmed · {confirmedTime}</Text>
         )}
 
         {/* Venue alert (VibeShift status change) */}
@@ -164,12 +162,13 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
               </Text>
             </View>
           ))}
-          <View style={styles.memberChip}>
+          {/* TODO:: FOR INVITING FRIEND BUT NOT WORKIN, also share with others already ehre */}
+          {/* <View style={styles.memberChip}>
             <View style={[styles.memberAvatar, styles.inviteAvatar]}>
               <Text style={styles.inviteAvatarText}>+</Text>
             </View>
             <Text style={styles.memberName}>Invite</Text>
-          </View>
+          </View> */}
         </View>
       </View>
 
@@ -184,10 +183,7 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
           index={2}
           text="Let one person be the point of contact for the group"
         />
-        <TipItem
-          index={3}
-          text="Check back here for live venue updates"
-        />
+        <TipItem index={3} text="Check back here for live venue updates" />
       </View>
     </ScrollView>
   );
@@ -226,43 +222,47 @@ const styles = StyleSheet.create({
     height: 82,
     borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: colors.confirmHeroIconBorder,
+    borderColor: colors.heroOutline,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.confirmHeroIconBg,
+    backgroundColor: colors.secondaryBackground,
     marginBottom: 14,
   },
   heroIconInner: {
     width: 58,
     height: 58,
     borderRadius: 18,
-    backgroundColor: colors.confirmHeroIconBg,
+    backgroundColor: colors.heroIconBg,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.heroOutline,
   },
   headerLabel: {
     color: colors.confirmHeroLabel,
     fontSize: 13,
     letterSpacing: 2,
-    fontWeight: '600',
+    fontWeight: '700',
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.text,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.textSecondary,
+    fontWeight: '600',
+    opacity: 0.8,
   },
   // Venue Card
   venueCard: {
     backgroundColor: colors.confirmCardBackground,
     borderRadius: 20,
-    padding: 24,
+    padding: 21,
     marginBottom: 32,
     borderWidth: 1,
     borderColor: colors.confirmCardBorder,
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
   },
   venueName: {
     fontSize: 24,
@@ -289,15 +289,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.confirmMetaText,
     marginBottom: 18,
+    fontWeight: '600',
+    opacity: 0.4,
   },
   confirmBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.confirmBadgeBackground,
-    borderRadius: 999,
+    borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    gap: 6,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors.confirmCardBorder,
   },
   confirmBadgeText: {
     color: colors.confirmBadgeText,
@@ -322,12 +326,14 @@ const styles = StyleSheet.create({
   },
   devider: {
     borderWidth: 1,
-    borderColor: colors.confirmationDevider,
+    borderColor: colors.confirmCardBorder,
     marginBottom: 14,
-    opacity: 0.4
+    opacity: 0.8,
   },
   navigateButton: {
-    backgroundColor: colors.confirmPrimaryButtonBg,
+    borderColor: colors.confirmCardBorder,
+    // backgroundColor: colors.confirmSecondaryButtonBg,
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -350,15 +356,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.confirmSecondaryButtonBorder,
-    backgroundColor: colors.confirmSecondaryButtonBg,
+    borderColor: colors.confirmCardBorder,
+    // backgroundColor: colors.confirmSecondaryButtonBg,
     width: '100%',
   },
   shareButtonText: {
     color: colors.confirmSecondaryButtonText,
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 6,
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 8,
   },
   // Members
   membersSection: {
@@ -370,18 +376,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    flex: 1,
+    letterSpacing: 1.5,
+    marginRight: 8,
+    opacity: 0.4,
   },
   sectionCountBadge: {
     backgroundColor: colors.confirmMemberCountBg,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 2,
+    borderColor: colors.primaryMuted,
+    borderWidth: 1,
   },
   sectionCountText: {
     color: colors.confirmMemberCountText,
@@ -390,19 +399,21 @@ const styles = StyleSheet.create({
   memberAvatarRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 18,
+    // gap: 18,
   },
   memberChip: {
     alignItems: 'center',
     width: 72,
   },
   memberAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
+    borderColor: colors.border,
+    borderWidth: 1,
   },
   memberAvatarText: {
     fontSize: 17,
@@ -413,6 +424,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textSecondary,
     textAlign: 'center',
+    fontWeight: '700',
+    opacity: 0.8
   },
   inviteAvatar: {
     backgroundColor: colors.outlineButtonBorder,
@@ -431,10 +444,11 @@ const styles = StyleSheet.create({
     borderColor: colors.confirmTipCardBorder,
   },
   tipsTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '800',
     color: colors.text,
     marginBottom: 14,
+    opacity: 0.8
   },
   tipRow: {
     flexDirection: 'row',
@@ -449,6 +463,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.confirmTipNumberBg,
     justifyContent: 'center',
     alignItems: 'center',
+    borderColor: colors.border,
+    borderWidth: 1
   },
   tipNumberText: {
     color: colors.confirmTipNumberText,
@@ -459,6 +475,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 18,
     flex: 1,
+    fontWeight: '600'
   },
 });
 
