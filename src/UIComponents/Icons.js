@@ -48,6 +48,9 @@ const ProfileIcon = (props)=> {
 const ChevronBackIcon = (props) => {
   return <Ionicons name="chevron-back" {...props} />;
 }
+const MusicIcon = (props)=> {
+return <Ionicons name="musical-notes-outline" {...props} />;
+}
 
 const ChevronForwardIcon = (props) => {
   return <Ionicons name="chevron-forward" {...props} />;
@@ -170,8 +173,52 @@ const NavigateIcon = (props) => {
 const ClockIcon = (props)=>{
   return <Feather name="clock" {...props} />;
 }
+const NightLifeIcon = (props)=> {
+  return <MaterialIcons  name="nightlife" {...props} />
+}
+
+const BarIcon = (props) => {
+   return <MaterialIcons name="local-bar" {...props} />
+}
+
+const SportIcon = (props)=> {
+  return <MaterialIcons name="sports-soccer" {...props} />
+}
+
+const FoodIcon = (props)=>{
+  return <MaterialDesignIcons name="silverware-fork-knife" {...props} />;
+}
+
+const StarIcon = (props)=> {
+  return <Feather name="star" {...props}/>
+}
+const SmileFaceIcon=(props) => {
+  return <Octicons name="smiley" {...props} />;
+}
+const TVPlayIcon = (props)=> {
+  return <MaterialDesignIcons name="television-play" {...props} />;
+}
+const LoungeIcon = (props)=> {
+  return <MaterialDesignIcons name="sofa-outline" {...props} />
+}
+
+const StreamIcon = (props)=> {
+  return <MaterialIcons name="stream" {...props} />
+}
+
+
 
 export {
+  StreamIcon,
+  LoungeIcon,
+  TVPlayIcon,
+  SmileFaceIcon,
+  StarIcon,
+  SportIcon,
+  FoodIcon,
+  BarIcon,
+  MusicIcon,
+  NightLifeIcon,
   ClockIcon,
   mapIcon,
   LocationIcon,

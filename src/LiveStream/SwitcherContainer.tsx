@@ -2,7 +2,9 @@ import {View, Text, SafeAreaView} from 'react-native';
 import React, {useState} from 'react';
 import EventSelections from './EventSelections';
 import LiveStreamContainer from './LiveStreamContainer';
+import GlobalColors from '../styles/GlobalColors';
 
+const colors = GlobalColors.BoostFOMOFlow;
 const SwitcherContainer = () => {
   const [showStartLive, setShowStartLive] = useState(false);
   const [title, setTitle] = useState('');
@@ -42,7 +44,7 @@ const SwitcherContainer = () => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#292929'}}>
+    <SafeAreaView style={{flex: 1, backgroundColor: colors.background}}>
       {!showStartLive ? (
         <EventSelections onCompleteSelection={handleCompleteSelection} onTitleChange={handleChangeTitle} />
       ) : (

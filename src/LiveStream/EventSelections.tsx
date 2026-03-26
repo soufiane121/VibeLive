@@ -18,7 +18,18 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {GlobalColors} from '../styles/GlobalColors';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
 import {IAPAdapter} from '../Payment/adapters/IAPAdapter';
-import { AnalyticsEventType } from '../types/AnalyticsEnums';
+import {AnalyticsEventType} from '../types/AnalyticsEnums';
+import {
+  BarIcon,
+  FoodIcon,
+  MusicIcon,
+  NightLifeIcon,
+  SmileFaceIcon,
+  SportIcon,
+  StarIcon,
+  StreamIcon,
+  TVPlayIcon,
+} from '../UIComponents/Icons';
 
 const colors = GlobalColors.BoostFOMOFlow;
 // import { LinearGradient } from 'react-native-linear-gradient';
@@ -36,18 +47,52 @@ const colors = GlobalColors.BoostFOMOFlow;
 // npm install react-native-reanimated
 // For iOS: cd ios && pod install
 
-const eventsList = [
-  {key: 'nightlife', label: 'Nightlife & Parties', emoji: '🎉'},
-  {key: 'bars', label: 'Bars & Lounges', emoji: '🍸'},
-  {key: 'concerts', label: 'Music & Concerts', emoji: '🎵'},
-  {key: 'sports', label: 'Sports Events', emoji: '🏟️'},
-  {key: 'festivals', label: 'Festivals & Fairs', emoji: '🎪'},
-  {key: 'food', label: 'Food & Drink events', emoji: '🍽️'},
-  {key: 'art', label: 'Art & Culture', emoji: '🎨'},
-  {key: 'show', label: 'Show & Performances', emoji: '🎭'},
-  {key: 'shopping', label: 'Markets & Pop-ups', emoji: '🛍️'},
-  {key: 'special', label: 'Special & Seasonal', emoji: '🎉'},
-];
+
+  const eventsList = [
+    {
+      key: 'nightlife',
+      label: 'Nightlife & Parties',
+      emoji: (color: string)=> (<NightLifeIcon size={32} color={color} />),
+    },
+    {
+      key: 'bars',
+      label: 'Bars & Lounges',
+      emoji: (color: string)=> (<BarIcon size={32} color={color} />),
+    },
+    {
+      key: 'concerts',
+      label: 'Music & Concerts',
+      emoji: (color: string)=> (<MusicIcon size={32} color={color} />),
+    },
+    {
+      key: 'sports',
+      label: 'Sports Events',
+      emoji: (color: string)=> (<SportIcon size={32} color={color} />),
+    },
+    {
+      key: 'festivals',
+      label: 'Festivals & Fairs',
+      emoji: (color: string)=> (<StarIcon size={32} color={color} />),
+    },
+    {
+      key: 'food',
+      label: 'Food & Drink events',
+      emoji: (color: string)=> (<FoodIcon size={32} color={color} />),
+    },
+    {
+      key: 'art',
+      label: 'Art & Culture',
+      emoji: (color: string)=> (<SmileFaceIcon size={32} color={color} />),
+    },
+    {
+      key: 'show',
+      label: 'Show & Performances',
+      emoji: (color: string)=> (<TVPlayIcon size={32} color={color} />),
+    },
+    // no needed for now, includes prides, ramadan, halloween
+    // {key: 'special', label: 'Special & Seasonal', emoji: '🎉'},
+  ];
+
 
 interface BoostTier {
   id: 'basic' | 'premium' | 'ultimate';
@@ -140,7 +185,9 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const [title, setTitle] = useState('');
   const [currentStep, setCurrentStep] = useState<FlowStep>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(
+    [],
+  );
   const [selectedTier, setSelectedTier] = useState<BoostTier | null>(null);
   const [boostData, setBoostData] = useState<BoostPurchaseData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -168,10 +215,13 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         try {
           const globalData = (global as any).subcategoryData;
           if (globalData && globalData.timestamp) {
-            console.log('Received subcategories from global state:', globalData.subcategories);
+            console.log(
+              'Received subcategories from global state:',
+              globalData.subcategories,
+            );
             setSelectedSubcategories(globalData.subcategories || []);
             setSelectedCategory(globalData.categoryKey || '');
-            
+
             // Clear the global data to avoid reprocessing
             delete (global as any).subcategoryData;
           }
@@ -185,8 +235,11 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         try {
           const streamData = (global as any).streamSelectionData;
           if (streamData && streamData.timestamp) {
-            console.log('Received stream selection data from monthly limit modal:', streamData);
-            
+            console.log(
+              'Received stream selection data from monthly limit modal:',
+              streamData,
+            );
+
             // Set the stream data
             if (streamData.streamTitle) {
               setTitle(streamData.streamTitle);
@@ -197,12 +250,12 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
             if (streamData.subcategoriesTags) {
               setSelectedSubcategories(streamData.subcategoriesTags);
             }
-            
+
             // Set the flow step to boost_intro to trigger boost flow
             if (streamData.flowStep === 'boost_tiers') {
               setCurrentStep('boost_tiers');
             }
-            
+
             // Clear the global data to avoid reprocessing
             delete (global as any).streamSelectionData;
           }
@@ -299,7 +352,10 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     // AnalyticsService.track(eventName, properties);
   };
 
-  const handleCategorySelection = (category: string, skipSubcategories = false) => {
+  const handleCategorySelection = (
+    category: string,
+    skipSubcategories = false,
+  ) => {
     setSelectedCategory(category);
     trackEvent(AnalyticsEventType.STREAM_CATEGORY_SELECTED, {
       category,
@@ -338,15 +394,17 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
     // Skip boost flow entirely - include subcategories and parent category
     onCompleteSelection({
-      value: category, 
+      value: category,
       title: title.trim(),
       subcategories: selectedSubcategories,
-      parentCategory: selectedEvent?.label
+      parentCategory: selectedEvent?.label,
     });
   };
 
   const handleSkipBoost = () => {
-    const selectedEvent = eventsList.find(event => event.key === selectedCategory);
+    const selectedEvent = eventsList.find(
+      event => event.key === selectedCategory,
+    );
     console.log('🚫 User skipped boost - proceeding without boost data');
     trackEvent(AnalyticsEventType.BOOST_SKIPPED, {
       category: selectedCategory,
@@ -362,13 +420,13 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       title: title.trim(),
       subcategories: selectedSubcategories,
       parentCategory: selectedEvent?.label,
-      boostData: null
+      boostData: null,
     });
     onCompleteSelection({
-      value: selectedCategory, 
+      value: selectedCategory,
       title: title.trim(),
       subcategories: selectedSubcategories,
-      parentCategory: selectedEvent?.label
+      parentCategory: selectedEvent?.label,
     });
   };
 
@@ -429,7 +487,10 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           throw new Error(iapResult.error || 'IAP purchase failed');
         }
 
-        console.log('✅ App Store purchase successful:', iapResult.transactionId);
+        console.log(
+          '✅ App Store purchase successful:',
+          iapResult.transactionId,
+        );
         transactionId = iapResult.transactionId;
         receipt = iapResult.receipt;
       } else {
@@ -484,7 +545,9 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       console.error('❌ Error details:', JSON.stringify(error, null, 2));
       Alert.alert(
         'Purchase Failed',
-        `Unable to complete your boost purchase: ${error?.data?.error || error?.message || 'Unknown error'}`,
+        `Unable to complete your boost purchase: ${
+          error?.data?.error || error?.message || 'Unknown error'
+        }`,
         [
           {text: 'Try Again', onPress: () => setCurrentStep('boost_tiers')},
           {text: 'Skip Boost', onPress: handleSkipBoost},
@@ -503,14 +566,18 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   };
 
   const handleBoostConfirmation = () => {
-    const selectedEvent = eventsList.find(event => event.key === selectedCategory);
-    console.log('🎉 User confirmed boost purchase - proceeding with boost data');
+    const selectedEvent = eventsList.find(
+      event => event.key === selectedCategory,
+    );
+    console.log(
+      '🎉 User confirmed boost purchase - proceeding with boost data',
+    );
     console.log('📤 Calling onCompleteSelection WITH boost data:', {
       value: selectedCategory,
       boostData: boostData,
       subcategories: selectedSubcategories,
       parentCategory: selectedEvent?.label,
-      title: title.trim()
+      title: title.trim(),
     });
     onCompleteSelection({
       value: selectedCategory,
@@ -609,7 +676,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
               }),
             }}>
             <Text style={styles.urgencyText}>
-               Special pricing ends in {formatTime(timeLeft)}
+              Special pricing ends in {formatTime(timeLeft)}
             </Text>
           </Animated.View>
           <Text style={styles.scarcityText}>
@@ -779,7 +846,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Ready to go live? 🎬</Text>
+        <Text style={styles.headerTitle}>Ready to go live?</Text>
         <Text style={styles.headerSubtitle}>
           Choose your vibe and reach more people
         </Text>
@@ -809,10 +876,28 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
               selectedCategory === item.key && styles.selectedCategoryTag,
             ]}
             onPress={() => {
-              console.log('Category pressed:', item.key, 'Navigation available:', !!navigation);
+              console.log(
+                'Category pressed:',
+                item.key,
+                'Navigation available:',
+                !!navigation,
+              );
               handleCategorySelection(item.key, false);
             }}>
-            <Text style={styles.categoryEmoji}>{item.emoji}</Text>
+            {/* <Text style={styles.categoryEmoji}>{item.emoji}</Text> */}
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: selectedCategory === item.key ? colors.primaryBorder : colors.border,
+                height: 60,
+                width: 60,
+                backgroundColor: selectedCategory === item.key ? colors.selectedIconBG : colors.iconsBG,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderRadius: 8
+              }}>
+              {item.emoji(selectedCategory === item.key ? colors.selectedIconColor : colors.iconColor)}
+            </View>
             <Text style={styles.categoryLabel}>{item.label}</Text>
           </TouchableOpacity>
         )}
@@ -820,11 +905,12 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
       {selectedCategory && (
         <View style={styles.actionSection}>
-          <Text style={styles.actionTitle}>Ready to go live?</Text>
+          <Text style={styles.actionTitle}>Ready to stream?</Text>
 
           <TouchableOpacity
             style={styles.primaryActionButton}
             onPress={() => handleGoDirectToStream(selectedCategory)}>
+            <StreamIcon color={colors.text} size={20} />
             <Text style={styles.primaryActionText}>Start Streaming</Text>
           </TouchableOpacity>
 
@@ -852,9 +938,9 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                 {' '}
                 Boost for More Viewers
               </Text>
-              <Text style={styles.boostActionSubtext}>
+              {/* <Text style={styles.boostActionSubtext}>
                 Get 5x more visibility
-              </Text>
+              </Text> */}
             </Animated.View>
           </TouchableOpacity>
         </View>
@@ -880,59 +966,68 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '800',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 13,
     color: colors.textSecondary,
     textAlign: 'center',
+    fontWeight:'700'
   },
 
   // Title input
   titleInput: {
-    backgroundColor: 'rgba(242, 239, 232, 0.1)',
-    borderWidth: 1,
-    borderColor: colors.primary,
+    backgroundColor: colors.inputBG,
+    borderWidth: 2,
+    borderColor: colors.inputBorder,
     borderRadius: 12,
     padding: 16,
-    fontSize: 16,
-    color: colors.text,
+    fontSize: 14,
+    color: colors.inputText,
     marginBottom: 30,
     textAlign: 'center',
+    // opacity: 0.4,
+    fontWeight: '600',
   },
 
   // Category selection
   categoryTitle: {
-    fontSize: 20,
-    fontWeight: '300',
+    fontSize: 12,
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 20,
-    textAlign: 'center',
+    opacity: 0.4,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
   },
   categoriesContainer: {
     paddingBottom: 30,
-    justifyContent: 'center',
+    // justifyContent: 'center',
+
   },
   categoryTag: {
-    backgroundColor: colors.cardBackground,
+    // backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 25,
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    margin: 6,
+    paddingHorizontal: 14,
+    margin: 3,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: (width - 80) / 3,
-    maxWidth: (width - 80) / 3,
+    minWidth: (width - 69) / 2.9,
+    maxWidth: (width - 73) / 2.9,
   },
   selectedCategoryTag: {
-    borderColor: colors.primary,
+    // backgroundColor: colors.tierBasicBackground,
+    // borderColor: colors.primaryBorder,
     backgroundColor: colors.tierBasicBackground,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   categoryEmoji: {
     fontSize: 20,
@@ -940,9 +1035,10 @@ const styles = StyleSheet.create({
   },
   categoryLabel: {
     fontSize: 11,
-    fontWeight: '300',
-    color: colors.text,
+    fontWeight: '700',
+    color: colors.textSecondary,
     textAlign: 'center',
+    marginTop: 7
   },
 
   // Action section
@@ -953,24 +1049,29 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   actionTitle: {
-    fontSize: 18,
-    fontWeight: '300',
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
     marginBottom: 20,
   },
   primaryActionButton: {
     backgroundColor: colors.buttonSecondary,
-    borderWidth: 0.5,
-    borderColor: colors.borderActive,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 15,
+    borderRadius: 8,
+    // height: 43,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
     // marginBottom: 20,
   },
   primaryActionText: {
     fontSize: 16,
-    // fontWeight: '400',
+    fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
   },
@@ -986,21 +1087,25 @@ const styles = StyleSheet.create({
   },
   orText: {
     fontSize: 14,
+    fontWeight: '600',
     color: colors.textSecondary,
     marginHorizontal: 15,
   },
   boostActionButton: {
     backgroundColor: colors.buttonSecondary,
-    borderWidth: 0.5,
-    borderColor: colors.borderActive,
-    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    // paddingVertical: 10,
     // paddingHorizontal: 32,
-    borderRadius: 15,
-    marginBottom:10
+    // borderRadius: 15,
+    marginBottom: 10,
   },
   boostActionText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
   },

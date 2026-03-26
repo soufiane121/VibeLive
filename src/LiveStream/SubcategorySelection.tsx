@@ -151,9 +151,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+
+    alignSelf:'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
+    width: '90%',
     borderBottomColor: colors.border,
   },
   backButton: {
@@ -173,14 +176,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
+    lineHeight: 32,
     color: colors.text,
     textAlign: 'center',
   },
   headerSubtitle: {
     fontSize: 14,
     color: colors.textSecondary,
+    fontWeight: '600',
     textAlign: 'center',
     marginTop: 4,
   },
@@ -195,9 +200,10 @@ const styles = StyleSheet.create({
   subcategoryCard: {
     width: cardWidth,
     height: cardWidth,
-    backgroundColor: colors.cardBackground,
+    // backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: colors.border,
+    backgroundColor: colors.selectedCard,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -205,8 +211,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   selectedSubcategoryCard: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.selectedSubCategory,
     borderColor: colors.primary,
+    
   },
   subcategoryContent: {
     flex: 1,
@@ -222,7 +229,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   selectedSubcategoryText: {
-    color: colors.background,
+    color: colors.text,
     fontWeight: '600',
   },
   checkmark: {
@@ -231,37 +238,39 @@ const styles = StyleSheet.create({
     right: 4,
     width: 20,
     height: 20,
-    backgroundColor: colors.background,
+    backgroundColor: colors.benchMark,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkmarkText: {
-    fontSize: 12,
-    color: colors.primary,
+    fontSize: 13,
+    color: colors.text,
     fontWeight: '600',
   },
   bottomSection: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 40,
     left: 0,
     right: 0,
-    backgroundColor: colors.background,
+    // backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    // borderTopColor: colors.border,
     padding: 20,
   },
   continueButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.selectedCard,
     paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 25,
+    borderRadius: 8,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   continueButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.background,
+    color: colors.text,
   },
 });
 

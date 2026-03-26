@@ -68,7 +68,7 @@ baseColors.deepBlack = baseColors.newBackGroundColor;
 
 let premiumDark;
 
-if (false) {
+if (true) {
   premiumDark = premiumColors.light;
 } else {
   premiumDark = premiumColors.dark;
@@ -288,14 +288,25 @@ export const GlobalColors = {
 
   // Boost FOMO Flow
   BoostFOMOFlow: {
-    cardBackground: baseColors.cardBackground,
-    background: baseColors.deepBlack,
+    cardBackground: premiumDark.secondaryBackground,
+    background: premiumDark.primaryBackground,
+    iconsBG: premiumDark.secondaryBackground,
+    selectedIconBG: premiumDark.accentSurface,
+    iconColor: premiumDark.secondaryText,
+    selectedIconColor: premiumDark.accentPrimary,
     surface: baseColors.dark_grey,
     overlay: baseColors.blackOverlay,
-    text: baseColors.white_ivory,
-    textSecondary: baseColors.white_ivory,
-    textMuted: baseColors.white_ivory,
-    primary: baseColors.gold_accent,
+    text: premiumDark.primaryText,
+    inputBG: premiumDark.secondaryBackground,
+    inputText: premiumDark.primaryText,
+    inputBorder: premiumDark.secondaryBorder,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.secondaryText,
+    selectedCard: premiumDark.secondaryBackground,
+    selectedSubCategory: premiumDark.accentSurface,
+    benchMark: premiumDark.accentPrimary,
+    primary: premiumDark.primaryBorder,
+    primaryBorder: premiumDark.secondaryBorder,
     primaryHover: baseColors.dark_gold,
     secondary: baseColors.gold_accent,
     accent: baseColors.gold_accent,
@@ -309,7 +320,7 @@ export const GlobalColors = {
     tierBasic: baseColors.gold_accent,
     tierPremium: baseColors.gold_accent,
     tierUltimate: baseColors.gold_accent,
-    tierBasicBackground: baseColors.dark_grey,
+    tierBasicBackground: premiumDark.accentSurface,
     tierPremiumBackground: baseColors.dark_grey,
     tierUltimateBackground: baseColors.dark_grey,
     // Gradient colors for boost tiers
@@ -320,11 +331,11 @@ export const GlobalColors = {
     tierUltimateGradientStart: baseColors.gold_accent,
     tierUltimateGradientEnd: baseColors.dark_gold,
     buttonPrimary: baseColors.gold_accent,
-    buttonSecondary: baseColors.dark_gold,
+    buttonSecondary: premiumDark.secondaryBackground,
     buttonGhost: 'transparent',
     buttonDisabled: baseColors.mutedGray,
-    border: baseColors.mutedGray,
-    borderActive: baseColors.gold_accent,
+    border: premiumDark.accentBorder,
+    borderActive: premiumDark.primaryBorder,
     pulse: 'rgba(212, 175, 55, 0.3)',
     glow: 'rgba(212, 175, 55, 0.2)',
     flash: 'rgba(212, 175, 55, 0.6)',
