@@ -7,7 +7,6 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
-  Alert,
   Image,
 } from 'react-native';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
@@ -22,20 +21,19 @@ import {
 } from '../../UIComponents/Icons';
 import { GlobalColors, ColorUtils } from '../../styles/GlobalColors';
 
-// Use global colors configuration
 const colors = GlobalColors.EventsListScreen;
 
 const eventTypeIcons: {[key: string]: string} = {
   music: 'music-note',
-  sports: 'sports-football',
-  nightlife: 'local-bar',
-  festival: 'celebration',
-  conference: 'business',
-  comedy: 'theater-comedy',
-  theater: 'theater-masks',
+  sports: 'basketball',
+  nightlife: 'glass-cocktail',
+  festival: 'tent',
+  conference: 'domain',
+  comedy: 'drama-masks',
+  theater: 'theater',
   art: 'palette',
-  food: 'restaurant',
-  other: 'event',
+  food: 'silverware-fork-knife',
+  other: 'clock-time-four-outline', // Used "clock" for OTHER badge loosely matching the screenshot
 };
 
 interface EventItemProps {
@@ -48,56 +46,39 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
     const date = new Date(dateString);
     if (isToday(date)) return 'Today';
     if (isTomorrow(date)) return 'Tomorrow';
-    if (isThisWeek(date)) return format(date, 'EEEE');
-    return format(date, 'MMM dd');
+    return format(date, 'EEEE');
   };
 
   const formatEventTime = (dateString: string) => {
     return format(new Date(dateString), 'h:mm a');
   };
 
-  const getPromotionBadge = () => {
-    if (event.promotionStatus === 'top' || event.promotionStatus === 'both') {
-      return (
-        <View style={styles.promotionBadge}>
-          <CommonMaterialCommunityIcons
-            name="star"
-            size={12}
-            color={colors.accent}
-          />
-          <Text style={styles.promotionText}>FEATURED</Text>
-        </View>
-      );
-    }
-    return null;
-  };
+  const isMusic = event.eventType === 'music';
 
   return (
     <TouchableOpacity
       style={styles.eventItem}
       onPress={onPress}
       activeOpacity={0.8}>
-      {getPromotionBadge()}
 
       <View style={styles.eventHeader}>
-        <View style={styles.eventTypeContainer}>
-          <View
+        <View
+          style={[
+            styles.eventTypeBadge,
+            isMusic ? styles.eventTypeBadgeMusic : null,
+          ]}>
+          <CommonMaterialCommunityIcons
+            name={(eventTypeIcons[event.eventType] || eventTypeIcons.other) as any}
+            size={12}
+            color={isMusic ? colors.primary : colors.textSecondary}
+            style={{marginRight: 6}}
+          />
+          <Text
             style={[
-              styles.eventTypeIcon,
-              {
-                backgroundColor: ColorUtils.getEventTypeColor(event.eventType),
-              },
+              styles.eventTypeText,
+              {color: isMusic ? colors.primary : colors.textSecondary},
             ]}>
-            <CommonMaterialCommunityIcons
-              name={
-                (eventTypeIcons[event.eventType] || eventTypeIcons.other) as any
-              }
-              size={16}
-              color="#ffffff"
-            />
-          </View>
-          <Text style={styles.eventType}>
-            {event?.eventType?.toUpperCase()}
+            {event?.eventType ? event.eventType.toUpperCase() : 'OTHER'}
           </Text>
         </View>
 
@@ -112,56 +93,59 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
       </View>
 
       <View style={styles.eventContent}>
-        {event.banner?.url && (
-          <Image source={{uri: event.banner.url}} style={styles.eventImage} />
-        )}
-
-        <View style={styles.eventInfo}>
-          <Text style={styles.eventTitle} numberOfLines={2}>
-            {event.title}
-          </Text>
-
-          <View style={styles.locationContainer}>
-            <CommonMaterialIcons
-              name="location-on"
-              size={14}
+        <View style={styles.eventImageContainer}>
+          {event.banner?.url ? (
+            <Image source={{uri: event.banner.url}} style={styles.eventImage} />
+          ) : (
+            <CommonMaterialCommunityIcons
+              name={(eventTypeIcons[event.eventType] || 'music-note') as any}
+              size={24}
               color={colors.textMuted}
             />
-            <Text style={styles.eventLocation} numberOfLines={1}>
-              {event.location.address}
+          )}
+        </View>
+
+        <View style={styles.eventInfo}>
+          <View>
+            <Text style={styles.eventTitle} numberOfLines={2}>
+              {event.title}
             </Text>
+
+            <View style={styles.locationContainer}>
+              <CommonMaterialIcons
+                name="location-on"
+                size={14}
+                color={colors.textSecondary}
+              />
+              <Text style={styles.eventLocation} numberOfLines={1}>
+                {event.location.address}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.eventFooter}>
-            <View style={styles.ticketingInfo}>
-              {event.ticketing.isFree ? (
-                <Text style={[styles.priceText, {color: colors.success}]}>
-                  FREE
-                </Text>
-              ) : (
-                <Text style={styles.priceText}>
-                  ${event.ticketing.price} {event.ticketing.currency}
-                </Text>
-              )}
-            </View>
+            {event.ticketing?.isFree ? (
+              <View style={styles.priceBadge}>
+                <Text style={styles.priceText}>Free</Text>
+              </View>
+            ) : (
+              <Text style={styles.paidPriceText}>
+                ${event.ticketing?.price || 0} {event.ticketing?.currency || 'USD'}
+              </Text>
+            )}
 
             <View style={styles.rsvpInfo}>
-              <CommonMaterialCommunityIcons
-                name="account-group"
-                size={14}
-                color={colors.textMuted}
-              />
-              <Text style={styles.rsvpCount}>{event.rsvpCount} interested</Text>
-              {event.hasUserRSVP && (
-                <View style={styles.userRsvpIndicator}>
-                  <CommonMaterialCommunityIcons
-                    name="check-circle"
-                    size={14}
-                    color={colors.success}
-                  />
-                </View>
-              )}
+              <View style={styles.interestedCircle} />
+              <Text style={styles.rsvpCount}>{event.rsvpCount || 0} interested</Text>
             </View>
+
+            <TouchableOpacity style={styles.bookmarkButton}>
+              <CommonMaterialCommunityIcons
+                name="bookmark-outline"
+                size={18}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -186,57 +170,31 @@ const EventsListScreen: React.FC = () => {
     days: 7,
     limit: 50,
     eventType: selectedFilter === 'all' ? 'all' : selectedFilter,
-    useDB: false, // Use database first for debugging
+    useDB: false,
     coordinates: coordinates?.join(','),
     radius: 100,
   });
 
-  // Handle empty array response from backend
   const events = Array.isArray(eventsResponse?.data) ? eventsResponse.data : [];
 
   interface FilterItem {
     key: string;
     label: string;
-    icon: string | ((props: {style?: any}) => React.ReactElement);
+    icon: string;
   }
 
   const eventFilters: FilterItem[] = [
-    {
-      key: 'all',
-      label: 'All Events',
-      icon: ({style}) => <CommonMaterialIcons name="event" style={style} />,
-    },
+    {key: 'all', label: 'All Events', icon: 'animation-play'},
     {key: 'music', label: 'Music', icon: 'music-note'},
-    {
-      key: 'sports',
-      label: 'Sports',
-      icon: ({style}) => (
-        <CommonMaterialIcons name="sports-football" style={style} />
-      ),
-    },
-    {
-      key: 'nightlife',
-      label: 'Nightlife',
-      icon: ({style}) => <CommonMaterialIcons name="nightlife" style={style} />,
-    },
-    {
-      key: 'festival',
-      label: 'Festivals',
-      icon: ({style}) => (
-        <CommonMaterialIcons name="celebration" style={style} />
-      ),
-    },
-    {key: 'other', label: 'Other', icon: 'more-horizontal'},
+    {key: 'sports', label: 'Sports', icon: 'basketball'},
+    {key: 'nightlife', label: 'Nightlife', icon: 'glass-cocktail'},
+    {key: 'festival', label: 'Festivals', icon: 'tent'},
+    {key: 'other', label: 'Other', icon: 'dots-horizontal'},
   ];
 
   const sortedEvents = useMemo(() => {
     return [...events].sort((a, b) => {
-      // Featured events first
-      if (a.promotionStatus === 'top' || a.promotionStatus === 'both')
-        return -1;
-      if (b.promotionStatus === 'top' || b.promotionStatus === 'both') return 1;
-
-      // Then by start date
+      // Sort by start date first instead of promotion status to keep dates chronological
       return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
     });
   }, [events]);
@@ -255,41 +213,63 @@ const EventsListScreen: React.FC = () => {
     navigation.navigate('EventCreationFlow');
   };
 
-  const renderEventItem = ({item}: {item: Event}) => {
-    // Safety check for valid event data
-    if (!item || !item._id) {
-      return null;
+  const renderEventItem = ({item, index}: {item: Event, index: number}) => {
+    if (!item || !item._id) return null;
+
+    let showSeparator = false;
+    let separatorDate = new Date(item.startDate);
+    
+    if (index === 0) {
+      showSeparator = true;
+    } else {
+      const prevItem = sortedEvents[index - 1];
+      const prevDate = new Date(prevItem.startDate);
+      if (
+        separatorDate.getFullYear() !== prevDate.getFullYear() ||
+        separatorDate.getMonth() !== prevDate.getMonth() ||
+        separatorDate.getDate() !== prevDate.getDate()
+      ) {
+        showSeparator = true;
+      }
     }
-    return <EventItem event={item} onPress={() => handleEventPress(item)} />;
+
+    return (
+      <View>
+        {showSeparator && (
+          <View style={styles.dateSeparatorContainer}>
+            <View style={styles.dateSeparatorLine} />
+            <Text style={styles.dateSeparatorText}>
+              {format(separatorDate, 'EEEE · MMM d').toUpperCase()}
+            </Text>
+            <View style={styles.dateSeparatorLine} />
+          </View>
+        )}
+        <EventItem event={item} onPress={() => handleEventPress(item)} />
+      </View>
+    );
   };
 
   const renderFilterItem = ({item}: {item: (typeof eventFilters)[0]}) => {
-    const iconStyle = {
-      marginRight: 6,
-      color: selectedFilter === item.key ? colors.primary : colors.textMuted,
-      fontSize: 18, // Use fontSize instead of size for consistency
-    };
+    const isActive = selectedFilter === item.key;
+    const iconColor = isActive ? colors.filterActiveText : colors.textSecondary;
 
     return (
       <TouchableOpacity
         style={[
           styles.filterItem,
-          selectedFilter === item.key && styles.filterItemActive,
+          isActive && styles.filterItemActive,
         ]}
         onPress={() => setSelectedFilter(item.key)}>
-        {typeof item.icon === 'string' ? (
-          <CommonMaterialCommunityIcons
-            name={item.icon as any}
-            size={16}
-            style={iconStyle}
-          />
-        ) : (
-          item.icon({style: iconStyle})
-        )}
+        <CommonMaterialCommunityIcons
+          name={item.icon as any}
+          size={16}
+          color={iconColor}
+          style={{marginRight: 6}}
+        />
         <Text
           style={[
             styles.filterText,
-            selectedFilter === item.key && styles.filterTextActive,
+            isActive && styles.filterTextActive,
           ]}>
           {item.label}
         </Text>
@@ -310,11 +290,6 @@ const EventsListScreen: React.FC = () => {
           ? 'There are no upcoming events in your area.'
           : `No ${selectedFilter} events found.`}
       </Text>
-      <TouchableOpacity
-        style={styles.createEventButton}
-        onPress={handleCreateEvent}>
-        <Text style={styles.createEventButtonText}>Create Event</Text>
-      </TouchableOpacity>
     </View>
   );
 
@@ -343,34 +318,38 @@ const EventsListScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Events</Text>
+        <View>
+          {/* <Text style={styles.headerSubtitle}>CHARLOTTE, NC</Text> */}
+          <Text style={styles.headerTitle}>Events</Text>
+        </View>
         <TouchableOpacity
           style={styles.createButton}
           onPress={handleCreateEvent}>
           <CommonMaterialCommunityIcons
             name="plus"
-            size={24}
+            size={28}
             color={colors.text}
           />
         </TouchableOpacity>
       </View>
 
       {/* Filters */}
-      <FlatList
-        data={eventFilters}
-        renderItem={renderFilterItem}
-        keyExtractor={item => item.key}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filtersContainer}
-        contentContainerStyle={styles.filtersContent}
-      />
+      <View style={styles.filtersWrapper}>
+        <FlatList
+          data={eventFilters}
+          renderItem={renderFilterItem}
+          keyExtractor={item => item.key}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filtersContainer}
+          contentContainerStyle={styles.filtersContent}
+        />
+      </View>
 
       {/* Events List */}
       {isLoading && !refreshing ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading events...</Text>
         </View>
       ) : (
         <FlatList
@@ -405,230 +384,250 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingBottom: 16,
+    backgroundColor: colors.background,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.textSecondary,
+    letterSpacing: 1.2,
+    marginBottom: 2,
+    textTransform: 'uppercase',
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 34,
+    fontWeight: '900',
     color: colors.text,
+    letterSpacing: -0.5,
   },
   createButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  filtersWrapper: {
+    height: 50,
+    marginBottom: 8,
+  },
   filtersContainer: {
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    minHeight: 60, // Ensure minimum height
-    maxHeight: 80
+    backgroundColor: 'transparent',
   },
   filtersContent: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    alignItems: 'center', // Center items vertically
+    alignItems: 'center',
   },
   filterItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
+    marginRight: 10,
     borderRadius: 20,
-    // backgroundColor: colors.surfaceVariant,
-    height: 36, // Fixed height for consistency
-    minWidth: 100, // Minimum width to prevent content squishing
+    backgroundColor: colors.filterBackground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.filterBorder,
+    height: 38,
   },
   filterItemActive: {
-    backgroundColor: colors.primary + '20',
-    borderColor: colors.primary,
+    backgroundColor: colors.filterActive,
+    borderColor: colors.filterActiveBorder,
   },
   filterText: {
-    marginLeft: 6,
     fontSize: 14,
-    fontWeight: '500',
-    color: colors.textMuted,
+    fontWeight: '700',
+    color: colors.textSecondary,
   },
   filterTextActive: {
-    color: colors.primary,
+    color: colors.filterActiveText,
   },
   eventsContainer: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingBottom: 30,
+  },
+  dateSeparatorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+    paddingHorizontal: 8,
+  },
+  dateSeparatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.separator,
+  },
+  dateSeparatorText: {
+    marginHorizontal: 16,
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textSecondary,
+    letterSpacing: 1.5,
   },
   eventItem: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  promotionBadge: {
-    // position: 'absolute',
-    top: 12,
-    left: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    // backgroundColor: colors.accent + '20',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    zIndex: 1,
-    width: 90,
-  },
-  promotionText: {
-    marginLeft: 4,
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: colors.accent,
+    padding: 16,
   },
   eventHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    paddingBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 14,
   },
-  eventTypeContainer: {
+  eventTypeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.filterBackground,
+    borderWidth: 1,
+    borderColor: colors.filterBorder,
   },
-  eventTypeIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
+  eventTypeBadgeMusic: {
+    backgroundColor: colors.primarySurface, // Light blue tinted background
+    borderColor: colors.primaryBorder,     // Light blue tinted border
   },
-  eventType: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
+  eventTypeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
   dateTimeContainer: {
     alignItems: 'flex-end',
   },
   eventDate: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '800',
     color: colors.text,
   },
   eventTime: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.textSecondary,
+    fontWeight: '600',
     marginTop: 2,
   },
   eventContent: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+  },
+  eventImageContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    marginRight: 16,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.borderLight, // Very subtle border matching the grey outline
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   eventImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 12,
-    backgroundColor: colors.surfaceVariant,
+    width: '100%',
+    height: '100%',
   },
   eventInfo: {
     flex: 1,
+    justifyContent: 'space-between',
   },
   eventTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '800',
     color: colors.text,
-    marginBottom: 8,
-    lineHeight: 22,
+    lineHeight: 20,
+    marginBottom: 6,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8, // reduced margin to fit all components nicely
   },
   eventLocation: {
     marginLeft: 4,
-    fontSize: 14,
-    color: colors.textMuted,
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '600',
     flex: 1,
   },
   eventFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 4,
   },
-  ticketingInfo: {
-    flex: 1,
+  priceBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: colors.successSurface,
+    borderWidth: 1,
+    borderColor: colors.successBorder,
+    marginRight: 12,
   },
   priceText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.success,
+  },
+  paidPriceText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textMuted,
+    marginRight: 12,
   },
   rsvpInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  interestedCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: colors.textSecondary,
+    marginRight: 6,
   },
   rsvpCount: {
-    marginLeft: 4,
     fontSize: 12,
-    color: colors.textMuted,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
-  userRsvpIndicator: {
-    marginLeft: 8,
+  bookmarkButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
   emptyState: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingTop: 60,
   },
   emptyStateTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.text,
     marginTop: 16,
-    marginBottom: 8,
   },
   emptyStateText: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  createEventButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  createEventButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
+    marginTop: 8,
   },
   errorState: {
     flex: 1,
@@ -647,7 +646,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
     marginBottom: 24,
   },
   retryButton: {
@@ -658,7 +656,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: colors.text,
   },
 });
