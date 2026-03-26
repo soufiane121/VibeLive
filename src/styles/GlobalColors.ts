@@ -1,4 +1,11 @@
-import {premiumColors} from './premuimColors';
+import { premiumColors } from './premuimColors';
+
+import { getLocalData } from '../Utils/LocalStorageHelper';
+
+let isDarkMode, premiumDark;
+(async () => {
+  isDarkMode = await getLocalData({ key: 'isDarkMode' }) === 'true';
+})()
 
 // Global Colors Configuration for VibeLive
 // Centralized color management with screen-specific organization
@@ -66,9 +73,8 @@ const baseColors = {
 };
 baseColors.deepBlack = baseColors.newBackGroundColor;
 
-let premiumDark;
 
-if (true) {
+if (isDarkMode) {
   premiumDark = premiumColors.light;
 } else {
   premiumDark = premiumColors.dark;
@@ -80,27 +86,27 @@ export interface ColorScheme {
   // Background and surfaces
   background?: string;
   overlay?: string;
-  
+
   // Text colors
   text?: string;
   textSecondary?: string;
   buttonText?: string;
-  
+
   // Interactive elements
   primary?: string;
   highlight?: string;
   error?: string;
-  
+
   // Borders and dividers
   border?: string;
-  
+
   // Special backgrounds
   infoBackground?: string;
   infoBorder?: string;
   infoText?: string;
   highlightBackground?: string;
   highlightBorder?: string;
-  
+
   // UI elements
   dragHandle?: string;
   shadow?: string;
@@ -334,8 +340,8 @@ export const GlobalColors = {
     buttonSecondary: premiumDark.secondaryBackground,
     buttonGhost: 'transparent',
     buttonDisabled: baseColors.mutedGray,
-    border: premiumDark.accentBorder,
-    borderActive: premiumDark.primaryBorder,
+    border: premiumDark.primaryBorder,
+    borderActive: premiumDark.accentBorder,
     pulse: 'rgba(212, 175, 55, 0.3)',
     glow: 'rgba(212, 175, 55, 0.2)',
     flash: 'rgba(212, 175, 55, 0.6)',
@@ -751,7 +757,7 @@ export const ColorUtils = {
     }
     return color;
   },
-  
+
   // Get event type color
   getEventTypeColor: (eventType: string): string => {
     const colors = GlobalColors.EventsListScreen;
@@ -780,7 +786,7 @@ export const ColorUtils = {
     error: '#e74c3c',
     border: '#95a5a6',
   },
-  
+
   // Get boost tier color
   getBoostTierColor: (tier: 'basic' | 'premium' | 'ultimate'): string => {
     const colors = GlobalColors.BoostFOMOFlow;

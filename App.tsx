@@ -13,13 +13,20 @@ import {Provider} from 'react-redux';
 import {store} from './redux/store';
 import { initFCM } from './src/Services/FCMNotificationService';
 import { AnalyticsProvider } from './src/Providers/AnalyticsProvider';
+import { setLocalData } from './src/Utils/LocalStorageHelper';
+
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
+
   useEffect(() => {
     initFCM();
+    handleInitTheme()
   }, [])
 
+  const handleInitTheme = async () => {
+    await setLocalData({key: 'isDarkMode', value: isDarkMode.toString()});
+  }
   const handleInitOneSignal =async  ()=> {
     // await initOneSignal();
   }

@@ -1058,7 +1058,7 @@ const styles = StyleSheet.create({
   primaryActionButton: {
     backgroundColor: colors.buttonSecondary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderActive,
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 8,
@@ -1094,7 +1094,7 @@ const styles = StyleSheet.create({
   boostActionButton: {
     backgroundColor: colors.buttonSecondary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderActive,
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 8,
