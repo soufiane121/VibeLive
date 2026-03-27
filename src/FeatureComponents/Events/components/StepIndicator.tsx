@@ -16,16 +16,24 @@ interface StepIndicatorProps {
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, totalSteps }) => {
   return (
     <View style={styles.stepIndicator}>
-      {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
-        <View key={step} style={styles.stepContainer}>
-          <View style={[styles.stepCircle, currentStep >= step && styles.stepCircleActive]}>
-            <Text style={[styles.stepNumber, currentStep >= step && styles.stepNumberActive]}>
-              {step}
-            </Text>
-          </View>
-          {step < totalSteps && <View style={[styles.stepLine, currentStep > step && styles.stepLineActive]} />}
-        </View>
-      ))}
+      {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => {
+        const isActive = currentStep === step;
+        const isPast = currentStep > step;
+        const isCompletedOrActive = currentStep >= step;
+
+        return (
+          <React.Fragment key={step}>
+            <View style={[styles.stepCircle, isCompletedOrActive && styles.stepCircleActive]}>
+              <Text style={[styles.stepNumber, isCompletedOrActive && styles.stepNumberActive]}>
+                {step}
+              </Text>
+            </View>
+            {step < totalSteps && (
+              <View style={[styles.stepLine, isPast && styles.stepLineActive]} />
+            )}
+          </React.Fragment>
+        );
+      })}
     </View>
   );
 };
@@ -35,40 +43,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 32,
     backgroundColor: colors.background,
   },
-  stepContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   stepCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    // backgroundColor: colors.stepIndicatorInactive,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: colors.stepIndicatorInactiveBox,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    zIndex: 2,
   },
   stepCircleActive: {
     backgroundColor: colors.stepIndicatorActive,
     borderColor: colors.stepIndicatorActive,
+    borderWidth:1
   },
   stepNumber: {
     fontSize: 14,
-    // fontWeight: 'bold',
+    fontWeight: '800',
     color: colors.textMuted,
   },
   stepNumberActive: {
-    color: colors.text,
+    color: '#FFFFFF',
   },
   stepLine: {
-    width: 40,
-    height: 2,
-    backgroundColor: colors.stepIndicatorInactive,
-    marginHorizontal: 8,
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.borderLight,
+    zIndex: 1,
   },
   stepLineActive: {
     backgroundColor: colors.stepIndicatorActive,

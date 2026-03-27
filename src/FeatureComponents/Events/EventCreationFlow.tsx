@@ -46,7 +46,7 @@ const EventCreationFlow: React.FC = () => {
       coordinates: coordinates as [number, number],
       address: '',
     },
-    eventType: 'other',
+    eventType: '',
     ticketing: {
       isFree: true,
       price: 0,
@@ -247,8 +247,8 @@ const EventCreationFlow: React.FC = () => {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack}>
-          <CommonMaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <CommonMaterialCommunityIcons name="chevron-left" size={24} color={colors.textSecondary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Event</Text>
         <View style={styles.headerRight} />
@@ -297,13 +297,35 @@ const EventCreationFlow: React.FC = () => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={[styles.button, styles.nextButton]} onPress={handleNext} disabled={isLoading}>
+        <View style={styles.progressBarContainer}>
+          <Text style={styles.progressText}>Step {currentStep} of 5</Text>
+          <View style={styles.progressBarBackground}>
+            <View style={[styles.progressBarFill, { width: `${(currentStep / 5) * 100}%` }]} />
+          </View>
+          <Text style={styles.progressText}>{Math.round((currentStep / 5) * 100)}%</Text>
+        </View>
+
+        <TouchableOpacity 
+          style={[styles.button, styles.nextButton, currentStep === 5 && styles.createSubmitButton]} 
+          onPress={handleNext} 
+          disabled={isLoading}
+        >
           {isLoading ? (
-            <ActivityIndicator color={colors.text} />
+            <ActivityIndicator color={currentStep === 5 ? '#FFF' : colors.nextButtonText} />
           ) : (
-            <Text style={styles.nextButtonText}>
-              {currentStep === 5 ? 'Create Event' : 'Next'}
-            </Text>
+            <View style={styles.nextButtonContent}>
+              <Text style={[styles.nextButtonText, currentStep === 5 && styles.createSubmitButtonText]}>
+                {currentStep === 5 ? 'Create Event' : 'Next'}
+              </Text>
+              {currentStep < 5 && (
+                <CommonMaterialCommunityIcons 
+                  name="arrow-right" 
+                  size={20} 
+                  color={colors.nextButtonText} 
+                  style={{marginLeft: 8}} 
+                />
+              )}
+            </View>
           )}
         </TouchableOpacity>
       </View>
@@ -315,16 +337,79 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20,
-    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
+    paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16,
+    backgroundColor: colors.background,
   },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: colors.text },
-  headerRight: { width: 24 },
+  headerTitle: { fontSize: 18, fontWeight: '800', color: colors.text },
+  headerRight: { width: 40 },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.backButton,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
   content: { flex: 1 },
-  footer: { padding: 20, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, marginBottom: 10 },
-  button: { borderRadius: 10, paddingVertical: 16, alignItems: 'center' },
-  nextButton: { backgroundColor: colors.primary },
-  nextButtonText: { fontSize: 16, fontWeight: '600', color: colors.text },
+  footer: { 
+    padding: 24, 
+    // backgroundColor: colors.background, 
+    paddingBottom: 20,
+  },
+  progressBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    justifyContent: 'space-between',
+  },
+  progressBarBackground: {
+    flex: 1,
+    height: 4,
+    backgroundColor: colors.stepIndicatorInactiveBox,
+    marginHorizontal: 16,
+    borderRadius: 2,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.textSecondary,
+  },
+  button: { 
+    borderRadius: 16, 
+    paddingVertical: 18, 
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nextButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nextButton: { 
+    backgroundColor: colors.nextButton, 
+    borderColor: colors.borderLight,
+    borderWidth: 1,
+  },
+  createSubmitButton: {
+    backgroundColor: colors.createButton,
+  },
+  nextButtonText: { 
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: colors.nextButtonText, 
+  },
+  createSubmitButtonText: {
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: colors.nextButtonText, 
+  },
 });
 
 export default EventCreationFlow;

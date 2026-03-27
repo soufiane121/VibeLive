@@ -6,16 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import {CommonMaterialCommunityIcons, CommonMaterialIcons} from '../../../UIComponents/Icons';
-import GlobalColors from '../../../styles/GlobalColors';
+import {CommonMaterialCommunityIcons} from '../../../UIComponents/Icons';
+import { GlobalColors } from '../../../styles/GlobalColors';
 
 const eventTypes = [
   {key: 'music', label: 'Music', icon: 'music-note'},
-  {key: 'sports', label: 'Sports', icon: 'sports-football'},
-  {key: 'nightlife', label: 'Nightlife', icon: 'local-bar'},
-  {key: 'festival', label: 'Festival', icon: 'celebration'},
-  {key: 'conference', label: 'Conference', icon: 'business'},
-  {key: 'other', label: 'Other', icon: 'event'},
+  {key: 'sports', label: 'Sports', icon: 'basketball'},
+  {key: 'nightlife', label: 'Nightlife', icon: 'glass-cocktail'},
+  {key: 'festival', label: 'Festival', icon: 'star-outline'},
+  {key: 'conference', label: 'Conference', icon: 'calendar-blank'},
+  {key: 'other', label: 'Other', icon: 'alert-circle-outline'},
 ];
 
 interface EventBasicDetailsProps {
@@ -27,19 +27,8 @@ interface EventBasicDetailsProps {
   errors: {[key: string]: string};
   onUpdateFormData: (updates: any) => void;
 }
-const Globalcolors = GlobalColors.EventCreationFlow;
 
-const colors = {
-  background: Globalcolors.background,
-  surface: Globalcolors.surface,
-  surfaceVariant: '#2a2a2a',
-  primary: Globalcolors.primary,
-  text: Globalcolors.text,
-  textSecondary: Globalcolors.textSecondary,
-  textMuted: Globalcolors.textMuted,
-  error: Globalcolors.error,
-  border: Globalcolors.border,
-};
+const colors = GlobalColors.EventCreationFlow;
 
 const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
   formData,
@@ -48,10 +37,14 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
 }) => {
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Event Details</Text>
+      <Text style={styles.stepSubtitle}>STEP 1 OF 5</Text>
+      <Text style={styles.stepTitle}>Event details</Text>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Event Title *</Text>
+        <View style={styles.labelContainer}>
+          <View style={styles.labelDot} />
+          <Text style={styles.label}>Event title</Text>
+        </View>
         <TextInput
           style={[styles.input, errors.title && styles.inputError]}
           value={formData.title}
@@ -64,7 +57,10 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Description *</Text>
+        <View style={styles.labelContainer}>
+          <View style={styles.labelDot} />
+          <Text style={styles.label}>Description</Text>
+        </View>
         <TextInput
           style={[styles.textArea, errors.description && styles.inputError]}
           value={formData.description}
@@ -81,34 +77,38 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Event Type *</Text>
+        <View style={styles.labelContainer}>
+          <View style={styles.labelDot} />
+          <Text style={styles.label}>Event type</Text>
+        </View>
         <View style={styles.eventTypeGrid}>
-          {eventTypes.map(type => (
-            <TouchableOpacity
-              key={type.key}
-              style={[
-                styles.eventTypeItem,
-                formData.eventType === type.key && styles.eventTypeItemActive,
-              ]}
-              onPress={() => onUpdateFormData({eventType: type.key})}>
-              <CommonMaterialIcons
-                name={type.icon as any}
-                size={24}
-                color={
-                  formData.eventType === type.key
-                    ? colors.primary
-                    : colors.textMuted
-                }
-              />
-              <Text
+          {eventTypes.map(type => {
+            const isActive = formData.eventType === type.key;
+            return (
+              <TouchableOpacity
+                key={type.key}
                 style={[
-                  styles.eventTypeText,
-                  formData.eventType === type.key && styles.eventTypeTextActive,
-                ]}>
-                {type.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                  styles.eventTypeItem,
+                  isActive && styles.eventTypeItemActive,
+                ]}
+                onPress={() => onUpdateFormData({eventType: type.key})}>
+                <View style={[styles.eventIconWrapper, isActive && styles.eventIconWrapperActive]}>
+                  <CommonMaterialCommunityIcons
+                    name={type.icon as any}
+                    size={20}
+                    color={isActive ? colors.background : colors.textMuted}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.eventTypeText,
+                    isActive && styles.eventTypeTextActive,
+                  ]}>
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
         {errors.eventType && (
           <Text style={styles.errorText}>{errors.eventType}</Text>
@@ -119,63 +119,122 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
 };
 
 const styles = StyleSheet.create({
-  stepContent: {padding: 20},
+  stepContent: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  stepSubtitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
   stepTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '900',
     color: colors.text,
+    marginBottom: 32,
+    letterSpacing: -0.5,
+  },
+  inputGroup: {
     marginBottom: 24,
   },
-  inputGroup: {marginBottom: 20},
-  label: {fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 8},
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: colors.text,
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  inputError: {borderColor: colors.error},
-  textArea: {
-    backgroundColor: colors.surface,
+  labelDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+    marginRight: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.textSecondary,
+  },
+  input: {
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
+    borderColor: colors.inputBorder,
+    borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 18,
     fontSize: 16,
     color: colors.text,
-    minHeight: 100,
+    fontWeight: '600',
+  },
+  inputError: {
+    borderColor: colors.error,
+  },
+  textArea: {
+    backgroundColor: colors.inputBackground,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '600',
+    minHeight: 120,
     textAlignVertical: 'top',
   },
-  errorText: {fontSize: 14, color: colors.error, marginTop: 4},
-  eventTypeGrid: {flexDirection: 'row', flexWrap: 'wrap', marginTop: 8},
+  errorText: {
+    fontSize: 14, 
+    color: colors.error, 
+    marginTop: 6,
+    fontWeight: '600',
+  },
+  eventTypeGrid: {
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
   eventTypeItem: {
-    width: '30%',
+    width: '31%',
     aspectRatio: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
+    borderColor: colors.inputBorder,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: '1.5%',
+    marginBottom: 12,
   },
   eventTypeItemActive: {
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.primarySurface,
+  },
+  eventIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.borderLight, // matches inner gray line
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  eventIconWrapperActive: {
+    backgroundColor: colors.primary,
     borderColor: colors.primary,
-    backgroundColor: colors.primary + '20',
   },
   eventTypeText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '800',
     color: colors.textMuted,
-    marginTop: 4,
-    textAlign: 'center',
   },
-  eventTypeTextActive: {color: colors.primary},
+  eventTypeTextActive: {
+    color: colors.primary,
+  },
 });
 
 export default EventBasicDetails;
