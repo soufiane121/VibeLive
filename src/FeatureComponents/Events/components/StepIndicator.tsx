@@ -69,7 +69,8 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   stepNumberActive: {
-    color: '#FFFFFF',
+    // color: '#FFFFFF',
+    color: colors.textActiveStep,
   },
   stepLine: {
     flex: 1,

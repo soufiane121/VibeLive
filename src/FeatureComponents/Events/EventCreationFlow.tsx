@@ -256,79 +256,82 @@ const EventCreationFlow: React.FC = () => {
 
       <StepIndicator currentStep={currentStep} totalSteps={5} />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {currentStep === 1 && (
-          <EventBasicDetails
-            formData={formData}
-            errors={errors}
-            onUpdateFormData={updateFormData}
-          />
-        )}
-        {currentStep === 2 && (
-          <EventDateTime
-            formData={formData}
-            errors={errors}
-            onUpdateFormData={updateFormData}
-            onShowStartDatePicker={() => setShowStartDatePicker(true)}
-            onShowEndDatePicker={() => setShowEndDatePicker(true)}
-          />
-        )}
-        {currentStep === 3 && (
-          <EventLocation
-            formData={formData}
-            errors={errors}
-            onUpdateFormData={updateFormData}
-          />
-        )}
-        {currentStep === 4 && (
-          <EventTicketing
-            formData={formData}
-            errors={errors}
-            onUpdateFormData={updateFormData}
-          />
-        )}
-        {currentStep === 5 && (
-          <EventPromotion
-            formData={formData}
-            onPromotionChange={handlePromotionChange}
-            calculatePromotionCost={calculatePromotionCost}
-          />
-        )}
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <View style={styles.progressBarContainer}>
-          <Text style={styles.progressText}>Step {currentStep} of 5</Text>
-          <View style={styles.progressBarBackground}>
-            <View style={[styles.progressBarFill, { width: `${(currentStep / 5) * 100}%` }]} />
-          </View>
-          <Text style={styles.progressText}>{Math.round((currentStep / 5) * 100)}%</Text>
+      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.stepWrapper}>
+          {currentStep === 1 && (
+            <EventBasicDetails
+              formData={formData}
+              errors={errors}
+              onUpdateFormData={updateFormData}
+            />
+          )}
+          {currentStep === 2 && (
+            <EventDateTime
+              formData={formData}
+              errors={errors}
+              onUpdateFormData={updateFormData}
+              onShowStartDatePicker={() => setShowStartDatePicker(true)}
+              onShowEndDatePicker={() => setShowEndDatePicker(true)}
+            />
+          )}
+          {currentStep === 3 && (
+            <EventLocation
+              formData={formData}
+              errors={errors}
+              onUpdateFormData={updateFormData}
+            />
+          )}
+          {currentStep === 4 && (
+            <EventTicketing
+              formData={formData}
+              errors={errors}
+              onUpdateFormData={updateFormData}
+            />
+          )}
+          {currentStep === 5 && (
+            <EventPromotion
+              formData={formData}
+              onPromotionChange={handlePromotionChange}
+              calculatePromotionCost={calculatePromotionCost}
+            />
+          )}
         </View>
 
-        <TouchableOpacity 
-          style={[styles.button, styles.nextButton, currentStep === 5 && styles.createSubmitButton]} 
-          onPress={handleNext} 
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color={currentStep === 5 ? '#FFF' : colors.nextButtonText} />
-          ) : (
-            <View style={styles.nextButtonContent}>
-              <Text style={[styles.nextButtonText, currentStep === 5 && styles.createSubmitButtonText]}>
-                {currentStep === 5 ? 'Create Event' : 'Next'}
-              </Text>
-              {currentStep < 5 && (
-                <CommonMaterialCommunityIcons 
-                  name="arrow-right" 
-                  size={20} 
-                  color={colors.nextButtonText} 
-                  style={{marginLeft: 8}} 
-                />
-              )}
+        <View style={styles.footer}>
+          <View style={styles.progressBarContainer}>
+            <Text style={styles.progressText}>Step {currentStep} of 5</Text>
+            <View style={styles.progressBarBackground}>
+              <View style={[styles.progressBarFill, { width: `${(currentStep / 5) * 100}%` }]} />
             </View>
-          )}
-        </TouchableOpacity>
-      </View>
+            <Text style={styles.progressText}>{Math.round((currentStep / 5) * 100)}%</Text>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.button, styles.nextButton, currentStep === 5 && styles.createSubmitButton]} 
+            onPress={handleNext} 
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={currentStep === 5 ? '#FFF' : colors.nextButtonText} />
+            ) : (
+              <View style={styles.nextButtonContent}>
+                <Text style={[styles.nextButtonText, currentStep === 5 && styles.createSubmitButtonText]}>
+                  {currentStep === 5 ? 'Create Event' : 'Next'}
+                </Text>
+                {currentStep < 5 && (
+                  <CommonMaterialCommunityIcons 
+                    name="arrow-right" 
+                    size={20} 
+                    color={colors.nextButtonText} 
+                    style={{marginLeft: 8}} 
+                  />
+                )}
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
     </KeyboardAvoidingView>
   );
 };
@@ -353,6 +356,8 @@ const styles = StyleSheet.create({
     borderColor: colors.borderLight,
   },
   content: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
+  stepWrapper: { flex: 1 },
   footer: { 
     padding: 24, 
     // backgroundColor: colors.background, 

@@ -22,6 +22,8 @@ import { useAnalytics } from '../../Hooks/useAnalytics';
 import { GlobalColors, ColorUtils } from '../../styles/GlobalColors';
 import { Linking } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import LinearGradient from 'react-native-linear-gradient';
+import { useSelector } from 'react-redux';
 // import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 const colors = GlobalColors.EventDetailsScreen;
@@ -36,9 +38,17 @@ const EventDetailsScreen: React.FC = () => {
   const [rsvpEvent, { isLoading: isRsvping }] = useRsvpEventMutation();
   const [removeRSVP, { isLoading: isRemovingRsvp }] = useRemoveRSVPMutation();
   
+  const { currentUser } = useSelector((state: any) => state?.currentUser);
+  
   const [selectedRsvpStatus, setSelectedRsvpStatus] = useState<'interested' | 'going'>('interested');
 
   const event = eventResponse?.data;
+  // TODO:: WE USED TO LISTEN TO hasUserRSVP FROM THE API BUT SOMEHOW IT'S TOPPED AND SWITCH TO LOCAL STATE TO ITTERRATE OVER THE RSVPS ARRAY
+  // EXAMPLE OF BEFORE: event.hasUserRSVP
+  
+  const currentUserRSVP = event?.rsvps?.find((rsvp: any) => rsvp?.user?._id === currentUser?._id || rsvp?.user === currentUser?._id);
+  const hasUserRSVP = !!currentUserRSVP;
+  const userRSVPStatus = currentUserRSVP?.status;
 
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -131,28 +141,36 @@ const EventDetailsScreen: React.FC = () => {
       </View>
     );
   }
+   console.log(event) 
+
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Header Floating */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => {
+        <TouchableOpacity style={styles.headerIconButton} onPress={() => {
           if (fromEventCreation) {
             navigation.navigate('EventDetails', { eventId: event._id });
           } else {
             navigation.goBack();
           }
         }}>
-          <CommonMaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
+          <CommonMaterialCommunityIcons name="chevron-left" size={28} color={colors.headerIconText} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleShare}>
-          <CommonMaterialCommunityIcons name="share-variant" size={24} color={colors.text} />
-        </TouchableOpacity>
+        {/* TODO:: Add share functionality */}
+        {/* <TouchableOpacity style={styles.headerIconButton} onPress={handleShare}>
+          <CommonMaterialCommunityIcons name="share-variant" size={22} color={colors.headerIconText} />
+        </TouchableOpacity> */}
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
         {/* Event Banner */}
-        {event.banner?.url && (
+        {!event.banner?.url ? (
+          <LinearGradient
+            colors={[colors.secondaryBackground, colors.background]}
+            style={styles.gradientBanner}
+          />
+        ) : (
           <Image source={{ uri: event.banner.url }} style={styles.banner} />
         )}
 
@@ -160,10 +178,10 @@ const EventDetailsScreen: React.FC = () => {
         <View style={styles.eventInfo}>
           {/* Event Type Badge */}
           <View style={styles.eventTypeBadge}>
-            <View style={[styles.eventTypeIcon, { backgroundColor: ColorUtils.getEventTypeColor(event.eventType) }]}>
-              <CommonMaterialCommunityIcons name="music-note" size={16} color="#ffffff" />
-            </View>
-            <Text style={styles.eventTypeText}>{event.eventType.toUpperCase()}</Text>
+            <CommonMaterialCommunityIcons name="music-note" size={16} color={ColorUtils.getEventTypeColor(event.eventType)} />
+            <Text style={[styles.eventTypeText, { color: ColorUtils.getEventTypeColor(event.eventType) }]}>
+              {event.eventType.toUpperCase()}
+            </Text>
           </View>
 
           {/* Promotion Badge */}
@@ -182,121 +200,121 @@ const EventDetailsScreen: React.FC = () => {
             <Text style={styles.creatorLabel}>Hosted by</Text>
             <Text style={styles.creatorName}>{event.creator?.displayName || event.creator?.username}</Text>
           </View>
+          
+          <View style={styles.divider} />
 
           {/* Date & Time */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="calendar" size={24} color={colors.primary} />
-              <Text style={styles.detailTitle}>Date & Time</Text>
+              <CommonMaterialCommunityIcons name="calendar-blank-outline" size={20} color={colors.iconColor} />
+              <Text style={styles.detailTitle}>Date & time</Text>
             </View>
-            <Text style={styles.detailText}>{formatEventDate(event.startDate)}</Text>
-            <Text style={styles.detailSubtext}>{formatEventTime(event.startDate, event.endDate)}</Text>
+            <View style={styles.card}>
+              <Text style={styles.cardPrimaryText}>{formatEventDate(event.startDate)}</Text>
+              <Text style={styles.cardSecondaryText}>{formatEventTime(event.startDate, event.endDate)}</Text>
+            </View>
           </View>
 
           {/* Location */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="map-marker" size={24} color={colors.primary} />
+              <CommonMaterialCommunityIcons name="map-marker-outline" size={20} color={colors.iconColor} />
               <Text style={styles.detailTitle}>Location</Text>
             </View>
-            <Text style={styles.detailText}>{event.location.address}</Text>
-            
-            {/* Mini Map */}
-            <View style={styles.mapContainer}>
-              {/* <MapView
-                style={styles.map}
-                provider={PROVIDER_GOOGLE}
-                region={{
-                  latitude: event.location.coordinates[1],
-                  longitude: event.location.coordinates[0],
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
-                scrollEnabled={false}
-                zoomEnabled={false}
-              >
-                <Marker
-                  coordinate={{
-                    latitude: event.location.coordinates[1],
-                    longitude: event.location.coordinates[0],
-                  }}
-                />
-              </MapView> */}
-              <TouchableOpacity style={styles.directionsButton} onPress={handleGetDirections}>
-                <CommonMaterialCommunityIcons name="directions" size={20} color={colors.primary} />
-                <Text style={styles.directionsText}>Get Directions</Text>
+            <View style={styles.card}>
+              <Text style={styles.cardPrimaryText}>{event.location.address}</Text>
+              
+              <TouchableOpacity style={styles.openInMapsButton} onPress={handleGetDirections}>
+                <Text style={styles.openInMapsText}>Open in maps ↗</Text>
               </TouchableOpacity>
+              
+              {/* Mini Map (Hidden in screenshot, can be enabled later if needed) */}
             </View>
           </View>
 
           {/* Description */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="text" size={24} color={colors.primary} />
+              <CommonMaterialCommunityIcons name="format-list-bulleted" size={20} color={colors.iconColor} />
               <Text style={styles.detailTitle}>About</Text>
             </View>
-            <Text style={styles.description}>{event.description}</Text>
+            <View style={styles.card}>
+              <Text style={styles.description}>{event.description}</Text>
+            </View>
           </View>
 
           {/* Ticketing */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="ticket" size={24} color={colors.primary} />
+              <CommonMaterialCommunityIcons name="ticket-outline" size={20} color={colors.iconColor} />
               <Text style={styles.detailTitle}>Tickets</Text>
             </View>
-            {event.ticketing.isFree ? (
-              <Text style={[styles.priceText, { color: colors.success }]}>FREE</Text>
-            ) : (
-              <View style={styles.ticketInfo}>
-                <Text style={styles.priceText}>
-                  ${event.ticketing.price} {event.ticketing.currency}
-                </Text>
-                {event.ticketing.ticketLink && (
+            <View style={styles.card}>
+              <View style={styles.ticketRow}>
+                {event.ticketing.isFree ? (
+                  <View style={styles.freeTicketBadge}>
+                    <Text style={styles.freeTicketText}>Free</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.priceText}>
+                    ${event.ticketing.price} {event.ticketing.currency}
+                  </Text>
+                )}
+                
+                {event.ticketing.isFree ? (
+                  <Text style={styles.noRegistrationText}>No registration needed</Text>
+                ) : event.ticketing.ticketLink ? (
                   <TouchableOpacity style={styles.buyTicketsButton} onPress={handleBuyTickets}>
                     <Text style={styles.buyTicketsText}>Buy Tickets</Text>
                   </TouchableOpacity>
-                )}
+                ) : null}
               </View>
-            )}
+            </View>
           </View>
 
           {/* Attendees */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="account-group" size={24} color={colors.primary} />
+              <CommonMaterialCommunityIcons name="account-group-outline" size={20} color={colors.iconColor} />
               <Text style={styles.detailTitle}>Attendees</Text>
             </View>
-            <Text style={styles.detailText}>{event.rsvpCount} people interested</Text>
             
-            {event.rsvps.length > 0 && (
-              <View style={styles.attendeesList}>
-                {event.rsvps.slice(0, 5).map((rsvp, index) => {
-                  console.log({rsvp});
-                  
-                  return (
-                  <View key={index} style={styles.attendeeItem}>
-                    <View style={styles.attendeeAvatar}>
-                      <Text style={styles.attendeeInitial}>
-                        {(rsvp?.user?.displayName || rsvp?.user?.username)?.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View style={styles.attendeeInfo}>
-                      <Text style={styles.attendeeName}>
-                        {rsvp.user.displayName || rsvp.user.username}
-                      </Text>
-                      <Text style={styles.attendeeStatus}>
-                        {rsvp.status === 'going' ? 'Going' : 'Interested'}
-                      </Text>
-                    </View>
-                  </View>
-                )})}
-                {event.rsvps.length > 5 && (
-                  <Text style={styles.moreAttendees}>
-                    +{event.rsvps.length - 5} more
-                  </Text>
-                )}
+            <View style={styles.card}>
+              <View style={styles.attendeesRow}>
+                <Text style={styles.attendeesCountText}>{event.rsvpCount} people interested</Text>
+                {event.rsvpCount === 0  && <TouchableOpacity style={styles.beFirstButton} onPress={() => handleRSVP('interested')}>
+                  <Text style={styles.beFirstText}>{event.rsvpCount > 0 ? 'View all' : 'Be first'}</Text>
+                </TouchableOpacity>}
               </View>
-            )}
+              
+              {event.rsvps.length > 0 && (
+                <View style={styles.attendeesList}>
+                  {event.rsvps.slice(0, 5).map((rsvp, index) => {
+                    return (
+                    <View key={index} style={styles.attendeeItem}>
+                      <View style={styles.attendeeAvatar}>
+                        <Text style={styles.attendeeInitial}>
+                          {(rsvp?.user?.displayName || rsvp?.user?.username)?.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={styles.attendeeInfo}>
+                        <Text style={styles.attendeeName}>
+                          {rsvp.user.displayName || rsvp.user.username}
+                        </Text>
+                        <Text style={styles.attendeeStatus}>
+                          {rsvp.status === 'going' ? 'Going' : 'Interested'}
+                        </Text>
+                      </View>
+                    </View>
+                  )})}
+                  {event.rsvps.length > 5 && (
+                    <Text style={styles.moreAttendees}>
+                      +{event.rsvps.length - 5} more
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
           </View>
 
           {/* Tags */}
@@ -314,16 +332,15 @@ const EventDetailsScreen: React.FC = () => {
           )}
         </View>
       </ScrollView>
-
       {/* Bottom Action Bar */}
       <View style={styles.bottomBar}>
-        {event.hasUserRSVP ? (
+        {hasUserRSVP ? (
           <View style={styles.rsvpContainer}>
             <View style={styles.currentRsvpStatus}>
-              <CommonMaterialCommunityIcons name="check-circle" size={20} color={colors.success} />
-              <Text style={styles.currentRsvpText}>
-                You're {event.userRSVPStatus === 'going' ? 'going' : 'interested'}
-              </Text>
+              <CommonMaterialCommunityIcons name="check-circle" size={20} color={colors.primary} />
+               <Text style={styles.currentRsvpText}>
+                 You're {userRSVPStatus === 'going' ? 'going' : 'interested'}
+               </Text>
             </View>
             <TouchableOpacity
               style={styles.removeRsvpButton}
@@ -336,11 +353,14 @@ const EventDetailsScreen: React.FC = () => {
                 <Text style={styles.removeRsvpText}>Remove</Text>
               )}
             </TouchableOpacity>
-          </View>
+           </View>
         ) : (
           <View style={styles.rsvpButtons}>
             <TouchableOpacity
-              style={[styles.rsvpButton, styles.interestedButton]}
+              style={[
+                styles.rsvpOutlineButton,
+                // selectedRsvpStatus === 'interested' && styles.rsvpOutlineButtonActive //if you want to have colorful backrfound with text
+              ]}
               onPress={() => handleRSVP('interested')}
               disabled={isRsvping}
             >
@@ -348,14 +368,17 @@ const EventDetailsScreen: React.FC = () => {
                 <ActivityIndicator size="small" color={colors.text} />
               ) : (
                 <>
-                  <CommonMaterialCommunityIcons name="heart-outline" size={20} color={colors.text} />
-                  <Text style={styles.rsvpButtonText}>Interested</Text>
+                  <CommonMaterialCommunityIcons name={selectedRsvpStatus === 'interested' ? "heart" : "heart-outline"} size={18} color={colors.iconColor} />
+                  <Text style={[styles.rsvpOutlineButtonText]}>Interested</Text>
                 </>
               )}
             </TouchableOpacity>
             
             <TouchableOpacity
-              style={[styles.rsvpButton, styles.goingButton]}
+              style={[
+                styles.rsvpOutlineButton,
+                // selectedRsvpStatus === 'going' && styles.rsvpOutlineButtonActive
+              ]}
               onPress={() => handleRSVP('going')}
               disabled={isRsvping}
             >
@@ -363,8 +386,13 @@ const EventDetailsScreen: React.FC = () => {
                 <ActivityIndicator size="small" color={colors.text} />
               ) : (
                 <>
-                  <CommonMaterialCommunityIcons name="check" size={20} color={colors.text} />
-                  <Text style={styles.rsvpButtonText}>Going</Text>
+                  <CommonMaterialCommunityIcons name="check" size={18} color={
+                    // selectedRsvpStatus === 'going' ? colors.accentPrimary : colors.iconColor
+                    colors.iconColor
+                  } />
+                  <Text style={[styles.rsvpOutlineButtonText, 
+                    // selectedRsvpStatus === 'going' && { color: colors.accentPrimary }
+                    ]}>Going</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -376,14 +404,14 @@ const EventDetailsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: colors.background},
+  container: { flex: 1, backgroundColor: colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
   },
-  loadingText: {marginTop: 16, fontSize: 16, color: colors.textSecondary},
+  loadingText: { marginTop: 16, fontSize: 16, color: colors.textSecondary },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -411,38 +439,44 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 24,
   },
-  backButtonText: {fontSize: 16, fontWeight: '600', color: colors.text},
+  backButtonText: { fontSize: 16, fontWeight: '600', color: colors.text },
+  
   header: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 60 : 40,
+    left: 20,
+    right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    zIndex: 10,
   },
-  content: {flex: 1},
-  banner: {width: '100%', height: 200, backgroundColor: colors.surfaceVariant},
-  eventInfo: {padding: 20},
+  headerIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.headerIconBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: { flex: 1 },
+  banner: { width: '100%', height: 300, backgroundColor: colors.surfaceVariant },
+  gradientBanner: {
+    width: '100%',
+    height: 300,
+    position: 'absolute',
+    top: 0,
+  },
+  eventInfo: { padding: 20, paddingTop: 100 },
   eventTypeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  eventTypeIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
+    marginBottom: 12,
   },
   eventTypeText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontWeight: 'bold',
+    marginLeft: 4,
     letterSpacing: 0.5,
   },
   promotionBadge: {
@@ -451,7 +485,7 @@ const styles = StyleSheet.create({
     right: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.accent + '20',
+    backgroundColor: colors.primarySurface,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -466,81 +500,112 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 12,
-    lineHeight: 36,
+    marginBottom: 8,
+    lineHeight: 34,
   },
   creatorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
+  },
+  creatorLabel: { fontSize: 14, color: colors.textSecondary, marginRight: 4 },
+  creatorName: { fontSize: 14, fontWeight: 'bold', color: colors.primary },
+  divider: {
+    height: 1,
+    backgroundColor: colors.separator,
     marginBottom: 24,
   },
-  creatorLabel: {fontSize: 14, color: colors.textMuted, marginRight: 4},
-  creatorName: {fontSize: 14, fontWeight: '600', color: colors.primary},
-  detailSection: {marginBottom: 24},
-  detailHeader: {flexDirection: 'row', alignItems: 'center', marginBottom: 12},
+  detailSection: { marginBottom: 24 },
+  detailHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   detailTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: 'bold',
     color: colors.text,
-    marginLeft: 12,
+    marginLeft: 8,
   },
-  detailText: {fontSize: 16, color: colors.text, marginBottom: 4},
-  detailSubtext: {fontSize: 14, color: colors.textMuted},
-  description: {fontSize: 16, color: colors.textSecondary, lineHeight: 24},
-  mapContainer: {
-    marginTop: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  map: {height: 150},
-  directionsButton: {
-    position: 'absolute',
-    bottom: 12,
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+  card: {
     backgroundColor: colors.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 16,
+    padding: 16,
+    // Add shadow for premium feel
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  directionsText: {
-    marginLeft: 4,
-    fontSize: 12,
-    fontWeight: '600',
+  cardPrimaryText: { fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 4 },
+  cardSecondaryText: { fontSize: 14, color: colors.textSecondary },
+  
+  description: { fontSize: 15, color: colors.textSecondary, lineHeight: 22 },
+  
+  openInMapsButton: {
+    marginTop: 8,
+  },
+  openInMapsText: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: colors.primary,
   },
-  priceText: {fontSize: 20, fontWeight: 'bold', color: colors.text},
-  ticketInfo: {
+
+  ticketRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  freeTicketBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.successBorder,
+    backgroundColor: colors.successSurface,
+  },
+  freeTicketText: { fontSize: 14, fontWeight: 'bold', color: colors.success },
+  noRegistrationText: { fontSize: 14, color: colors.textSecondary },
+  priceText: { fontSize: 18, fontWeight: 'bold', color: colors.text },
   buyTicketsButton: {
     backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
   },
-  buyTicketsText: {fontSize: 14, fontWeight: '600', color: colors.text},
-  attendeesList: {marginTop: 12},
-  attendeeItem: {flexDirection: 'row', alignItems: 'center', marginBottom: 12},
+  buyTicketsText: { fontSize: 14, fontWeight: 'bold', color: colors.surface },
+  
+  attendeesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  attendeesCountText: { fontSize: 15, color: colors.textSecondary },
+  beFirstButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.primarySurface,
+  },
+  beFirstText: { fontSize: 14, fontWeight: 'bold', color: colors.primary },
+
+  attendeesList: { marginTop: 16 },
+  attendeeItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   attendeeAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primarySurface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  attendeeInitial: {fontSize: 16, fontWeight: 'bold', color: colors.text},
-  attendeeInfo: {flex: 1},
-  attendeeName: {fontSize: 14, fontWeight: '600', color: colors.text},
-  attendeeStatus: {fontSize: 12, color: colors.textMuted},
-  moreAttendees: {fontSize: 14, color: colors.textMuted, marginTop: 8},
-  tagsContainer: {flexDirection: 'row', flexWrap: 'wrap', marginTop: 8},
+  attendeeInitial: { fontSize: 14, fontWeight: 'bold', color: colors.primary },
+  attendeeInfo: { flex: 1 },
+  attendeeName: { fontSize: 14, fontWeight: '600', color: colors.text },
+  attendeeStatus: { fontSize: 12, color: colors.textSecondary },
+  moreAttendees: { fontSize: 14, color: colors.textSecondary, marginTop: 4, textAlign: 'center' },
+  
+  tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
   tag: {
     backgroundColor: colors.surfaceVariant,
     paddingHorizontal: 12,
@@ -549,48 +614,58 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 8,
   },
-  tagText: {fontSize: 12, color: colors.textSecondary},
+  tagText: { fontSize: 12, color: colors.textSecondary },
+  
   bottomBar: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.separator,
     paddingHorizontal: 20,
     paddingVertical: 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
   },
   rsvpContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  currentRsvpStatus: {flexDirection: 'row', alignItems: 'center', flex: 1},
+  currentRsvpStatus: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   currentRsvpText: {
     marginLeft: 8,
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.success,
+    fontWeight: 'bold',
+    color: colors.primary,
   },
   removeRsvpButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: colors.removeBorder,
   },
-  removeRsvpText: {fontSize: 14, fontWeight: '600', color: colors.text},
-  rsvpButtons: {flexDirection: 'row', gap: 12, marginBottom: 10},
-  rsvpButton: {
+  removeRsvpText: { fontSize: 14, fontWeight: '700', color: colors.removeText },
+  
+  rsvpButtons: { flexDirection: 'row', gap: 12 },
+  rsvpOutlineButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.surface,
   },
-  interestedButton: {backgroundColor: colors.surfaceVariant},
-  goingButton: {backgroundColor: colors.button},
-  rsvpButtonText: {
+  rsvpOutlineButtonActive: {
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.primarySurface,
+  },
+  rsvpOutlineButtonText: {
     marginLeft: 8,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: colors.text,
   },
 });

@@ -5,14 +5,17 @@ import {
   TextInput,
   StyleSheet,
 } from 'react-native';
+import GlobalColors from '../../../styles/GlobalColors';
+
+const GlobalColorsLocal = GlobalColors.EventCreationFlow;
 
 const colors = {
-  background: '#0a0a0a',
-  surface: '#1a1a1a',
-  surfaceVariant: '#2a2a2a',
-  primary: '#4f46e5',
-  text: '#ffffff',
-  textSecondary: '#a1a1aa',
+  background: GlobalColorsLocal.background,
+  surface: GlobalColorsLocal.surface,
+  surfaceVariant: GlobalColorsLocal.surfaceVariant,
+  primary: GlobalColorsLocal.primary,
+  text: GlobalColorsLocal.text,
+  textSecondary: GlobalColorsLocal.textSecondary,
   textMuted: '#71717a',
   error: '#ef4444',
   border: '#374151',
