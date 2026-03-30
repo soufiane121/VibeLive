@@ -12,11 +12,14 @@ import {
   Animated,
   Easing,
   Platform,
+  ScrollView,
 } from 'react-native';
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {GlobalColors} from '../styles/GlobalColors';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
+import {useLazyGetNearbyVenuesQuery, NearbyVenue} from '../../features/LiveStream/LiveStream';
+import useGetLocation from '../CustomHooks/useGetLocation';
 import {IAPAdapter} from '../Payment/adapters/IAPAdapter';
 import {AnalyticsEventType} from '../types/AnalyticsEnums';
 import {
@@ -115,12 +118,19 @@ interface BoostPurchaseData {
   purchaseTime: Date;
 }
 
+export interface VenueTagData {
+  venueId: string;
+  venueGooglePlaceId: string | null;
+  venueName: string;
+}
+
 interface onCompleteSelection {
   value: string;
   boostData?: BoostPurchaseData;
   title?: string;
   subcategories?: string[];
   parentCategory?: string;
+  venueTag?: VenueTagData | null;
 }
 
 interface EventSelectionsProps {
@@ -194,6 +204,14 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const navigation = useNavigation();
   // RTK Query mutation for boost activation
   const [boostStream, {isLoading: isBoostLoading}] = useBoostStreamMutation();
+
+  // Venue tagging state
+  const {coordinates, hasPermission} = useGetLocation();
+  const [fetchNearbyVenues] = useLazyGetNearbyVenuesQuery();
+  const [nearbyVenues, setNearbyVenues] = useState<NearbyVenue[]>([]);
+  const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
+  const [venueLoadingState, setVenueLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'hidden'>('idle');
+  const venuesFetchedRef = useRef(false);
   // IAP adapter instance for real App Store purchases (iOS)
   const iapAdapterRef = useRef<IAPAdapter | null>(null);
 
@@ -298,6 +316,58 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     ).start();
   }, []);
 
+  // Fetch nearby venues once when coordinates are available
+  useEffect(() => {
+    if (venuesFetchedRef.current) return;
+    if (!hasPermission) {
+      setVenueLoadingState('hidden');
+      return;
+    }
+    // coordinates from useGetLocation are [longitude, latitude]
+    const [lng, lat] = coordinates;
+    if (!lat || !lng) return;
+
+    venuesFetchedRef.current = true;
+    setVenueLoadingState('loading');
+
+    const timeoutId = setTimeout(() => {
+      // If still loading after 5s, hide the section
+      setVenueLoadingState(prev => (prev === 'loading' ? 'hidden' : prev));
+    }, 5000);
+
+    fetchNearbyVenues({lat, lng, limit: 5})
+      .unwrap()
+      .then(result => {
+        clearTimeout(timeoutId);
+        setNearbyVenues(result.venues || []);
+        setVenueLoadingState('loaded');
+      })
+      .catch(() => {
+        clearTimeout(timeoutId);
+        setVenueLoadingState('hidden');
+      });
+
+    return () => clearTimeout(timeoutId);
+  }, [coordinates, hasPermission]);
+
+  // Helper: build VenueTagData from selected venue
+  const getSelectedVenueTag = useCallback((): VenueTagData | null => {
+    if (!selectedVenueId) return null;
+    const venue = nearbyVenues.find(v => v.id === selectedVenueId);
+    if (!venue) return null;
+    return {
+      venueId: venue.id,
+      venueGooglePlaceId: venue.googlePlaceId,
+      venueName: venue.name,
+    };
+  }, [selectedVenueId, nearbyVenues]);
+
+  // Format distance for display
+  const formatDistance = (metres: number): string => {
+    if (metres < 1000) return `${metres}m`;
+    return `${(metres / 1000).toFixed(1)}km`;
+  };
+
   useEffect(() => {
     // Countdown timer
     if (currentStep === 'boost_intro' || currentStep === 'boost_tiers') {
@@ -398,6 +468,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       title: title.trim(),
       subcategories: selectedSubcategories,
       parentCategory: selectedEvent?.label,
+      venueTag: getSelectedVenueTag(),
     });
   };
 
@@ -427,6 +498,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       title: title.trim(),
       subcategories: selectedSubcategories,
       parentCategory: selectedEvent?.label,
+      venueTag: getSelectedVenueTag(),
     });
   };
 
@@ -585,6 +657,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       subcategories: selectedSubcategories,
       parentCategory: selectedEvent?.label,
       title: title.trim(),
+      venueTag: getSelectedVenueTag(),
     });
   };
 
@@ -845,111 +918,256 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   // Category Selection Screen (Default)
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Ready to go live?</Text>
-        <Text style={styles.headerSubtitle}>
-          Choose your vibe and reach more people
-        </Text>
-      </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Ready to go live?</Text>
+          <Text style={styles.headerSubtitle}>
+            Choose your vibe and reach more people
+          </Text>
+        </View>
 
-      <TextInput
+      {/* <TextInput
         style={styles.titleInput}
         placeholder="Give your stream a vibe, party? chill? wild?"
         placeholderTextColor={colors.textMuted}
         value={title}
         onChangeText={handleTitleChange}
         maxLength={60}
-      />
+      /> */}
 
-      <Text style={styles.categoryTitle}>What's your vibe?</Text>
+        <Text style={styles.categoryTitle}>What's your vibe?</Text>
 
-      <FlatList
-        data={eventsList}
-        numColumns={3}
-        keyExtractor={item => item.key}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.categoriesContainer}
-        renderItem={({item}) => (
-          <TouchableOpacity
-            style={[
-              styles.categoryTag,
-              selectedCategory === item.key && styles.selectedCategoryTag,
-            ]}
-            onPress={() => {
-              console.log(
-                'Category pressed:',
-                item.key,
-                'Navigation available:',
-                !!navigation,
-              );
-              handleCategorySelection(item.key, false);
-            }}>
+        <FlatList
+          data={eventsList}
+          scrollEnabled={false}
+          numColumns={3}
+          keyExtractor={item => item.key}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContainer}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              style={[
+                styles.categoryTag,
+                selectedCategory === item.key && styles.selectedCategoryTag,
+              ]}
+              onPress={() => {
+                console.log(
+                  'Category pressed:',
+                  item.key,
+                  'Navigation available:',
+                  !!navigation,
+                );
+                handleCategorySelection(item.key, false);
+              }}>
             {/* <Text style={styles.categoryEmoji}>{item.emoji}</Text> */}
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: selectedCategory === item.key ? colors.primaryBorder : colors.border,
-                height: 60,
-                width: 60,
-                backgroundColor: selectedCategory === item.key ? colors.selectedIconBG : colors.iconsBG,
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderRadius: 8
-              }}>
-              {item.emoji(selectedCategory === item.key ? colors.selectedIconColor : colors.iconColor)}
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderColor: selectedCategory === item.key ? colors.primaryBorder : colors.border,
+                  height: 60,
+                  width: 60,
+                  backgroundColor: selectedCategory === item.key ? colors.selectedIconBG : colors.iconsBG,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: 8
+                }}>
+                {item.emoji(selectedCategory === item.key ? colors.selectedIconColor : colors.iconColor)}
+              </View>
+              <Text style={styles.categoryLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          )}
+        />
+
+        {/* Venue Tagging Section */}
+        {venueLoadingState === 'loading' && (
+          <View style={venueStyles.section}>
+            <Text style={styles.categoryTitle}>Tag a venue</Text>
+            <View style={venueStyles.skeletonRow}>
+              {[0, 1, 2].map(i => (
+                <View key={i} style={venueStyles.skeletonCard} />
+              ))}
             </View>
-            <Text style={styles.categoryLabel}>{item.label}</Text>
-          </TouchableOpacity>
-        )}
-      />
-
-      {selectedCategory && (
-        <View style={styles.actionSection}>
-          <Text style={styles.actionTitle}>Ready to stream?</Text>
-
-          <TouchableOpacity
-            style={styles.primaryActionButton}
-            onPress={() => handleGoDirectToStream(selectedCategory)}>
-            <StreamIcon color={colors.text} size={20} />
-            <Text style={styles.primaryActionText}>Start Streaming</Text>
-          </TouchableOpacity>
-
-          <View style={styles.orDivider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.orText}>or</Text>
-            <View style={styles.dividerLine} />
           </View>
+        )}
 
-          <TouchableOpacity
-            style={styles.boostActionButton}
-            onPress={() => handleCategorySelection(selectedCategory, true)}>
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    scale: pulseAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.02],
-                    }),
-                  },
-                ],
-              }}>
-              <Text style={styles.boostActionText}>
-                {' '}
-                Boost for More Viewers
-              </Text>
+        {venueLoadingState === 'loaded' && nearbyVenues.length > 0 && (
+          <View style={venueStyles.section}>
+            <Text style={styles.categoryTitle}>Tag a venue</Text>
+            <FlatList
+              horizontal
+              data={[{id: '__none__', name: 'None', primaryTag: null, distanceMetres: 0, googlePlaceId: null} as NearbyVenue, ...nearbyVenues]}
+              keyExtractor={item => item.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={venueStyles.listContent}
+              renderItem={({item}) => {
+                const isNone = item.id === '__none__';
+                const isSelected = isNone ? selectedVenueId === null : selectedVenueId === item.id;
+                return (
+                  <TouchableOpacity
+                    style={[
+                      venueStyles.card,
+                      isSelected && venueStyles.cardSelected,
+                    ]}
+                    onPress={() => {
+                      if (isNone) {
+                        setSelectedVenueId(null);
+                      } else {
+                        setSelectedVenueId(prev => prev === item.id ? null : item.id);
+                      }
+                    }}
+                    activeOpacity={0.7}>
+                    {isSelected && (
+                      <View style={venueStyles.checkmark}>
+                        <Text style={venueStyles.checkmarkText}>✓</Text>
+                      </View>
+                    )}
+                    <Text
+                      style={[venueStyles.cardName, isSelected && venueStyles.cardNameSelected]}
+                      numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    {!isNone && item.primaryTag && (
+                      <Text style={venueStyles.cardTag} numberOfLines={1}>
+                        {item.primaryTag.replace(/_/g, ' ')}
+                      </Text>
+                    )}
+                    {!isNone && (
+                      <Text style={venueStyles.cardDistance}>
+                        {formatDistance(item.distanceMetres)}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        )}
+
+        {selectedCategory && (
+          <View style={styles.actionSection}>
+            <Text style={styles.actionTitle}>Ready to stream?</Text>
+
+            <TouchableOpacity
+              style={styles.primaryActionButton}
+              onPress={() => handleGoDirectToStream(selectedCategory)}>
+              <StreamIcon color={colors.text} size={20} />
+              <Text style={styles.primaryActionText}>Start Streaming</Text>
+            </TouchableOpacity>
+
+            <View style={styles.orDivider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.orText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.boostActionButton}
+              onPress={() => handleCategorySelection(selectedCategory, true)}>
+              <Animated.View
+                style={{
+                  transform: [
+                    {
+                      scale: pulseAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 1.02],
+                      }),
+                    },
+                  ],
+                }}>
+                <Text style={styles.boostActionText}>
+                  {' '}
+                  Boost for More Viewers
+                </Text>
               {/* <Text style={styles.boostActionSubtext}>
                 Get 5x more visibility
               </Text> */}
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
-      )}
+              </Animated.View>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 };
 
 const {width} = Dimensions.get('window');
+
+const venueStyles = StyleSheet.create({
+  section: {
+    marginBottom: 10,
+  },
+  listContent: {
+    paddingRight: 10,
+  },
+  skeletonRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  skeletonCard: {
+    width: 110,
+    height: 80,
+    borderRadius: 12,
+    backgroundColor: colors.surface || 'rgba(255,255,255,0.05)',
+  },
+  card: {
+    width: 120,
+    minHeight: 80,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  cardSelected: {
+    borderColor: colors.primaryBorder || colors.primary,
+    backgroundColor: colors.tierBasicBackground || 'rgba(255,255,255,0.08)',
+    borderWidth: 1.5,
+  },
+  checkmark: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkmarkText: {
+    color: colors.background,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  cardName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 3,
+  },
+  cardNameSelected: {
+    color: colors.primary,
+  },
+  cardTag: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    textTransform: 'capitalize',
+    marginBottom: 2,
+  },
+  cardDistance: {
+    fontSize: 10,
+    color: colors.textMuted || colors.textSecondary,
+    textAlign: 'center',
+  },
+});
 
 const styles = StyleSheet.create({
   // Base container
@@ -958,6 +1176,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: 20,
     paddingTop: 20,
+  },
+  scrollContent: {
+    paddingBottom: 30,
   },
 
   // Header styles

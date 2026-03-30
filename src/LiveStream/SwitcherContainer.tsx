@@ -1,6 +1,6 @@
 import {View, Text, SafeAreaView} from 'react-native';
 import React, {useState} from 'react';
-import EventSelections from './EventSelections';
+import EventSelections, {VenueTagData} from './EventSelections';
 import LiveStreamContainer from './LiveStreamContainer';
 import GlobalColors from '../styles/GlobalColors';
 
@@ -12,6 +12,7 @@ const SwitcherContainer = () => {
   const [boostData, setBoostData] = useState<any>(null);
   const [subcategoriesTags, setSubcategoriesTags] = useState<string[]>([]);
   const [parentCategory, setParentCategory] = useState<string>('');
+  const [venueTag, setVenueTag] = useState<VenueTagData | null>(null);
   
   const handleCompleteSelection = (args: {
     value: string;
@@ -19,8 +20,9 @@ const SwitcherContainer = () => {
     title?: string;
     subcategories?: string[];
     parentCategory?: string;
+    venueTag?: VenueTagData | null;
   }) => {
-    const {value, boostData: boostInfo, title: titleValue, subcategories: subcategoriesValue, parentCategory: parentCategoryValue} = args || {};
+    const {value, boostData: boostInfo, title: titleValue, subcategories: subcategoriesValue, parentCategory: parentCategoryValue, venueTag: venueTagValue} = args || {};
     
     setSelectedEventType(value);
     setBoostData(boostInfo);
@@ -28,6 +30,7 @@ const SwitcherContainer = () => {
     setTitle(titleValue || "");
     setSubcategoriesTags(subcategoriesValue || []);
     setParentCategory(parentCategoryValue || '');
+    setVenueTag(venueTagValue || null);
     
     console.log('✅ SwitcherContainer state updated - proceeding to LiveStreamContainer');
   };
@@ -37,6 +40,7 @@ const SwitcherContainer = () => {
     setShowStartLive(false);
     // Reset boost data to allow new selection
     setBoostData(null);
+    setVenueTag(null);
   };
   const handleChangeTitle = (title: string) => {
     console.log('Title changed:', title);
@@ -54,6 +58,7 @@ const SwitcherContainer = () => {
           boostData={boostData}
           subcategoriesTags={subcategoriesTags}
           parentCategory={parentCategory}
+          venueTag={venueTag}
           onBackToEventSelections={handleBackToEventSelections}
         />
       )}

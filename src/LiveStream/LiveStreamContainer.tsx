@@ -47,12 +47,19 @@ interface BoostPurchaseData {
   purchaseTime: Date;
 }
 
+interface VenueTagData {
+  venueId: string;
+  venueGooglePlaceId: string | null;
+  venueName: string;
+}
+
 interface LiveStreamContainerProps {
   streamEventType?: string;
   streamTitle?: string;
   boostData?: BoostPurchaseData;
   subcategoriesTags?: string[];
   parentCategory?: string;
+  venueTag?: VenueTagData | null;
   onBackToEventSelections?: () => void;
 }
 export default function LiveStreamContainer(props: LiveStreamContainerProps) {
@@ -62,6 +69,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     boostData,
     subcategoriesTags,
     parentCategory,
+    venueTag,
     onBackToEventSelections,
   } = props;
   const {currentUser} = useSelector((state: any) => state?.currentUser);
@@ -548,6 +556,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           boostDuration: boostData.duration,
           boostTransactionId: boostData.transactionId,
         }),
+        // Include venue tag if available
+        ...(venueTag && {
+          venueId: venueTag.venueId,
+          venueGooglePlaceId: venueTag.venueGooglePlaceId,
+          venueName: venueTag.venueName,
+        }),
       };
 
       const response = await fetchStartStream(streamRequestData).unwrap();
@@ -683,6 +697,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             dataFlowValidated: true,
             streamStartTime: Date.now(),
             rtmpUrl: `rtmps://global-live.mux.com:443/app/${streamKey}`,
+            // Venue tag data for map display
+            ...(venueTag && {
+              venueId: venueTag.venueId,
+              venueGooglePlaceId: venueTag.venueGooglePlaceId,
+              venueName: venueTag.venueName,
+            }),
           });
         }
       } else {
