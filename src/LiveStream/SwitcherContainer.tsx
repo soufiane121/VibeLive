@@ -48,7 +48,7 @@ const SwitcherContainer = () => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.background}}>
+    <View style={{flex: 1, backgroundColor: colors.background}}>
       {!showStartLive ? (
         <EventSelections onCompleteSelection={handleCompleteSelection} onTitleChange={handleChangeTitle} />
       ) : (
@@ -62,7 +62,7 @@ const SwitcherContainer = () => {
           onBackToEventSelections={handleBackToEventSelections}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 

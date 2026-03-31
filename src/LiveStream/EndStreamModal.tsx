@@ -6,9 +6,12 @@ import {
   Modal,
   StyleSheet,
   Dimensions,
+  Platform
 } from 'react-native';
-import { CloseIcon, CheckmarkIcon } from '../UIComponents/Icons';
+import { CloseIcon, CheckmarkIcon, CommonMaterialCommunityIcons } from '../UIComponents/Icons';
 import { GlobalColors } from '../styles/GlobalColors';
+
+const colors = GlobalColors.EndStreamModal;
 
 interface EndStreamModalProps {
   visible: boolean;
@@ -44,16 +47,20 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
+          <View style={styles.handleBar} />
+          
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>End Live Stream?</Text>
-            <TouchableOpacity onPress={onCancel}>
-              <CloseIcon size={20} color={GlobalColors.Common.ghostButtonText} />
+            <View>
+              <View style={styles.actionRequiredWrapper}>
+                <Text style={styles.actionIcon}>!</Text>
+                <Text style={styles.actionText}>ACTION REQUIRED</Text>
+              </View>
+              <Text style={styles.modalTitle}>End live stream?</Text>
+            </View>
+            <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
+              <CloseIcon size={14} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
-          
-          <Text style={styles.modalSubtitle}>
-            Are you sure you want to end your live stream?
-          </Text>
           
           {isBoosted && (
             <View style={styles.playbackSection}>
@@ -83,25 +90,37 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
           )}
           
           <View style={styles.modalStats}>
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Current viewers:</Text>
-              <Text style={styles.statValue}>{viewerCount}K</Text>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>VIEWERS</Text>
+              <Text style={styles.statValue}>{viewerCount}</Text>
+              <Text style={styles.statSubInfo}>right now</Text>
             </View>
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Stream duration:</Text>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>DURATION</Text>
               <Text style={styles.statValue}>{formatDuration(streamDuration)}</Text>
+              <Text style={styles.statSubInfo}>elapsed</Text>
             </View>
+          </View>
+
+          <View style={styles.warningStrip}>
+            <View style={styles.warningStripIconWrapper}>
+              <Text style={styles.warningStripIcon}>!</Text>
+            </View>
+            <Text style={styles.warningStripText}>
+              This will end your stream for all viewers and cannot be undone
+            </Text>
           </View>
           
           <View style={styles.modalButtons}>
             <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>Keep going</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.endStreamButton} 
               onPress={() => onConfirm(keepPlayback)}
             >
-              <Text style={styles.endStreamButtonText}>End Stream</Text>
+              <View style={styles.stopIconOutline} />
+              <Text style={styles.endStreamButtonText}>End stream</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -115,53 +134,129 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: GlobalColors.Common.modalBackground,
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: GlobalColors.Common.modalSurface,
-    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 24,
-    margin: 20,
-    width: width - 40,
-    borderWidth: 1,
-    borderColor: GlobalColors.Common.modalBorder,
+    paddingTop: 12,
+    width: '100%',
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  handleBar: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: GlobalColors.LiveStreamContainer.text,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: GlobalColors.Common.loadingText,
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  modalStats: {
+    alignItems: 'flex-start',
     marginBottom: 24,
   },
-  statRow: {
+  actionRequiredWrapper: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  statLabel: {
+  actionIcon: {
+    color: colors.warningText,
+    fontWeight: '900',
     fontSize: 14,
-    color: GlobalColors.Common.loadingText,
+    marginRight: 6,
+  },
+  actionText: {
+    color: colors.warningText,
+    fontWeight: '800',
+    fontSize: 11,
+    letterSpacing: 1.2,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: colors.text,
+    letterSpacing: -0.5,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.buttonBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.buttonBackground,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 16,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.textSecondary,
+    letterSpacing: 1,
+    marginBottom: 6,
   },
   statValue: {
-    fontSize: 14,
+    fontSize: 28,
+    fontWeight: '900',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  statSubInfo: {
+    fontSize: 11,
     fontWeight: '600',
-    color: GlobalColors.LiveStreamContainer.text,
+    color: colors.textSecondary,
+  },
+  warningStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.warningBackground,
+    borderWidth: 1,
+    borderColor: colors.warningBorder,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  warningStripIconWrapper: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: colors.warningText,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  warningStripIcon: {
+    color: colors.warningText,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  warningStripText: {
+    flex: 1,
+    color: colors.warningText,
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -169,48 +264,60 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: GlobalColors.Common.secondaryButton,
-    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: colors.buttonBackground,
     borderWidth: 1,
-    borderColor: GlobalColors.Common.ghostButtonBorder,
+    borderColor: colors.border,
+    alignItems: 'center',
   },
   cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: GlobalColors.Common.secondaryButtonText,
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
   },
   endStreamButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: GlobalColors.LiveStreamContainer.endButton,
+    flexDirection: 'row',
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: colors.buttonBackground,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stopIconOutline: {
+    width: 14,
+    height: 14,
+    borderWidth: 2,
+    borderColor: colors.text,
+    marginRight: 8,
+    borderRadius: 3,
   },
   endStreamButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: GlobalColors.LiveStreamContainer.text,
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
   },
   playbackSection: {
-    backgroundColor: GlobalColors.Common.inputBackground,
+    backgroundColor: colors.buttonBackground,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: GlobalColors.Common.inputBorder,
+    borderColor: colors.border,
   },
   playbackTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: GlobalColors.LiveStreamContainer.text,
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.text,
     marginBottom: 8,
   },
   playbackDescription: {
-    fontSize: 14,
-    color: GlobalColors.Common.loadingText,
-    lineHeight: 20,
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 18,
     marginBottom: 16,
   },
   checkboxRow: {
@@ -223,8 +330,8 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: GlobalColors.Common.inputBorder,
-    backgroundColor: GlobalColors.Common.inputBackground,
+    borderColor: colors.border,
+    backgroundColor: colors.buttonBackground,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -234,16 +341,16 @@ const styles = StyleSheet.create({
     borderColor: GlobalColors.LiveStreamContainer.controlsActive,
   },
   checkboxLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: GlobalColors.LiveStreamContainer.text,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
     flex: 1,
   },
   playbackNote: {
-    fontSize: 13,
-    color: GlobalColors.Common.loadingText,
+    fontSize: 12,
+    color: colors.textSecondary,
     fontStyle: 'italic',
-    lineHeight: 18,
+    lineHeight: 16,
   },
 });
 

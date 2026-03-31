@@ -370,16 +370,34 @@ export const GlobalColors = {
     boostButton: baseColors.gold,
   },
 
-  // Live Stream Container
   LiveStreamContainer: {
-    background: baseColors.deepBlack,
-    overlay: baseColors.blackOverlay,
-    text: baseColors.white,
-    controls: baseColors.darkGray,
-    controlsActive: baseColors.cyan,
-    endButton: baseColors.error,
-    switchButton: baseColors.warning,
-    viewerCount: baseColors.success,
+    background: premiumDark.primaryBackground,
+    btnsBG: premiumDark.secondaryBackground,
+    overlay: premiumDark.primaryBackground,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    controls: premiumDark.secondarySurface,
+    controlsActive: premiumDark.accentSurface,
+    controlsActiveBorder: premiumDark.accentPrimary,
+    controlsActiveIcon: premiumDark.accentPrimary,
+    endButton: premiumDark.hotPrimary,
+    switchButton: premiumDark.primarySurface,
+    viewerCount: premiumDark.primaryText,
+    border: premiumDark.primaryBorder,
+    success: premiumDark.successPrimary,
+  },
+
+  EndStreamModal: {
+    background: premiumDark.primaryBackground,
+    surface: premiumDark.secondarySurface,
+    border: premiumDark.primaryBorder,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    warningBackground: premiumDark.hotSurface,
+    warningBorder: premiumDark.hotBorder,
+    warningText: premiumDark.hotPrimary,
+    buttonBorder: premiumDark.primaryBorder,
+    buttonBackground: premiumDark.secondaryBackground,
   },
 
   // Chat List

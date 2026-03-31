@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  SafeAreaView,
 } from 'react-native';
 // Using existing icon components from the app
 import {
@@ -19,7 +20,12 @@ import {
   CloseIcon,
   PlayIcon,
   StopIcon,
+  CommonMaterialCommunityIcons,
 } from '../UIComponents/Icons';
+import { GlobalColors } from '../styles/GlobalColors';
+
+const colors = GlobalColors.LiveStreamContainer;
+
 import EndStreamModal from './EndStreamModal';
 import MonthlyLimitModal from './MonthlyLimitModal';
 import FreeStreamLimitModal from './FreeStreamLimitModal';
@@ -780,28 +786,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header with LIVE indicator, viewer count, timer, and close button */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.liveIndicator}>
-            <Text style={styles.liveText}>LIVE</Text>
-          </View>
-          <Text style={styles.viewerCount}>{viewerCount}K</Text>
-        </View>
-
-        <StreamTimer
-          streamStartTime={streamStartTime}
-          isStreaming={isStreaming}
-          isBoosted={!!boostData || !!currentUser?.isBoosted}
-          onSevenMinuteWarning={handleSevenMinuteWarning}
-          onTenMinuteLimit={handleTenMinuteLimit}
-        />
-
-        <TouchableOpacity style={styles.closeButton} onPress={handleClosePress}>
-          <CloseIcon size={24} color="white" />
-        </TouchableOpacity>
-      </View>
-
+      {/* Camera Feed Area */}
       {/* Camera Feed Area */}
       <View style={styles.cameraContainer}>
         {!device && (
@@ -813,7 +798,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
 
         {device && (
           <>
-            {/* NodePublisher for Streaming - Simplified configuration to avoid authorization issues */}
+            {/* NodePublisher for Streaming */}
             <View style={styles.cameraAspectContainer}>
               <NodePublisher
                 ref={rtmp}
@@ -900,9 +885,47 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         )}
       </View>
 
-      {/* Control Panel */}
-      <View style={styles.controlPanel}>
-        {/* Main Stream Button */}
+      {/* UI Overlay wrapped in SafeAreaView to protect headers from notches */}
+      <SafeAreaView style={styles.overlayWrapper} pointerEvents="box-none">
+        <View style={styles.overlayInner} pointerEvents="box-none">
+
+          {/* Header with LIVE indicator, viewer count, timer, and close button */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <View style={styles.liveIndicator}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveText}>LIVE</Text>
+              </View>
+              <View style={styles.viewerPill}>
+                <CommonMaterialCommunityIcons name="account-group" size={14} color={colors.text} style={{marginRight: 4}} />
+                <Text style={styles.viewerCount}>{viewerCount} viewers</Text>
+              </View>
+            </View>
+
+            <View style={styles.headerRight}>
+              <StreamTimer
+                streamStartTime={streamStartTime}
+                isStreaming={isStreaming}
+                isBoosted={!!boostData || !!currentUser?.isBoosted}
+                onSevenMinuteWarning={handleSevenMinuteWarning}
+                onTenMinuteLimit={handleTenMinuteLimit}
+              />
+
+              <TouchableOpacity style={styles.closeButton} onPress={handleClosePress}>
+                <CloseIcon size={14} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Control Panel */}
+          <View style={styles.controlPanel}>
+        <View style={styles.locationPillContainer}>
+          <View style={styles.locationPill}>
+            <View style={styles.locationDot} />
+                <Text style={styles.locationText}>{`Streaming from ${venueTag}`}</Text>
+          </View>
+        </View>
+        
         <TouchableOpacity
           style={[
             styles.streamButton,
@@ -921,31 +944,37 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
               startStreaming();
             }
           }}>
-          {/* {isStreaming ? (
-            <StopIcon size={24} color="white" />
-          ) : (
-            <PlayIcon size={24} color="white" />
-          )} */}
-          <Text style={styles.streamButtonText}>Go Live</Text>
+              <CommonMaterialCommunityIcons name="bullseye" size={24} color={colors.text} style={{marginRight: 8}} />
+          <Text style={styles.streamButtonText}>{isStreaming ? 'Stop Streaming' : 'Go Live'}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Side Controls */}
       <View style={styles.sideControls}>
-        {/* Camera Toggle */}
-        <TouchableOpacity style={styles.controlButton} onPress={toggleCamera}>
-          <CameraReverseIcon size={24} color="white" />
+        <TouchableOpacity style={[styles.controlButton, styles.controlButtonActive]} onPress={() => {}}>
+          <CommonMaterialCommunityIcons name="shield-outline" size={24} color={colors.controlsActiveIcon} />
         </TouchableOpacity>
 
-        {/* Microphone Toggle */}
         <TouchableOpacity style={styles.controlButton} onPress={toggleMute}>
           {isMuted ? (
-            <MicrophoneSlashIcon size={24} color="#EF4444" />
+            <MicrophoneSlashIcon size={24} color={colors.text} />
           ) : (
-            <MicrophoneIcon size={24} color="white" />
+            <MicrophoneIcon size={24} color={colors.text} />
           )}
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.controlButton} onPress={toggleCamera}>
+          <CameraReverseIcon size={24} color={colors.text} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.controlButton} onPress={() => {}}>
+          <CommonMaterialCommunityIcons name="bullseye" size={24} color={colors.text} />
+        </TouchableOpacity>
       </View>
+      
+        </View>
+      </SafeAreaView>
+
       {isStreaming && streamId && coordinates && (
         <ChatList
           streamId={streamId}
@@ -1027,9 +1056,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  overlayWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+  },
+  overlayInner: {
+    flex: 1,
+    position: 'relative',
+  },
   header: {
     position: 'absolute',
-    top: -5,
+    top: 10,
     left: 20,
     right: 20,
     flexDirection: 'row',
@@ -1041,42 +1078,72 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#EF4444',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 16,
     marginRight: 8,
   },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.text,
+    marginRight: 4,
+  },
   liveText: {
-    color: 'white',
+    color: colors.text,
     fontSize: 12,
     fontWeight: 'bold',
   },
+  viewerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.controls,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   viewerCount: {
-    color: 'white',
-    fontSize: 16,
+    color: colors.text,
+    fontSize: 12,
     fontWeight: '600',
   },
   timer: {
-    color: 'white',
+    color: colors.text,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   closeButton: {
-    padding: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.controls,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   cameraContainer: {
-    flex: 1,
-    backgroundColor: '#000',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   cameraAspectContainer: {
     width: '100%',
-    aspectRatio: 9 / 16, // 9:16 aspect ratio container
-    maxHeight: '100%',
-    backgroundColor: '#000',
+    height: '100%',
+    backgroundColor: colors.background,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -1090,7 +1157,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
   placeholderText: {
     color: 'rgba(255,255,255,0.6)',
@@ -1099,68 +1166,76 @@ const styles = StyleSheet.create({
   },
   controlPanel: {
     position: 'absolute',
-    bottom: 100,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
+    bottom: 40,
+    left: 20,
+    right: 20,
     zIndex: 1,
-    top: '85%',
   },
   streamButton: {
-    // width: 80,
-    // height: 80,
-    // borderRadius: 40,
-    // justifyContent: 'center',
-    // alignItems: 'center',
-    // borderWidth: 4,
-    // borderColor: 'white',
-    width: 180,
-    height: 40,
-    padding: 10,
-    borderRadius: 10,
+    width: '100%',
+    height: 56,
+    borderRadius: 16,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
   startButton: {
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.btnsBG,
   },
   stopButton: {
-    backgroundColor: '#6B7280',
+    backgroundColor: colors.btnsBG,
+  },
+  streamButtonText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  locationPillContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  locationPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.controls,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  locationDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444',
+    marginRight: 8,
+  },
+  locationText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '600',
   },
   sideControls: {
     position: 'absolute',
     right: 20,
-    top: '50%',
-    transform: [{translateY: -100}],
+    top: '30%',
     zIndex: 1,
   },
   controlButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.controls,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  recordingIndicator: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  recordingDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#EF4444',
-  },
-  streamButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+  controlButtonActive: {
+    backgroundColor: colors.controlsActive,
+    borderColor: colors.controlsActiveBorder,
   },
   // 7-minute warning alert styles
   warningOverlay: {

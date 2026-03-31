@@ -33,6 +33,8 @@ const LoginContainer = () => {
     if (email && password) {
       try {
         const answer = await verifyLogin({password, email}).unwrap();
+        console.log({answer});
+        
         if (answer.data) {
           await setLocalData({key: 'token', value: answer.data.email});
           dispatch(setCurrentUser(answer.data));
