@@ -5,25 +5,41 @@
  * @format
  */
 
-import React, {useState, useRef, useEffect} from 'react';
-import type {PropsWithChildren} from 'react';
-import {SafeAreaView, useColorScheme, Text, View, Image, Animated, Alert} from 'react-native';
-// import RadarMap from './src/FeatureComponents/Map/Map.container';
-// import RadarMap from './working';
-import useRequestLocationAuth from './UserGetUserLocation';
-import Geolocation from '@react-native-community/geolocation';
-import RadarMap from './src/FeatureComponents/Map/Map.container';
+// import './gesture-handler';
+import React, { useEffect } from 'react';
+import { useColorScheme} from 'react-native';
+import Main from './src/Main';
+import {Provider} from 'react-redux';
+import {store} from './redux/store';
+import { initFCM } from './src/Services/FCMNotificationService';
+import { AnalyticsProvider } from './src/Providers/AnalyticsProvider';
+import { setLocalData } from './src/Utils/LocalStorageHelper';
 
 
-function App(): React.JSX.Element {
+function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
+  useEffect(() => {
+    initFCM();
+    handleInitTheme()
+  }, [])
 
+  const handleInitTheme = async () => {
+    await setLocalData({key: 'isDarkMode', value: isDarkMode.toString()});
+  }
+  const handleInitOneSignal =async  ()=> {
+    // await initOneSignal();
+  }
+  
 
   return (
-    <SafeAreaView className='flex-1'>
-      <RadarMap/>
-    </SafeAreaView>
+    <Provider store={store}>
+      <AnalyticsProvider>
+        <Main />
+        {/* <LiveStreamContainer /> */}
+        {/* <RadarMap  /> */}
+      </AnalyticsProvider>
+    </Provider>
   );
 }
 

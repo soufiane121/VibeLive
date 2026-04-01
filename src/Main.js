@@ -1,14 +1,15 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import { NavigationContainer } from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import React from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import StackNavigation from './NavigationsScreens/StackNavigation/StackNavigation.tsx';
+
+
 
 const Main = () => {
   return (
-    <NavigationContainer>
+      <NavigationContainer >
+        <StackNavigation />
+      </NavigationContainer>
+  );
+};
 
-    </NavigationContainer>
-  )
-}
-
-export default Main
+export default Main;

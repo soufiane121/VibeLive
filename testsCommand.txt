@@ -1,0 +1,21 @@
+TOKEN="Bearer eyJhbGciOiJIUzI1NiJ9.YWJAdC5jb20.bama-qvOFWrBZ8VGL3sFy6mw8sxWnwF7uHgcbSTAMlU"
+
+# Single venue — "🔥 Is [Venue] hot tonight?"
+curl -X POST http://localhost:3000/voting/test-notification \
+  -H "Authorization: $TOKEN" -H "Content-Type: application/json" \
+  -d '{"scenario": "single_venue"}'
+
+# Multi venue — "🎯 Multiple venues nearby!"
+curl -X POST http://localhost:3000/voting/test-notification \
+  -H "Authorization: $TOKEN" -H "Content-Type: application/json" \
+  -d '{"scenario": "multi_venue"}'
+
+# Vibe shift — "📊 Crowd shifting!"
+curl -X POST http://localhost:3000/voting/test-notification \
+  -H "Authorization: $TOKEN" -H "Content-Type: application/json" \
+  -d '{"scenario": "vibe_shift"}'
+
+# Digest — "📋 Venue digest"
+curl -X POST http://localhost:3000/voting/test-notification \
+  -H "Authorization: $TOKEN" -H "Content-Type: application/json" \
+  -d '{"scenario": "digest"}'

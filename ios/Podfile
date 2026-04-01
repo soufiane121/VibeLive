@@ -6,6 +6,7 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 
 platform :ios, min_ios_version_supported
+# platform :ios, 15.6
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -16,6 +17,9 @@ end
 
 target 'VibeLive' do
   config = use_native_modules!
+  
+  use_frameworks! :linkage => :static
+  $RNFirebaseAsStaticFramework = true
 
   use_react_native!(
     :path => config[:reactNativePath],
@@ -41,5 +45,14 @@ target 'VibeLive' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    # additional_context
+      # system("node ../scripts/restore-local-libs.js")
+    # end of additional_context
   end
+end
+# for notification
+target 'OneSignalNotificationServiceExtension' do
+  use_frameworks! :linkage => :static
+  
+  pod 'OneSignalXCFramework', '>= 5.0.0', '< 6.0'
 end
