@@ -999,11 +999,10 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       {/* Monthly Limit Modal */}
       <MonthlyLimitModal
         labelsData={{
-          title: "You're Missing Out on Live Viewers!",
-          subTitle: `Your spotlight just dimmed, the audience is still watching. 
-  Boost now to jump back in before the moment slips away.`,
-          boostButtonLabel: 'Boost Now & Reclaim Your Spot 🚀',
-          cancelButtonLabel: 'Wait… I’ll Miss Out',
+          title: 'Your free minutes are up this week.',
+          subTitle: 'Free minutes reset every Monday. Get more now to keep going live.',
+          boostButtonLabel: 'Get More Minutes',
+          cancelButtonLabel: 'Maybe Later',
         }}
         visible={isMonthlyLimitReached || isWeeklyLimitReached}
         onBoostAndGoLive={handleBoostAndGoLive}

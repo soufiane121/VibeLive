@@ -4,13 +4,9 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  TextInput,
-  Modal,
   Alert,
   ActivityIndicator,
   Dimensions,
-  Animated,
-  Easing,
   Platform,
   ScrollView,
 } from 'react-native';
@@ -20,7 +16,7 @@ import {GlobalColors} from '../styles/GlobalColors';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
 import useGetLocation from '../CustomHooks/useGetLocation';
 import {useLazyGetNearbyVenuesQuery, NearbyVenue} from '../../features/LiveStream/LiveStream';
-import {IAPAdapter} from '../Payment/adapters/IAPAdapter';
+import {IAPAdapter, TIER_TO_PRODUCT_ID} from '../Payment/adapters/IAPAdapter';
 import {AnalyticsEventType} from '../types/AnalyticsEnums';
 import {
   BarIcon,
@@ -32,24 +28,10 @@ import {
   StarIcon,
   StreamIcon,
   TVPlayIcon,
+  CommonMaterialCommunityIcons,
 } from '../UIComponents/Icons';
 
 const colors = GlobalColors.BoostFOMOFlow;
-// import { LinearGradient } from 'react-native-linear-gradient';
-// import Animated, {
-//   useSharedValue,
-//   useAnimatedStyle,
-//   withTiming,
-//   withRepeat,
-//   interpolate,
-//   runOnJS
-// } from 'react-native-reanimated';
-
-// TODO: Install these packages manually:
-// npm install react-native-linear-gradient
-// npm install react-native-reanimated
-// For iOS: cd ios && pod install
-
 
   const eventsList = [
     {
@@ -92,22 +74,55 @@ const colors = GlobalColors.BoostFOMOFlow;
       label: 'Show & Performances',
       emoji: (color: string)=> (<TVPlayIcon size={32} color={color} />),
     },
-    // no needed for now, includes prides, ramadan, halloween
-    // {key: 'special', label: 'Special & Seasonal', emoji: '🎉'},
   ];
 
-
-interface BoostTier {
+// ─────────────────────────────────────────────────────────────────
+// Minute package definitions (replaces old BoostTier)
+// ─────────────────────────────────────────────────────────────────
+interface MinutesPackage {
   id: 'basic' | 'premium' | 'ultimate';
   name: string;
-  price: number;
-  originalPrice: number;
-  duration: number; // hours
-  features: string[];
-  multiplier: string;
+  minutes: number;
+  description: string;
   badge?: string;
-  color: string;
+  badgeColor?: string;
 }
+
+const MINUTES_PACKAGES: MinutesPackage[] = [
+  {
+    id: 'basic',
+    name: 'Tonight',
+    minutes: 30,
+    description: 'One more night out. Stream freely without watching the clock.',
+    badge: 'Tonight only',
+    badgeColor: colors.tonightOnlyBadge,
+  },
+  {
+    id: 'premium',
+    name: 'This Month',
+    minutes: 120,
+    description: 'Four nights covered. Go live whenever inspiration strikes.',
+    badge: 'MOST POPULAR',
+    badgeColor: colors.accent,
+  },
+  {
+    id: 'ultimate',
+    name: 'All Season',
+    minutes: 300,
+    description: 'Go live whenever you want, all season long.',
+    badge: 'BEST VALUE',
+    badgeColor: colors.success,
+  },
+];
+
+// Currency symbol lookup from ISO code
+const getCurrencySymbol = (code: string): string => {
+  const symbols: Record<string, string> = {
+    USD: '$', GBP: '£', EUR: '€', CAD: 'C$', AUD: 'A$',
+    JPY: '¥', CNY: '¥', INR: '₹', KRW: '₩',
+  };
+  return symbols[code] || code;
+};
 
 interface BoostPurchaseData {
   tier: 'basic' | 'premium' | 'ultimate';
@@ -124,19 +139,12 @@ export interface VenueTagData {
   venueName: string;
 }
 
-export interface VenueTagData {
-  venueId: string;
-  venueGooglePlaceId: string | null;
-  venueName: string;
-}
-
 interface onCompleteSelection {
   value: string;
   boostData?: BoostPurchaseData;
   title?: string;
   subcategories?: string[];
   parentCategory?: string;
-  venueTag?: VenueTagData | null;
   venueTag?: VenueTagData | null;
 }
 
@@ -153,51 +161,6 @@ type FlowStep =
   | 'processing'
   | 'confirmation';
 
-const BOOST_TIERS: BoostTier[] = [
-  {
-    id: 'basic',
-    name: 'Visibility Boost',
-    price: 2.99,
-    originalPrice: 4.99,
-    duration: 2,
-    features: ['2x visibility', 'Priority in nearby feeds', 'Basic analytics'],
-    multiplier: '2x',
-    color: colors.primary,
-  },
-  {
-    id: 'premium',
-    name: 'Prime Time',
-    price: 7.99,
-    originalPrice: 12.99,
-    duration: 6,
-    features: [
-      '5x visibility',
-      'Featured placement',
-      'Advanced analytics',
-      'Custom badges',
-    ],
-    multiplier: '5x',
-    badge: 'MOST POPULAR',
-    color: colors.accent,
-  },
-  {
-    id: 'ultimate',
-    name: 'Viral Mode',
-    price: 14.99,
-    originalPrice: 24.99,
-    duration: 12,
-    features: [
-      '10x visibility',
-      'Homepage featured',
-      'Premium analytics',
-      'VIP support',
-      'Custom effects',
-    ],
-    multiplier: '10x',
-    color: colors.primary,
-  },
-];
-
 const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const [title, setTitle] = useState('');
   const [currentStep, setCurrentStep] = useState<FlowStep>('category');
@@ -205,7 +168,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(
     [],
   );
-  const [selectedTier, setSelectedTier] = useState<BoostTier | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<MinutesPackage | null>(null);
   const [boostData, setBoostData] = useState<BoostPurchaseData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const navigation = useNavigation();
@@ -223,15 +186,9 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   // IAP adapter instance for real App Store purchases (iOS)
   const iapAdapterRef = useRef<IAPAdapter | null>(null);
 
-  // FOMO state
-  const [timeLeft, setTimeLeft] = useState(1847); // 30:47 in seconds
-  const [premiumSlotsLeft] = useState(3);
-  const [competingStreamers] = useState(47);
-
-  // Animations
-  const pulseAnim = useRef(new Animated.Value(0)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
-  const countdownFlash = useRef(new Animated.Value(0)).current;
+  // IAP product data for displaying real prices
+  const [iapProducts, setIapProducts] = useState<any[]>([]);
+  const [iapLoading, setIapLoading] = useState(false);
 
   // Handle returning from subcategory screen and monthly limit modal via global state
   useFocusEffect(
@@ -277,7 +234,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
               setSelectedSubcategories(streamData.subcategoriesTags);
             }
 
-            // Set the flow step to boost_intro to trigger boost flow
+            // Set the flow step to boost_tiers (package selection)
             if (streamData.flowStep === 'boost_tiers') {
               setCurrentStep('boost_tiers');
             }
@@ -294,35 +251,6 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       checkStreamSelectionData();
     }, []),
   );
-
-  useEffect(() => {
-    // Start animations
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-
-    Animated.loop(
-      Animated.timing(glowAnim, {
-        toValue: 1,
-        duration: 2000,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: false,
-      }),
-    ).start();
-  }, []);
 
   // Fetch nearby venues once when coordinates are available
   useEffect(() => {
@@ -378,93 +306,38 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     return `${(metres / 1000).toFixed(1)}km`;
   };
 
-  // Fetch nearby venues once when coordinates are available
+  // Load IAP products when entering package selection
   useEffect(() => {
-    if (venuesFetchedRef.current) return;
-    if (!hasPermission) {
-      setVenueLoadingState('hidden');
-      return;
-    }
-    // coordinates from useGetLocation are [longitude, latitude]
-    const [lng, lat] = coordinates;
-    if (!lat || !lng) return;
-
-    venuesFetchedRef.current = true;
-    setVenueLoadingState('loading');
-
-    const timeoutId = setTimeout(() => {
-      // If still loading after 5s, hide the section
-      setVenueLoadingState(prev => (prev === 'loading' ? 'hidden' : prev));
-    }, 5000);
-
-    fetchNearbyVenues({lat, lng, limit: 5})
-      .unwrap()
-      .then(result => {
-        clearTimeout(timeoutId);
-        setNearbyVenues(result.venues || []);
-        setVenueLoadingState('loaded');
-      })
-      .catch(() => {
-        clearTimeout(timeoutId);
-        setVenueLoadingState('hidden');
-      });
-
-    return () => clearTimeout(timeoutId);
-  }, [coordinates, hasPermission]);
-
-
-  useEffect(() => {
-    // Countdown timer
-    if (currentStep === 'boost_intro' || currentStep === 'boost_tiers') {
-      const timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
+    if (currentStep === 'boost_tiers') {
+      const loadIapProducts = async () => {
+        setIapLoading(true);
+        try {
+          if (!iapAdapterRef.current) {
+            iapAdapterRef.current = new IAPAdapter();
           }
-
-          // Flash animation when under 5 minutes
-          if (prev <= 300 && prev % 10 === 0) {
-            Animated.sequence([
-              Animated.timing(countdownFlash, {
-                toValue: 1,
-                duration: 200,
-                useNativeDriver: false,
-              }),
-              Animated.timing(countdownFlash, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: false,
-              }),
-            ]).start();
-          }
-
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
+          await iapAdapterRef.current.initialize();
+          const products = iapAdapterRef.current.getLoadedProducts();
+          setIapProducts(products);
+          console.log('IAP products loaded:', products.length);
+        } catch (error) {
+          console.log('Failed to load IAP products, using fallback prices:', error);
+        } finally {
+          setIapLoading(false);
+        }
+      };
+      loadIapProducts();
     }
   }, [currentStep]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const handleTitleChange = (text: string) => {
     if (text.length <= 60) {
       setTitle(text);
-      // onTitleChange && onTitleChange(text);
     }
   };
 
   // Analytics tracking (mock implementation)
   const trackEvent = (eventName: string, properties: any) => {
     console.log(`Analytics: ${eventName}`, properties);
-    // TODO: Replace with actual analytics service
-    // AnalyticsService.track(eventName, properties);
   };
 
   const handleCategorySelection = (
@@ -480,7 +353,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     });
 
     if (skipSubcategories) {
-      // Go directly to boost flow, skip subcategory selection
+      // Go directly to minutes trigger screen
       setCurrentStep('boost_intro');
     } else {
       // Navigate to subcategory selection screen via stack navigation
@@ -507,7 +380,6 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       timestamp: new Date().toISOString(),
     });
 
-    // Skip boost flow entirely - include subcategories and parent category
     onCompleteSelection({
       value: category,
       title: title.trim(),
@@ -521,7 +393,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     const selectedEvent = eventsList.find(
       event => event.key === selectedCategory,
     );
-    console.log('🚫 User skipped boost - proceeding without boost data');
+    console.log('User chose Maybe Later — proceeding without purchase');
     trackEvent(AnalyticsEventType.BOOST_SKIPPED, {
       category: selectedCategory,
       parentCategory: selectedEvent?.label,
@@ -531,13 +403,6 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       timestamp: new Date().toISOString(),
     });
 
-    console.log('📤 Calling onCompleteSelection without boost data:', {
-      value: selectedCategory,
-      title: title.trim(),
-      subcategories: selectedSubcategories,
-      parentCategory: selectedEvent?.label,
-      boostData: null,
-    });
     onCompleteSelection({
       value: selectedCategory,
       title: title.trim(),
@@ -547,27 +412,65 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     });
   };
 
-  const handleBoostTierSelection = (tier: BoostTier) => {
-    setSelectedTier(tier);
+  const handlePackageSelection = (pkg: MinutesPackage) => {
+    setSelectedPackage(pkg);
     trackEvent(AnalyticsEventType.BOOST_TIER_SELECTED, {
-      tier: tier.id,
-      price: tier.price,
+      tier: pkg.id,
+      minutes: pkg.minutes,
       category: selectedCategory,
       timestamp: new Date().toISOString(),
     });
   };
 
+  // Get IAP product info for a given package
+  const getProductForPackage = (pkg: MinutesPackage) => {
+    const productId = TIER_TO_PRODUCT_ID[pkg.id];
+    return iapProducts.find((p: any) => p.productId === productId);
+  };
+
+  // Get display price for a package (from IAP or fallback)
+  const getDisplayPrice = (pkg: MinutesPackage): string => {
+    const product = getProductForPackage(pkg);
+    if (product?.localizedPrice) return product.localizedPrice;
+    // Fallback prices when IAP data isn't available
+    const fallbacks: Record<string, string> = {basic: '$2.99', premium: '$7.99', ultimate: '$14.99'};
+    return fallbacks[pkg.id] || '—';
+  };
+
+  // Get numeric price for calculations
+  const getNumericPrice = (pkg: MinutesPackage): number => {
+    const product = getProductForPackage(pkg);
+    if (product?.price) return parseFloat(product.price);
+    const fallbacks: Record<string, number> = {basic: 2.99, premium: 7.99, ultimate: 14.99};
+    return fallbacks[pkg.id] || 0;
+  };
+
+  // Get per-minute rate string with custom footer tags
+  const getPerMinuteRate = (pkg: MinutesPackage): string | null => {
+    const price = getNumericPrice(pkg);
+    const rate = price / pkg.minutes;
+    const product = getProductForPackage(pkg);
+    const symbol = product?.currency ? getCurrencySymbol(product.currency) : '$';
+    
+    if (pkg.id === 'basic') return `${symbol}${rate.toFixed(2)} / min`;
+    if (pkg.id === 'premium') return `${symbol}${rate.toFixed(2)} / min · Save 30%`;
+    if (pkg.id === 'ultimate') return `${symbol}${rate.toFixed(2)} / min · Save 50%`;
+    return null;
+  };
+
   const handleBoostPurchase = async () => {
-    if (!selectedTier) return;
+    if (!selectedPackage) return;
 
     setIsProcessing(true);
     setCurrentStep('processing');
 
     try {
-      console.log('🚀 Starting boost purchase process:', {
-        tier: selectedTier.id,
-        duration: selectedTier.duration,
-        price: selectedTier.price,
+      const price = getNumericPrice(selectedPackage);
+
+      console.log('Starting minutes purchase:', {
+        tier: selectedPackage.id,
+        minutes: selectedPackage.minutes,
+        price,
         category: selectedCategory,
         title: title.trim(),
         platform: Platform.OS,
@@ -585,13 +488,13 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         }
         await iapAdapterRef.current.initialize();
 
-        console.log('💳 Requesting App Store purchase...');
+        console.log('Requesting App Store purchase...');
         const iapResult = await iapAdapterRef.current.purchaseBoost(
           {
-            id: selectedTier.id,
-            price: selectedTier.price,
-            duration: selectedTier.duration,
-            features: selectedTier.features,
+            id: selectedPackage.id,
+            price,
+            duration: selectedPackage.minutes,
+            features: [`${selectedPackage.minutes} streaming minutes`],
           },
           {
             category: selectedCategory,
@@ -604,42 +507,38 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           throw new Error(iapResult.error || 'IAP purchase failed');
         }
 
-        console.log(
-          '✅ App Store purchase successful:',
-          iapResult.transactionId,
-        );
+        console.log('App Store purchase successful:', iapResult.transactionId);
         transactionId = iapResult.transactionId;
         receipt = iapResult.receipt;
       } else {
         // Fallback mock for web/development
-        console.log('💳 Using mock payment (non-mobile platform)...');
+        console.log('Using mock payment (non-mobile platform)...');
         await new Promise(resolve => setTimeout(resolve, 2000));
-        transactionId = `boost_${Date.now()}_${Math.random()
+        transactionId = `minutes_${Date.now()}_${Math.random()
           .toString(36)
           .substr(2, 9)}`;
         receipt = `mock_receipt_${transactionId}`;
       }
 
       // Call backend boost activation endpoint using RTK Query
-      console.log('🚀 Calling backend boost activation API...');
+      console.log('Calling backend activation API...');
       const boostResult = await boostStream({
         transactionId,
-        tier: selectedTier.id,
-        duration: selectedTier.duration,
-        price: selectedTier.price,
+        tier: selectedPackage.id,
+        duration: selectedPackage.minutes,
+        price,
         category: selectedCategory,
         title: title.trim(),
-        // receipt: receipt || `receipt_${transactionId}`,
         receipt: `receipt_${transactionId}`,
       }).unwrap();
 
-      console.log('✅ Backend boost activation successful:', boostResult);
+      console.log('Backend activation successful:', boostResult);
 
       const purchaseData: BoostPurchaseData = {
-        tier: selectedTier.id,
-        duration: selectedTier.duration,
-        price: selectedTier.price,
-        features: selectedTier.features,
+        tier: selectedPackage.id,
+        duration: selectedPackage.minutes,
+        price,
+        features: [`${selectedPackage.minutes} streaming minutes`],
         transactionId,
         purchaseTime: new Date(),
       };
@@ -647,32 +546,32 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       setBoostData(purchaseData);
       setCurrentStep('confirmation');
 
-      console.log('🎉 Boost purchase completed successfully:', purchaseData);
+      console.log('Minutes purchase completed:', purchaseData);
 
       trackEvent(AnalyticsEventType.BOOST_PURCHASED, {
-        tier: selectedTier.id,
-        price: selectedTier.price,
+        tier: selectedPackage.id,
+        price,
+        minutes: selectedPackage.minutes,
         category: selectedCategory,
         title: title.trim(),
         transactionId,
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      console.error('❌ Boost purchase failed:', error);
-      console.error('❌ Error details:', JSON.stringify(error, null, 2));
+      console.error('Minutes purchase failed:', error);
       Alert.alert(
         'Purchase Failed',
-        `Unable to complete your boost purchase: ${
+        `Unable to complete your purchase: ${
           error?.data?.error || error?.message || 'Unknown error'
         }`,
         [
           {text: 'Try Again', onPress: () => setCurrentStep('boost_tiers')},
-          {text: 'Skip Boost', onPress: handleSkipBoost},
+          {text: 'Maybe Later', onPress: handleSkipBoost},
         ],
       );
 
       trackEvent(AnalyticsEventType.PAYMENT_FAILED, {
-        tier: selectedTier.id,
+        tier: selectedPackage.id,
         category: selectedCategory,
         error: error?.data?.error || error?.message || 'Unknown error',
         timestamp: new Date().toISOString(),
@@ -686,16 +585,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     const selectedEvent = eventsList.find(
       event => event.key === selectedCategory,
     );
-    console.log(
-      '🎉 User confirmed boost purchase - proceeding with boost data',
-    );
-    console.log('📤 Calling onCompleteSelection WITH boost data:', {
-      value: selectedCategory,
-      boostData: boostData,
-      subcategories: selectedSubcategories,
-      parentCategory: selectedEvent?.label,
-      title: title.trim(),
-    });
+    console.log('Purchase confirmed — proceeding to stream');
     onCompleteSelection({
       value: selectedCategory,
       boostData: boostData!,
@@ -706,261 +596,243 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     });
   };
 
+  // ─────────────────────────────────────────────────────────────────
   // Processing Screen
+  // ─────────────────────────────────────────────────────────────────
   if (currentStep === 'processing') {
     return (
       <View style={styles.processingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.processingText}>Processing your boost...</Text>
-        <Text style={styles.processingSubtext}>Securing your premium spot</Text>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={styles.processingText}>Processing your purchase…</Text>
+        <Text style={styles.processingSubtext}>This only takes a moment</Text>
       </View>
     );
   }
 
-  // Boost Confirmation Screen
+  // ─────────────────────────────────────────────────────────────────
+  // Confirmation Screen (post-purchase success)
+  // ─────────────────────────────────────────────────────────────────
   if (currentStep === 'confirmation' && boostData) {
     return (
       <View style={styles.confirmationContainer}>
-        <View style={styles.confettiContainer}>
-          <Text style={styles.confettiEmoji}>🎉</Text>
-          <Text style={styles.confettiEmoji}>✨</Text>
-          <Text style={styles.confettiEmoji}>🚀</Text>
+        <View style={styles.successIconContainer}>
+          <Text style={styles.successIcon}>✓</Text>
         </View>
 
-        <Text style={styles.confirmationTitle}>Boost Activated! 🔥</Text>
+        <Text style={styles.confirmationTitle}>
+          {boostData.duration} minutes added
+        </Text>
         <Text style={styles.confirmationSubtitle}>
-          Your stream is now supercharged for maximum visibility
+          Minutes never expire. Go live whenever you're ready.
         </Text>
 
-        <View style={styles.boostDetailsCard}>
-          <View style={styles.boostDetailRow}>
-            <Text style={styles.boostDetailLabel}>Tier:</Text>
-            <Text
-              style={[styles.boostDetailValue, {color: selectedTier?.color}]}>
-              {selectedTier?.name}
+        <View style={styles.purchaseSummaryCard}>
+          <View style={styles.purchaseSummaryRow}>
+            <Text style={styles.purchaseSummaryLabel}>Package</Text>
+            <Text style={styles.purchaseSummaryValue}>
+              {selectedPackage?.name}
             </Text>
           </View>
-          <View style={styles.boostDetailRow}>
-            <Text style={styles.boostDetailLabel}>Duration:</Text>
-            <Text style={styles.boostDetailValue}>
-              {boostData.duration} hours
+          <View style={styles.purchaseSummaryRow}>
+            <Text style={styles.purchaseSummaryLabel}>Minutes</Text>
+            <Text style={styles.purchaseSummaryValue}>
+              {boostData.duration} min
             </Text>
           </View>
-          <View style={styles.boostDetailRow}>
-            <Text style={styles.boostDetailLabel}>Visibility:</Text>
-            <Text style={styles.boostDetailValue}>
-              {selectedTier?.multiplier} boost
-            </Text>
-          </View>
-          <View style={styles.boostDetailRow}>
-            <Text style={styles.boostDetailLabel}>Transaction:</Text>
-            <Text style={styles.boostDetailValue}>
+          <View style={styles.purchaseSummaryRow}>
+            <Text style={styles.purchaseSummaryLabel}>Transaction</Text>
+            <Text style={styles.purchaseSummaryValue}>
               {boostData.transactionId.slice(-8)}
             </Text>
           </View>
         </View>
 
-        <View style={styles.featuresUnlocked}>
-          <Text style={styles.featuresTitle}>Features Unlocked:</Text>
-          {boostData.features.map((feature, index) => (
-            <Text key={index} style={styles.featureItem}>
-              ✓ {feature}
-            </Text>
-          ))}
-        </View>
-
         <TouchableOpacity
-          style={[
-            styles.continueButton,
-            {backgroundColor: selectedTier?.color},
-          ]}
+          style={styles.startStreamButton}
           onPress={handleBoostConfirmation}>
-          <Text style={styles.continueButtonText}>Start Boosted Stream 🚀</Text>
+          <Text style={styles.startStreamButtonText}>Start Streaming</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // Boost Tiers Selection
+  // ─────────────────────────────────────────────────────────────────
+  // Screen 2 — Package Selection (boost_tiers)
+  // ─────────────────────────────────────────────────────────────────
   if (currentStep === 'boost_tiers') {
     return (
-      <View style={styles.boostTiersContainer}>
-        <View style={styles.urgencyHeader}>
-          <Animated.View
-            style={{
-              backgroundColor: countdownFlash.interpolate({
-                inputRange: [0, 1],
-                outputRange: [colors.pulse, colors.flash],
-              }),
-            }}>
-            <Text style={styles.urgencyText}>
-              Special pricing ends in {formatTime(timeLeft)}
+      <View style={styles.packageScreenContainer}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.packageScrollContent}>
+          
+          <View style={styles.headerContainer}>
+            <Text style={styles.headerSmallText}>STREAM MINUTES</Text>
+            <Text style={styles.headerTitle}>Choose your minutes</Text>
+            <Text style={styles.headerSubtitle}>
+              Minutes never expire — use them across any night out
             </Text>
-          </Animated.View>
-          <Text style={styles.scarcityText}>
-            Only {premiumSlotsLeft} premium spots left today!
-          </Text>
-        </View>
+          </View>
 
-        <Text style={styles.tiersTitle}>Choose Your Boost Level</Text>
+          <View style={styles.topInfoBanner}>
+            <CommonMaterialCommunityIcons name="clock-outline" size={18} color={colors.accent} style={{marginRight: 10}} />
+            <Text style={styles.topInfoBannerText}>
+              You have 2 free streams per week — minutes extend beyond that
+            </Text>
+          </View>
 
-        <FlatList
-          data={BOOST_TIERS}
-          keyExtractor={item => item.id}
-          renderItem={({item}) => (
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    scale: pulseAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, item.badge ? 1.02 : 1],
-                    }),
-                  },
-                ],
-              }}>
-              <TouchableOpacity
-                style={[
-                  styles.tierCard,
-                  selectedTier?.id === item.id && styles.tierCardSelected,
-                ]}
-                onPress={() => handleBoostTierSelection(item)}>
-                {item.badge && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{item.badge}</Text>
-                  </View>
-                )}
+          {iapLoading ? (
+            <View style={styles.loadingPlaceholder}>
+              <ActivityIndicator size="small" color={colors.accent} />
+              <Text style={styles.loadingText}>Loading prices…</Text>
+            </View>
+          ) : (
+            MINUTES_PACKAGES.map(pkg => {
+              const isSelected = selectedPackage?.id === pkg.id;
+              const perMinute = getPerMinuteRate(pkg);
 
-                <View style={styles.tierIcon}>
-                  <Text style={styles.tierIconText}>{item.name.charAt(0)}</Text>
-                </View>
-
-                <View style={styles.tierContent}>
-                  <Text style={styles.tierName}>{item.name}</Text>
-                  <Text style={styles.tierPrice}>${item.price}</Text>
-
-                  <View style={styles.tierFeatures}>
-                    {item.features.map((feature, index) => (
-                      <Text key={index} style={styles.tierFeature}>
-                        • {feature}
-                      </Text>
-                    ))}
-                  </View>
-                </View>
-
-                <View
+              return (
+                <TouchableOpacity
+                  key={pkg.id}
                   style={[
-                    styles.radioButton,
-                    selectedTier?.id === item.id && styles.radioButtonSelected,
-                  ]}>
-                  {selectedTier?.id === item.id && (
-                    <View style={styles.radioButtonInner} />
+                    styles.packageCard,
+                    isSelected ? styles.packageCardSelected : null,
+                  ]}
+                  onPress={() => handlePackageSelection(pkg)}
+                  activeOpacity={0.8}>
+                  
+                  {/* Absolute Top-Right Badge */}
+                  {pkg.badge && pkg.name !== 'Tonight' && (
+                    <View
+                      style={[
+                        styles.packageBadgeTopRight,
+                        {backgroundColor: pkg.badgeColor || colors.accent},
+                      ]}>
+                      <Text style={styles.packageBadgeTextTopRight}>{pkg.badge}</Text>
+                    </View>
                   )}
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
+
+                  {/* Top Row: Title + Check Circle */}
+                  <View style={styles.packageTopRow}>
+                    <View style={styles.packageTitleGroup}>
+                      <Text style={styles.packageName}>{pkg.name}</Text>
+                      {pkg.badge && pkg.name === 'Tonight' && (
+                        <View style={styles.packageBadgeInline}>
+                          <Text style={styles.packageBadgeTextInline}>• {pkg.badge}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={[styles.packageCheckCircle, isSelected && styles.packageCheckCircleSelected]}>
+                      {isSelected && <Text style={styles.packageCheckmarkText}>✓</Text>}
+                    </View>
+                  </View>
+
+                  {/* Row 2: Minutes + Price */}
+                  <View style={styles.packageRowTwo}>
+                    <Text style={styles.packageMinutes}>{pkg.minutes} minutes</Text>
+                    <Text style={[styles.packagePrice, isSelected && { color: colors.accent }]}>
+                      {getDisplayPrice(pkg)}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.packageDescription}>
+                    {pkg.description}
+                  </Text>
+
+                  <View style={styles.cardSeparator} />
+
+                  {/* Footer Badge pill */}
+                  {perMinute && (
+                    <View style={styles.footerBadgeWrapper}>
+                      <View style={[styles.footerBadge, isSelected ? styles.footerBadgeSelected : null]}>
+                        <CommonMaterialCommunityIcons 
+                           name="clock-outline" 
+                           size={14} 
+                           color={isSelected ? colors.accent : colors.iconColor} 
+                        />
+                        <Text style={[styles.footerBadgeText, isSelected ? styles.footerBadgeTextSelected : null]}>
+                          {perMinute}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })
           )}
-        />
 
-        <TouchableOpacity
-          style={[
-            styles.continueToPaymentButton,
-            !selectedTier && styles.disabledButton,
-          ]}
-          onPress={handleBoostPurchase}
-          disabled={!selectedTier}>
-          <Text style={styles.continueToPaymentText}>Continue to Payment</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  // Boost Intro Screen
-  if (currentStep === 'boost_intro') {
-    return (
-      <View style={styles.boostIntroContainer}>
-        <View style={styles.urgencyBanner}>
-          <Text style={styles.urgencyTitle}>Prime Time Alert!</Text>
-          <Text style={styles.urgencySubtitle}>
-            {competingStreamers} streamers nearby are competing for attention
-          </Text>
-          <Animated.View
-            style={{
-              backgroundColor: countdownFlash.interpolate({
-                inputRange: [0, 1],
-                outputRange: [colors.pulse, colors.flash],
-              }),
-            }}>
-            <Text style={styles.countdownText}>
-              Special pricing ends in {formatTime(timeLeft)}
+          {/* Free minutes reminder card */}
+          <View style={styles.freeMinutesCard}>
+            <CommonMaterialCommunityIcons name="heart-outline" size={20} color={colors.success} style={{marginTop: 2, marginRight: 12}} />
+            <Text style={styles.freeMinutesText}>
+              Your <Text style={{color: colors.success, fontWeight: '700'}}>2 free streams per week</Text> continue regardless of purchase — minutes only activate after your free streams are used.
             </Text>
-          </Animated.View>
-        </View>
-
-        <View style={styles.socialProofContainer}>
-          <Text style={styles.socialProofTitle}>Why streamers boost:</Text>
-          <View style={styles.statRow}>
-            <Text style={styles.statNumber}>89%</Text>
-            <Text style={styles.statLabel}>get 5x more viewers</Text>
           </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statNumber}>73%</Text>
-            <Text style={styles.statLabel}>reach trending page</Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statNumber}>94%</Text>
-            <Text style={styles.statLabel}>would boost again</Text>
-          </View>
-        </View>
+        </ScrollView>
 
-        <View style={styles.scarcityContainer}>
-          <Text style={styles.scarcityTitle}>⚡ Limited Availability</Text>
-          <View style={styles.slotsVisualization}>
-            {[...Array(10)].map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.slot,
-                  i < 7 ? styles.takenSlot : styles.availableSlot,
-                ]}
-              />
-            ))}
-          </View>
-          <Text style={styles.slotsText}>
-            {premiumSlotsLeft}/10 premium spots available today
-          </Text>
-        </View>
-
-        <View style={styles.introButtons}>
-          <Animated.View
-            style={{
-              transform: [
-                {
-                  scale: pulseAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [1, 1.05],
-                  }),
-                },
-              ],
-            }}>
-            <TouchableOpacity
-              style={styles.boostButton}
-              onPress={() => setCurrentStep('boost_tiers')}>
-              <Text style={styles.boostButtonText}>🚀 Boost My Stream</Text>
-            </TouchableOpacity>
-          </Animated.View>
-
+        {/* Sticky bottom CTA */}
+        <View style={styles.stickyBottomContainer}>
+          {selectedPackage && (
+             <Text style={styles.stickySummaryText}>
+               {selectedPackage.name} · {selectedPackage.minutes} min · <Text style={{fontWeight: '700'}}>{getDisplayPrice(selectedPackage)}</Text>
+             </Text>
+          )}
           <TouchableOpacity
-            style={styles.skipIntroButton}
-            onPress={handleSkipBoost}>
-            <Text style={styles.skipIntroButtonText}>No Thanks</Text>
+            style={[
+              styles.continueToPaymentButton,
+              !selectedPackage && styles.continueToPaymentDisabled,
+            ]}
+            onPress={handleBoostPurchase}
+            disabled={!selectedPackage}>
+            <CommonMaterialCommunityIcons name="credit-card-outline" size={20} color={!selectedPackage ? colors.textMuted : colors.text} style={{marginRight: 10}} />
+            <Text
+              style={[
+                styles.continueToPaymentText,
+                !selectedPackage && styles.continueToPaymentTextDisabled,
+              ]}>
+              Continue to payment
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────
+  // Screen 1 — Trigger Screen (boost_intro)
+  // ─────────────────────────────────────────────────────────────────
+  if (currentStep === 'boost_intro') {
+    return (
+      <View style={styles.triggerContainer}>
+        <View style={styles.triggerContent}>
+          <Text style={styles.triggerHeadline}>
+            Want to stream longer tonight?
+          </Text>
+          <Text style={styles.triggerSubheadline}>
+            Free minutes run out fast. Add more to keep your stream going without interruptions.
+          </Text>
+
+          {/* Primary CTA */}
+          <TouchableOpacity
+            style={styles.getMoreMinutesButton}
+            onPress={() => setCurrentStep('boost_tiers')}>
+            <Text style={styles.getMoreMinutesText}>Get More Minutes</Text>
+          </TouchableOpacity>
+
+          {/* Dismissal */}
+          <TouchableOpacity
+            style={styles.maybeLaterButton}
+            onPress={handleSkipBoost}>
+            <Text style={styles.maybeLaterText}>Maybe Later</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────
   // Category Selection Screen (Default)
+  // ─────────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
       <ScrollView
@@ -972,15 +844,6 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           Choose your vibe and reach more people
         </Text>
       </View>
-
-      {/* <TextInput
-        style={styles.titleInput}
-        placeholder="Give your stream a vibe, party? chill? wild?"
-        placeholderTextColor={colors.textMuted}
-        value={title}
-        onChangeText={handleTitleChange}
-        maxLength={60}
-      /> */}
 
       <Text style={styles.categoryTitle}>What's your vibe?</Text>
 
@@ -1006,7 +869,6 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
               );
               handleCategorySelection(item.key, false);
             }}>
-            {/* <Text style={styles.categoryEmoji}>{item.emoji}</Text> */}
             <View
               style={{
                 borderWidth: 1,
@@ -1090,71 +952,6 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         </View>
       )}
 
-        {/* Venue Tagging Section */}
-        {venueLoadingState === 'loading' && (
-          <View style={venueStyles.section}>
-            <Text style={styles.categoryTitle}>Tag a venue</Text>
-            <View style={venueStyles.skeletonRow}>
-              {[0, 1, 2].map(i => (
-                <View key={i} style={venueStyles.skeletonCard} />
-              ))}
-            </View>
-          </View>
-        )}
-
-        {venueLoadingState === 'loaded' && nearbyVenues.length > 0 && (
-          <View style={venueStyles.section}>
-            <Text style={styles.categoryTitle}>Tag a venue</Text>
-            <FlatList
-              horizontal
-              data={[{id: '__none__', name: 'None', primaryTag: null, distanceMetres: 0, googlePlaceId: null} as NearbyVenue, ...nearbyVenues]}
-              keyExtractor={item => item.id}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={venueStyles.listContent}
-              renderItem={({item}) => {
-                const isNone = item.id === '__none__';
-                const isSelected = isNone ? selectedVenueId === null : selectedVenueId === item.id;
-                return (
-                  <TouchableOpacity
-                    style={[
-                      venueStyles.card,
-                      isSelected && venueStyles.cardSelected,
-                    ]}
-                    onPress={() => {
-                      if (isNone) {
-                        setSelectedVenueId(null);
-                      } else {
-                        setSelectedVenueId(prev => prev === item.id ? null : item.id);
-                      }
-                    }}
-                    activeOpacity={0.7}>
-                    {isSelected && (
-                      <View style={venueStyles.checkmark}>
-                        <Text style={venueStyles.checkmarkText}>✓</Text>
-                      </View>
-                    )}
-                    <Text
-                      style={[venueStyles.cardName, isSelected && venueStyles.cardNameSelected]}
-                      numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                    {!isNone && item.primaryTag && (
-                      <Text style={venueStyles.cardTag} numberOfLines={1}>
-                        {item.primaryTag.replace(/_/g, ' ')}
-                      </Text>
-                    )}
-                    {!isNone && (
-                      <Text style={venueStyles.cardDistance}>
-                        {formatDistance(item.distanceMetres)}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
-        )}
-
       {selectedCategory && (
         <View style={styles.actionSection}>
           <Text style={styles.actionTitle}>Ready to stream?</Text>
@@ -1175,25 +972,9 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           <TouchableOpacity
             style={styles.boostActionButton}
             onPress={() => handleCategorySelection(selectedCategory, true)}>
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    scale: pulseAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.02],
-                    }),
-                  },
-                ],
-              }}>
-              <Text style={styles.boostActionText}>
-                {' '}
-                Boost for More Viewers
-              </Text>
-              {/* <Text style={styles.boostActionSubtext}>
-                Get 5x more visibility
-              </Text> */}
-            </Animated.View>
+            <Text style={styles.boostActionText}>
+              Get More Minutes
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -1280,7 +1061,7 @@ const venueStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  // Base container
+  // ── Base container ──
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -1292,7 +1073,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
 
-  // Header styles
+  // ── Header ──
   header: {
     alignItems: 'center',
     marginBottom: 30,
@@ -1311,22 +1092,7 @@ const styles = StyleSheet.create({
     fontWeight:'700'
   },
 
-  // Title input
-  titleInput: {
-    backgroundColor: colors.inputBG,
-    borderWidth: 2,
-    borderColor: colors.inputBorder,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 14,
-    color: colors.inputText,
-    marginBottom: 30,
-    textAlign: 'center',
-    // opacity: 0.4,
-    fontWeight: '600',
-  },
-
-  // Category selection
+  // ── Category selection ──
   categoryTitle: {
     fontSize: 12,
     fontWeight: '700',
@@ -1338,11 +1104,8 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     paddingBottom: 30,
-    // justifyContent: 'center',
-
   },
   categoryTag: {
-    // backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 25,
@@ -1355,15 +1118,9 @@ const styles = StyleSheet.create({
     maxWidth: (width - 73) / 2.9,
   },
   selectedCategoryTag: {
-    // backgroundColor: colors.tierBasicBackground,
-    // borderColor: colors.primaryBorder,
     backgroundColor: colors.tierBasicBackground,
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  categoryEmoji: {
-    fontSize: 20,
-    marginBottom: 4,
   },
   categoryLabel: {
     fontSize: 11,
@@ -1373,7 +1130,7 @@ const styles = StyleSheet.create({
     marginTop: 7
   },
 
-  // Action section
+  // ── Action section ──
   actionSection: {
     marginTop: 20,
     paddingTop: 20,
@@ -1394,12 +1151,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 8,
-    // height: 43,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
-    // marginBottom: 20,
   },
   primaryActionText: {
     fontSize: 16,
@@ -1430,9 +1185,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 8,
-    // paddingVertical: 10,
-    // paddingHorizontal: 32,
-    // borderRadius: 15,
     marginBottom: 10,
   },
   boostActionText: {
@@ -1441,36 +1193,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
   },
-  boostActionSubtext: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    // marginTop: 4,
-  },
 
-  // Boost preview
-  boostPreview: {
-    backgroundColor: colors.tierPremiumBackground,
-    borderWidth: 1,
-    borderColor: colors.borderActive,
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 20,
-  },
-  previewTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  previewText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-
-  // Processing screen
+  // ── Processing screen ──
   processingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -1479,20 +1203,20 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   processingText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 10,
+    marginTop: 20,
+    marginBottom: 8,
   },
   processingSubtext: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 30,
   },
 
-  // Confirmation screen
+  // ── Confirmation screen ──
   confirmationContainer: {
     flex: 1,
     backgroundColor: colors.background,
@@ -1500,419 +1224,369 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  confettiContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 30,
-    width: '100%',
+  successIconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.success,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  confettiEmoji: {
-    fontSize: 40,
-    textAlign: 'center',
+  successIcon: {
+    fontSize: 32,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   confirmationTitle: {
-    fontSize: 32,
-    fontWeight: '600',
-    color: colors.primary,
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   confirmationSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 32,
+    lineHeight: 22,
   },
-  boostDetailsCard: {
+  purchaseSummaryCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 20,
-    marginBottom: 30,
+    marginBottom: 32,
     width: '100%',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  boostDetailRow: {
+  purchaseSummaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  boostDetailLabel: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
-  boostDetailValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  featuresUnlocked: {
-    marginBottom: 30,
-    width: '100%',
-  },
-  featuresTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  featureItem: {
+  purchaseSummaryLabel: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 8,
-    textAlign: 'center',
   },
-  continueButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 25,
-    width: '100%',
-  },
-  continueButtonText: {
-    fontSize: 18,
+  purchaseSummaryValue: {
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text,
+  },
+  startStreamButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: '100%',
+  },
+  startStreamButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.background,
     textAlign: 'center',
   },
 
-  // Boost tiers screen
-  boostTiersContainer: {
+  // ── Screen 1: Trigger screen (boost_intro) ──
+  triggerContainer: {
     flex: 1,
     backgroundColor: colors.background,
-    padding: 16,
-    paddingTop: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
   },
-  urgencyHeader: {
-    marginBottom: 12,
+  triggerContent: {
+    width: '100%',
     alignItems: 'center',
   },
-  urgencyText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.urgency,
-    textAlign: 'center',
-    padding: 10,
-    borderRadius: 8,
-  },
-  scarcityText: {
-    fontSize: 12,
-    color: colors.scarcity,
-    textAlign: 'center',
-    marginTop: 6,
-  },
-  tiersTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+  triggerHeadline: {
+    fontSize: 24,
+    fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
     marginBottom: 12,
+    lineHeight: 32,
   },
-  tierCard: {
+  triggerSubheadline: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 40,
+    lineHeight: 22,
+    paddingHorizontal: 8,
+  },
+  getMoreMinutesButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: 16,
+    borderRadius: 12,
+    width: '100%',
+    marginBottom: 16,
+  },
+  getMoreMinutesText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.background,
+    textAlign: 'center',
+  },
+  maybeLaterButton: {
+    paddingVertical: 12,
+  },
+  maybeLaterText: {
+    fontSize: 15,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+
+  // ── Screen 2: Package selection (boost_tiers) ──
+  packageScreenContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingTop: Platform.OS === 'ios' ? 40 : 20,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  headerSmallText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.textSecondary,
+    letterSpacing: 1.5,
+    marginBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: colors.text,
+    letterSpacing: -0.5,
+    marginBottom: 10,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: 16,
+  },
+  topInfoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  topInfoBannerText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.accent,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  packageScrollContent: {
+    padding: 20,
+    paddingBottom: 140,
+  },
+  loadingPlaceholder: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 12,
+  },
+  packageCard: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
     marginBottom: 16,
     position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
   },
-  badge: {
+  packageCardSelected: {
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+  },
+  packageBadgeTopRight: {
     position: 'absolute',
-    top: -8,
-    right: 16,
-    backgroundColor: colors.primary,
+    top: -10,
+    right: 20,
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 5,
+    borderRadius: 6,
   },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.background,
+  packageBadgeTextTopRight: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
-  tierName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  tierPrice: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-    marginBottom: 12,
-  },
-  tierIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
+  packageTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginRight: 16,
+    marginBottom: 6,
   },
-  tierIconText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.background,
+  packageTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  tierContent: {
-    flex: 1,
+  packageName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.text,
+    marginRight: 8,
   },
-  tierFeatures: {
-    marginTop: 8,
+  packageBadgeInline: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: colors.tonightOnlyBadgeBG,
+    borderColor: colors.tonightOnlyBadgeBorder,
+    borderWidth: 1,
+    
   },
-  tierFeature: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 4,
-    paddingLeft: 8,
+  packageBadgeTextInline: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.tonightOnlyBadge,
   },
-  radioButton: {
+  packageCheckCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: colors.border,
-    marginLeft: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
-  radioButtonSelected: {
-    borderColor: colors.primary,
+  packageCheckCircleSelected: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
-  radioButtonInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.primary,
-  },
-  continueToPaymentButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 24,
-    marginHorizontal: 16,
-  },
-  continueToPaymentText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.background,
-    textAlign: 'center',
-  },
-  tierCardSelected: {
-    borderColor: colors.primary,
-    borderWidth: 2,
-  },
-  tierMultiplier: {
+  packageCheckmarkText: {
+    color: '#FFFFFF',
     fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 8,
+    fontWeight: '900',
   },
-  priceContainer: {
+  packageRowTwo: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  originalPrice: {
+  packageMinutes: {
     fontSize: 14,
-    color: colors.textMuted,
-    textDecorationLine: 'line-through',
-    marginRight: 8,
-  },
-  currentPrice: {
-    fontSize: 16,
+    color: colors.textSecondary,
     fontWeight: '600',
-    color: colors.primary,
   },
-  duration: {
+  packagePrice: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: colors.accent,
+  },
+  packageDescription: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 12,
+    lineHeight: 20,
+    fontWeight: '600',
+    paddingRight: 20,
   },
-  featuresContainer: {
-    marginTop: 8,
-  },
-  feature: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  actionButtons: {
-    marginTop: 20,
-  },
-  purchaseButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  disabledButton: {
+  cardSeparator: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 16,
     opacity: 0.5,
   },
-  purchaseButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.background,
-    textAlign: 'center',
+  footerBadgeWrapper: {
+    flexDirection: 'row',
   },
-  skipButton: {
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-  },
-  skipButtonText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-
-  // Boost intro screen
-  boostIntroContainer: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: 16,
-    paddingTop: 10,
-  },
-  urgencyBanner: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.urgency,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
+  footerBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  urgencyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.urgency,
-    textAlign: 'center',
-    marginBottom: 6,
+  footerBadgeSelected: {
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
   },
-  urgencySubtitle: {
+  footerBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginLeft: 6,
+  },
+  footerBadgeTextSelected: {
+    color: colors.accent,
+  },
+  freeMinutesCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  freeMinutesText: {
+    flex: 1,
     fontSize: 13,
     color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  countdownText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.urgency,
-    textAlign: 'center',
-    padding: 8,
-    borderRadius: 8,
-  },
-  socialProofContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  socialProofTitle: {
-    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '600',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 16,
   },
-  statRow: {
+  stickyBottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  stickySummaryText: {
+    textAlign: 'center',
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 16,
+    fontWeight: '600',
+  },
+  continueToPaymentButton: {
+    backgroundColor: colors.continueBtnBG,
+    paddingVertical: 16,
+    borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.primary,
-    marginRight: 8,
-  },
-  statLabel: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
-  scarcityContainer: {
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
     borderWidth: 1,
-    borderColor: colors.scarcity,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-    alignItems: 'center',
+    borderColor: colors.cntBtnBorder,
   },
-  scarcityTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.scarcity,
-    marginBottom: 12,
+  continueToPaymentDisabled: {
+    // backgroundColor: colors.cardBackground,
+    opacity: 0.5,
   },
-  slotsVisualization: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  slot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginHorizontal: 2,
-  },
-  takenSlot: {
-    backgroundColor: colors.error,
-  },
-  availableSlot: {
-    backgroundColor: colors.success,
-  },
-  slotsText: {
-    fontSize: 14,
-    color: colors.primary,
-    textAlign: 'center',
-  },
-  competitorWarning: {
-    backgroundColor: 'rgba(255, 165, 0, 0.1)',
-    borderWidth: 1,
-    borderColor: colors.warning,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 30,
-  },
-  warningText: {
-    fontSize: 14,
-    color: colors.warning,
-    textAlign: 'center',
-  },
-  introButtons: {
-    marginTop: 16,
-    paddingBottom: 20,
-  },
-  boostButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 15,
-    marginBottom: 12,
-  },
-  boostButtonText: {
-    fontSize: 18,
-    // fontWeight: 'bold',
+  continueToPaymentText: {
+    fontSize: 17,
+    fontWeight: '800',
     color: colors.text,
-    textAlign: 'center',
   },
-  skipIntroButton: {
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 25,
-  },
-  skipIntroButtonText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
+  continueToPaymentTextDisabled: {
+    color: colors.textMuted,
   },
 
-  // Legacy text style
+  // ── Legacy text style ──
   text: {
     fontSize: 14,
     fontWeight: '600',

@@ -14,9 +14,11 @@ import {store} from './redux/store';
 import { initFCM } from './src/Services/FCMNotificationService';
 import { AnalyticsProvider } from './src/Providers/AnalyticsProvider';
 import { setLocalData } from './src/Utils/LocalStorageHelper';
+import Constants from 'expo-constants';
 
 
 function App() {
+  console.log({Constants}, "------------------");
   const isDarkMode = useColorScheme() === 'dark';
 
   useEffect(() => {
