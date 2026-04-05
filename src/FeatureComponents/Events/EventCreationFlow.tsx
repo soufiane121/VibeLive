@@ -60,6 +60,8 @@ const EventCreationFlow: React.FC = () => {
       duration: 1,
       totalCost: 0,
     },
+    coverImageUrl: null as string | null,
+    coverImageUploadState: 'idle' as 'idle' | 'uploading' | 'success' | 'error',
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -206,8 +208,9 @@ const EventCreationFlow: React.FC = () => {
 
   const createEventWithPromotion = async (transactionId?: string) => {
     try {
+      const { coverImageUploadState, coverImageUrl, ...formDataWithoutImageState } = formData;
       const eventData = {
-        ...formData,
+        ...formDataWithoutImageState,
         startDate: formData.startDate.toISOString(),
         endDate: formData.endDate.toISOString(),
         source: 'app',
@@ -215,6 +218,8 @@ const EventCreationFlow: React.FC = () => {
         promotionExpiry: formData.promotion.isPromoted 
           ? new Date(Date.now() + formData.promotion.duration * 24 * 60 * 60 * 1000).toISOString()
           : null,
+        // Include coverImageUrl only if it exists
+        ...(coverImageUrl && { coverImageUrl }),
         // Include transaction ID if payment was processed
         ...(transactionId && { promotionTransactionId: transactionId })
       };
@@ -307,9 +312,9 @@ const EventCreationFlow: React.FC = () => {
           </View>
 
           <TouchableOpacity 
-            style={[styles.button, styles.nextButton, currentStep === 5 && styles.createSubmitButton]} 
+            style={[styles.button, styles.nextButton, currentStep === 5 && styles.createSubmitButton, (isLoading || formData.coverImageUploadState === 'uploading') && styles.buttonDisabled]} 
             onPress={handleNext} 
-            disabled={isLoading}
+            disabled={isLoading || formData.coverImageUploadState === 'uploading'}
           >
             {isLoading ? (
               <ActivityIndicator color={currentStep === 5 ? '#FFF' : colors.nextButtonText} />
@@ -414,6 +419,9 @@ const styles = StyleSheet.create({
     fontSize: 18, 
     fontWeight: '800', 
     color: colors.nextButtonText, 
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
 });
 

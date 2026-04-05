@@ -1,13 +1,24 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
+  Image,
+  ActivityIndicator,
+  ActionSheetIOS,
+  Platform,
+  Modal,
+  Pressable,
 } from 'react-native';
 import {CommonMaterialCommunityIcons} from '../../../UIComponents/Icons';
 import { GlobalColors } from '../../../styles/GlobalColors';
+import * as ImagePicker from 'expo-image-picker';
+import {
+  useGetUploadUrlMutation,
+} from '../../../../features/Events/EventsApi';
 
 const eventTypes = [
   {key: 'music', label: 'Music', icon: 'music-note'},
@@ -23,6 +34,8 @@ interface EventBasicDetailsProps {
     title: string;
     description: string;
     eventType: string;
+    coverImageUrl: string | null;
+    coverImageUploadState: 'idle' | 'uploading' | 'success' | 'error';
   };
   errors: {[key: string]: string};
   onUpdateFormData: (updates: any) => void;
@@ -35,10 +48,288 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
   errors,
   onUpdateFormData,
 }) => {
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const [showAndroidActionSheet, setShowAndroidActionSheet] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+
+  const [getUploadUrl] = useGetUploadUrlMutation();
+
+  const showImagePickerOptions = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Choose from Library', 'Take Photo'],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            pickImageFromLibrary();
+          } else if (buttonIndex === 2) {
+            takePhoto();
+          }
+        }
+      );
+    } else {
+      setShowAndroidActionSheet(true);
+    }
+  };
+
+  const pickImageFromLibrary = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert('Permission required', 'Permission to access the media library is required.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      await handleImageSelected(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert('Permission required', 'Permission to access the camera is required.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      await handleImageSelected(result.assets[0].uri);
+    }
+  };
+
+  const handleImageSelected = async (uri: string) => {
+    setLocalImageUri(uri);
+    onUpdateFormData({ coverImageUploadState: 'uploading' });
+
+    try {
+      const uploadUrlResponse = await getUploadUrl().unwrap();
+      
+      if (!uploadUrlResponse.success) {
+        throw new Error('Failed to get upload URL');
+      }
+
+      const { uploadUrl } = uploadUrlResponse.data;
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: uri,
+        type: 'image/jpeg',
+        name: 'event-cover.jpg',
+      } as any);
+
+      console.log('Uploading to Cloudflare:', uploadUrl);
+      console.log('Image URI:', uri);
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      console.log('Cloudflare upload status:', uploadResponse.status);
+      
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error('Cloudflare upload error:', uploadResponse.status, errorText);
+        throw new Error(`Failed to upload image: ${uploadResponse.status} ${errorText}`);
+      }
+
+      // Extract the public URL from Cloudflare's response
+      const cloudflareResult = await uploadResponse.json();
+      const coverImageUrl = cloudflareResult.result?.variants?.[0];
+      
+      if (!coverImageUrl) {
+        throw new Error('Failed to get image URL from Cloudflare response');
+      }
+
+      onUpdateFormData({
+        coverImageUrl,
+        coverImageUploadState: 'success',
+      });
+    } catch (error) {
+      console.error('Image upload error:', error);
+      setLocalImageUri(null);
+      onUpdateFormData({
+        coverImageUrl: null,
+        coverImageUploadState: 'error',
+      });
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setShowRemoveConfirm(true);
+  };
+
+  const confirmRemovePhoto = () => {
+    setLocalImageUri(null);
+    onUpdateFormData({
+      coverImageUrl: null,
+      coverImageUploadState: 'idle',
+    });
+    setShowRemoveConfirm(false);
+  };
+
+  const renderPhotoUploadSection = () => {
+    const { coverImageUrl, coverImageUploadState } = formData;
+    const hasImage = coverImageUrl || localImageUri;
+    const isUploading = coverImageUploadState === 'uploading';
+    const hasError = coverImageUploadState === 'error';
+
+    if (isUploading && localImageUri) {
+      return (
+        <View style={styles.photoContainer}>
+          <Image source={{ uri: localImageUri }} style={styles.photoImage} />
+          <View style={styles.uploadingOverlay}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+          </View>
+        </View>
+      );
+    }
+
+    if (hasImage && !isUploading) {
+      const imageUri = coverImageUrl || localImageUri;
+      return (
+        <View style={styles.photoContainer}>
+          <Image source={{ uri: imageUri! }} style={styles.photoImage} />
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={showImagePickerOptions}
+            activeOpacity={0.8}
+          >
+            <CommonMaterialCommunityIcons name="pencil" size={16} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={handleRemovePhoto}
+            activeOpacity={0.8}
+          >
+            <CommonMaterialCommunityIcons name="close" size={14} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        style={styles.uploadArea}
+        onPress={showImagePickerOptions}
+        activeOpacity={0.7}
+      >
+        <CommonMaterialCommunityIcons
+          name="cloud-upload-outline"
+          size={45}
+          color={colors.primary}
+        />
+        <Text style={styles.uploadLabel}>Add Event Photo</Text>
+        <Text style={styles.uploadHint}>
+          Optional · Tap to choose from library or take a photo
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.stepContent}>
       <Text style={styles.stepSubtitle}>STEP 1 OF 5</Text>
       <Text style={styles.stepTitle}>Event details</Text>
+
+      {/* Photo Upload Section */}
+      <View style={styles.photoSection}>
+        {renderPhotoUploadSection()}
+        {formData.coverImageUploadState === 'error' && (
+          <Text style={styles.uploadError}>
+            Photo upload failed. Please try again.
+          </Text>
+        )}
+      </View>
+
+      {/* Android Action Sheet Modal */}
+      <Modal
+        visible={showAndroidActionSheet}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAndroidActionSheet(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowAndroidActionSheet(false)}
+        >
+          <View style={styles.actionSheetContainer}>
+            <TouchableOpacity
+              style={styles.actionSheetOption}
+              onPress={() => {
+                setShowAndroidActionSheet(false);
+                pickImageFromLibrary();
+              }}
+            >
+              <CommonMaterialCommunityIcons name="image" size={24} color={colors.text} />
+              <Text style={styles.actionSheetText}>Choose from Library</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionSheetOption}
+              onPress={() => {
+                setShowAndroidActionSheet(false);
+                takePhoto();
+              }}
+            >
+              <CommonMaterialCommunityIcons name="camera" size={24} color={colors.text} />
+              <Text style={styles.actionSheetText}>Take Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionSheetOption, styles.actionSheetCancel]}
+              onPress={() => setShowAndroidActionSheet(false)}
+            >
+              <Text style={styles.actionSheetCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Remove Photo Confirmation Modal */}
+      <Modal
+        visible={showRemoveConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRemoveConfirm(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowRemoveConfirm(false)}
+        >
+          <View style={styles.confirmContainer}>
+            <Text style={styles.confirmTitle}>Remove photo?</Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={styles.confirmCancelButton}
+                onPress={() => setShowRemoveConfirm(false)}
+              >
+                <Text style={styles.confirmCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmRemoveButton}
+                onPress={confirmRemovePhoto}
+              >
+                <Text style={styles.confirmRemoveText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
 
       <View style={styles.inputGroup}>
         <View style={styles.labelContainer}>
@@ -186,14 +477,14 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   errorText: {
-    fontSize: 14, 
-    color: colors.error, 
+    fontSize: 14,
+    color: colors.error,
     marginTop: 6,
     fontWeight: '600',
   },
   eventTypeGrid: {
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginTop: 4,
   },
@@ -234,6 +525,162 @@ const styles = StyleSheet.create({
   },
   eventTypeTextActive: {
     color: colors.primary,
+  },
+  // Photo Upload Styles
+  photoSection: {
+    marginBottom: 24,
+  },
+  photoContainer: {
+    width: '100%',
+    height: 180,
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  uploadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editButton: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    // backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadArea: {
+    width: '100%',
+    height: 180,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.inputBackground,
+  },
+  uploadLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginTop: 8,
+  },
+  uploadHint: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 4,
+    fontWeight: '700'
+  },
+  uploadError: {
+    fontSize: 14,
+    color: colors.error,
+    marginTop: 8,
+    fontWeight: '600',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  actionSheetContainer: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 34,
+    paddingTop: 8,
+  },
+  actionSheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  actionSheetText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginLeft: 16,
+  },
+  actionSheetCancel: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    marginTop: 8,
+    justifyContent: 'center',
+  },
+  actionSheetCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  confirmContainer: {
+    backgroundColor: colors.surface,
+    marginHorizontal: 20,
+    marginBottom: 34,
+    borderRadius: 16,
+    padding: 20,
+  },
+  confirmTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  confirmCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    marginRight: 8,
+    borderRadius: 12,
+    backgroundColor: colors.inputBackground,
+    alignItems: 'center',
+  },
+  confirmCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  confirmRemoveButton: {
+    flex: 1,
+    paddingVertical: 14,
+    marginLeft: 8,
+    borderRadius: 12,
+    backgroundColor: colors.error,
+    alignItems: 'center',
+  },
+  confirmRemoveText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
 

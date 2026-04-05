@@ -26,6 +26,7 @@ export interface Event {
     url: string;
     publicId: string;
   };
+  coverImageUrl?: string;
   creator: {
     _id: string;
     username: string;
@@ -79,8 +80,17 @@ export interface CreateEventRequest {
     url: string;
     publicId: string;
   };
+  coverImageUrl?: string;
   tags?: string[];
   capacity?: number;
+}
+
+export interface UploadUrlResponse {
+  success: boolean;
+  data: {
+    uploadUrl: string;
+    imageId: string;
+  };
 }
 
 export interface EventsResponse {
@@ -258,6 +268,14 @@ export const eventsApi = createApi({
       query: () => '/user/my-rsvps',
       providesTags: ['UserRSVPs'],
     }),
+
+    // Get Cloudflare Images upload URL
+    getUploadUrl: builder.mutation<UploadUrlResponse, void>({
+      query: () => ({
+        url: '/upload-url',
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
@@ -278,4 +296,5 @@ export const {
   useLazyGetUserEventsQuery,
   useGetUserRSVPsQuery,
   useLazyGetUserRSVPsQuery,
+  useGetUploadUrlMutation,
 } = eventsApi;

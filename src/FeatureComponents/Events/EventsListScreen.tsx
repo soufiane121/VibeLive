@@ -60,7 +60,6 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
       style={styles.eventItem}
       onPress={onPress}
       activeOpacity={0.8}>
-
       <View style={styles.eventHeader}>
         <View
           style={[
@@ -68,7 +67,9 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
             isMusic ? styles.eventTypeBadgeMusic : null,
           ]}>
           <CommonMaterialCommunityIcons
-            name={(eventTypeIcons[event.eventType] || eventTypeIcons.other) as any}
+            name={
+              (eventTypeIcons[event.eventType] || eventTypeIcons.other) as any
+            }
             size={12}
             color={isMusic ? colors.primary : colors.textSecondary}
             style={{marginRight: 6}}
@@ -94,8 +95,11 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
 
       <View style={styles.eventContent}>
         <View style={styles.eventImageContainer}>
-          {event.banner?.url ? (
-            <Image source={{uri: event.banner.url}} style={styles.eventImage} />
+          {event.banner?.url || event?.coverImageUrl ? (
+            <Image
+              source={{uri: event?.banner?.url || event?.coverImageUrl}}
+              style={styles.eventImage}
+            />
           ) : (
             <CommonMaterialCommunityIcons
               name={(eventTypeIcons[event.eventType] || 'music-note') as any}
@@ -130,13 +134,16 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
               </View>
             ) : (
               <Text style={styles.paidPriceText}>
-                ${event.ticketing?.price || 0} {event.ticketing?.currency || 'USD'}
+                ${event.ticketing?.price || 0}{' '}
+                {event.ticketing?.currency || 'USD'}
               </Text>
             )}
 
             <View style={styles.rsvpInfo}>
               <View style={styles.interestedCircle} />
-              <Text style={styles.rsvpCount}>{event.rsvpCount || 0} interested</Text>
+              <Text style={styles.rsvpCount}>
+                {event.rsvpCount || 0} interested
+              </Text>
             </View>
 
             <TouchableOpacity style={styles.bookmarkButton}>
@@ -408,6 +415,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth:2,
+    borderColor: colors.border
   },
   filtersWrapper: {
     height: 50,

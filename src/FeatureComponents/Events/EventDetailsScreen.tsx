@@ -45,7 +45,7 @@ const EventDetailsScreen: React.FC = () => {
   const event = eventResponse?.data;
   // TODO:: WE USED TO LISTEN TO hasUserRSVP FROM THE API BUT SOMEHOW IT'S TOPPED AND SWITCH TO LOCAL STATE TO ITTERRATE OVER THE RSVPS ARRAY
   // EXAMPLE OF BEFORE: event.hasUserRSVP
-  
+  console.log({event});
   const currentUserRSVP = event?.rsvps?.find((rsvp: any) => rsvp?.user?._id === currentUser?._id || rsvp?.user === currentUser?._id);
   const hasUserRSVP = !!currentUserRSVP;
   const userRSVPStatus = currentUserRSVP?.status;
@@ -90,18 +90,18 @@ const EventDetailsScreen: React.FC = () => {
     }
   };
 
-  const handleShare = async () => {
-    if (!event) return;
+  // const handleShare = async () => {
+  //   if (!event) return;
 
-    try {
-      await Share.share({
-        message: `Check out this event: ${event.title}\n${event.description}\n\nWhen: ${formatEventDate(event.startDate)} at ${formatEventTime(event.startDate, event.endDate)}\nWhere: ${event.location.address}`,
-        title: event.title,
-      });
-    } catch (error) {
-      console.error('Error sharing event:', error);
-    }
-  };
+  //   try {
+  //     await Share.share({
+  //       message: `Check out this event: ${event.title}\n${event.description}\n\nWhen: ${formatEventDate(event.startDate)} at ${formatEventTime(event.startDate, event.endDate)}\nWhere: ${event.location.address}`,
+  //       title: event.title,
+  //     });
+  //   } catch (error) {
+  //     console.error('Error sharing event:', error);
+  //   }
+  // };
 
   const handleGetDirections = () => {
     if (!event) return;
@@ -148,14 +148,20 @@ const EventDetailsScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Header Floating */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerIconButton} onPress={() => {
-          if (fromEventCreation) {
-            navigation.navigate('EventDetails', { eventId: event._id });
-          } else {
-            navigation.goBack();
-          }
-        }}>
-          <CommonMaterialCommunityIcons name="chevron-left" size={28} color={colors.headerIconText} />
+        <TouchableOpacity
+          style={styles.headerIconButton}
+          onPress={() => {
+            if (fromEventCreation) {
+              navigation.navigate('EventDetails', {eventId: event._id});
+            } else {
+              navigation.goBack();
+            }
+          }}>
+          <CommonMaterialCommunityIcons
+            name="chevron-left"
+            size={28}
+            color={colors.headerIconText}
+          />
         </TouchableOpacity>
         {/* TODO:: Add share functionality */}
         {/* <TouchableOpacity style={styles.headerIconButton} onPress={handleShare}>
@@ -163,31 +169,50 @@ const EventDetailsScreen: React.FC = () => {
         </TouchableOpacity> */}
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        bounces={false}>
         {/* Event Banner */}
-        {!event.banner?.url ? (
+        {!event.banner?.url && !event?.coverImageUrl ? (
           <LinearGradient
             colors={[colors.secondaryBackground, colors.background]}
             style={styles.gradientBanner}
           />
         ) : (
-          <Image source={{ uri: event.banner.url }} style={styles.banner} />
+          <Image
+            source={{uri: event?.banner?.url || event?.coverImageUrl}}
+            style={styles.banner}
+          />
         )}
 
         {/* Event Info */}
         <View style={styles.eventInfo}>
           {/* Event Type Badge */}
           <View style={styles.eventTypeBadge}>
-            <CommonMaterialCommunityIcons name="music-note" size={16} color={ColorUtils.getEventTypeColor(event.eventType)} />
-            <Text style={[styles.eventTypeText, { color: ColorUtils.getEventTypeColor(event.eventType) }]}>
+            <CommonMaterialCommunityIcons
+              name="music-note"
+              size={16}
+              color={ColorUtils.getEventTypeColor(event.eventType)}
+            />
+            <Text
+              style={[
+                styles.eventTypeText,
+                {color: ColorUtils.getEventTypeColor(event.eventType)},
+              ]}>
               {event.eventType.toUpperCase()}
             </Text>
           </View>
 
           {/* Promotion Badge */}
-          {(event.promotionStatus === 'top' || event.promotionStatus === 'both') && (
+          {(event.promotionStatus === 'top' ||
+            event.promotionStatus === 'both') && (
             <View style={styles.promotionBadge}>
-              <CommonMaterialCommunityIcons name="star" size={16} color={colors.accent} />
+              <CommonMaterialCommunityIcons
+                name="star"
+                size={16}
+                color={colors.accent}
+              />
               <Text style={styles.promotionText}>FEATURED</Text>
             </View>
           )}
@@ -198,36 +223,54 @@ const EventDetailsScreen: React.FC = () => {
           {/* Creator */}
           <View style={styles.creatorContainer}>
             <Text style={styles.creatorLabel}>Hosted by</Text>
-            <Text style={styles.creatorName}>{event.creator?.displayName || event.creator?.username}</Text>
+            <Text style={styles.creatorName}>
+              {event.creator?.displayName || event.creator?.username}
+            </Text>
           </View>
-          
+
           <View style={styles.divider} />
 
           {/* Date & Time */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="calendar-blank-outline" size={20} color={colors.iconColor} />
+              <CommonMaterialCommunityIcons
+                name="calendar-blank-outline"
+                size={20}
+                color={colors.iconColor}
+              />
               <Text style={styles.detailTitle}>Date & time</Text>
             </View>
             <View style={styles.card}>
-              <Text style={styles.cardPrimaryText}>{formatEventDate(event.startDate)}</Text>
-              <Text style={styles.cardSecondaryText}>{formatEventTime(event.startDate, event.endDate)}</Text>
+              <Text style={styles.cardPrimaryText}>
+                {formatEventDate(event.startDate)}
+              </Text>
+              <Text style={styles.cardSecondaryText}>
+                {formatEventTime(event.startDate, event.endDate)}
+              </Text>
             </View>
           </View>
 
           {/* Location */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="map-marker-outline" size={20} color={colors.iconColor} />
+              <CommonMaterialCommunityIcons
+                name="map-marker-outline"
+                size={20}
+                color={colors.iconColor}
+              />
               <Text style={styles.detailTitle}>Location</Text>
             </View>
             <View style={styles.card}>
-              <Text style={styles.cardPrimaryText}>{event.location.address}</Text>
-              
-              <TouchableOpacity style={styles.openInMapsButton} onPress={handleGetDirections}>
+              <Text style={styles.cardPrimaryText}>
+                {event.location.address}
+              </Text>
+
+              <TouchableOpacity
+                style={styles.openInMapsButton}
+                onPress={handleGetDirections}>
                 <Text style={styles.openInMapsText}>Open in maps ↗</Text>
               </TouchableOpacity>
-              
+
               {/* Mini Map (Hidden in screenshot, can be enabled later if needed) */}
             </View>
           </View>
@@ -235,7 +278,11 @@ const EventDetailsScreen: React.FC = () => {
           {/* Description */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="format-list-bulleted" size={20} color={colors.iconColor} />
+              <CommonMaterialCommunityIcons
+                name="format-list-bulleted"
+                size={20}
+                color={colors.iconColor}
+              />
               <Text style={styles.detailTitle}>About</Text>
             </View>
             <View style={styles.card}>
@@ -246,7 +293,11 @@ const EventDetailsScreen: React.FC = () => {
           {/* Ticketing */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="ticket-outline" size={20} color={colors.iconColor} />
+              <CommonMaterialCommunityIcons
+                name="ticket-outline"
+                size={20}
+                color={colors.iconColor}
+              />
               <Text style={styles.detailTitle}>Tickets</Text>
             </View>
             <View style={styles.card}>
@@ -260,11 +311,15 @@ const EventDetailsScreen: React.FC = () => {
                     ${event.ticketing.price} {event.ticketing.currency}
                   </Text>
                 )}
-                
+
                 {event.ticketing.isFree ? (
-                  <Text style={styles.noRegistrationText}>No registration needed</Text>
+                  <Text style={styles.noRegistrationText}>
+                    No registration needed
+                  </Text>
                 ) : event.ticketing.ticketLink ? (
-                  <TouchableOpacity style={styles.buyTicketsButton} onPress={handleBuyTickets}>
+                  <TouchableOpacity
+                    style={styles.buyTicketsButton}
+                    onPress={handleBuyTickets}>
                     <Text style={styles.buyTicketsText}>Buy Tickets</Text>
                   </TouchableOpacity>
                 ) : null}
@@ -275,38 +330,53 @@ const EventDetailsScreen: React.FC = () => {
           {/* Attendees */}
           <View style={styles.detailSection}>
             <View style={styles.detailHeader}>
-              <CommonMaterialCommunityIcons name="account-group-outline" size={20} color={colors.iconColor} />
+              <CommonMaterialCommunityIcons
+                name="account-group-outline"
+                size={20}
+                color={colors.iconColor}
+              />
               <Text style={styles.detailTitle}>Attendees</Text>
             </View>
-            
+
             <View style={styles.card}>
               <View style={styles.attendeesRow}>
-                <Text style={styles.attendeesCountText}>{event.rsvpCount} people interested</Text>
-                {event.rsvpCount === 0  && <TouchableOpacity style={styles.beFirstButton} onPress={() => handleRSVP('interested')}>
-                  <Text style={styles.beFirstText}>{event.rsvpCount > 0 ? 'View all' : 'Be first'}</Text>
-                </TouchableOpacity>}
+                <Text style={styles.attendeesCountText}>
+                  {event.rsvpCount} people interested
+                </Text>
+                {event.rsvpCount === 0 && (
+                  <TouchableOpacity
+                    style={styles.beFirstButton}
+                    onPress={() => handleRSVP('interested')}>
+                    <Text style={styles.beFirstText}>
+                      {event.rsvpCount > 0 ? 'View all' : 'Be first'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              
+
               {event.rsvps.length > 0 && (
                 <View style={styles.attendeesList}>
                   {event.rsvps.slice(0, 5).map((rsvp, index) => {
                     return (
-                    <View key={index} style={styles.attendeeItem}>
-                      <View style={styles.attendeeAvatar}>
-                        <Text style={styles.attendeeInitial}>
-                          {(rsvp?.user?.displayName || rsvp?.user?.username)?.charAt(0).toUpperCase()}
-                        </Text>
+                      <View key={index} style={styles.attendeeItem}>
+                        <View style={styles.attendeeAvatar}>
+                          <Text style={styles.attendeeInitial}>
+                            {(rsvp?.user?.displayName || rsvp?.user?.username)
+                              ?.charAt(0)
+                              .toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={styles.attendeeInfo}>
+                          <Text style={styles.attendeeName}>
+                            {rsvp.user.displayName || rsvp.user.username}
+                          </Text>
+                          <Text style={styles.attendeeStatus}>
+                            {rsvp.status === 'going' ? 'Going' : 'Interested'}
+                          </Text>
+                        </View>
                       </View>
-                      <View style={styles.attendeeInfo}>
-                        <Text style={styles.attendeeName}>
-                          {rsvp.user.displayName || rsvp.user.username}
-                        </Text>
-                        <Text style={styles.attendeeStatus}>
-                          {rsvp.status === 'going' ? 'Going' : 'Interested'}
-                        </Text>
-                      </View>
-                    </View>
-                  )})}
+                    );
+                  })}
                   {event.rsvps.length > 5 && (
                     <Text style={styles.moreAttendees}>
                       +{event.rsvps.length - 5} more
@@ -337,23 +407,26 @@ const EventDetailsScreen: React.FC = () => {
         {hasUserRSVP ? (
           <View style={styles.rsvpContainer}>
             <View style={styles.currentRsvpStatus}>
-              <CommonMaterialCommunityIcons name="check-circle" size={20} color={colors.primary} />
-               <Text style={styles.currentRsvpText}>
-                 You're {userRSVPStatus === 'going' ? 'going' : 'interested'}
-               </Text>
+              <CommonMaterialCommunityIcons
+                name="check-circle"
+                size={20}
+                color={colors.primary}
+              />
+              <Text style={styles.currentRsvpText}>
+                You're {userRSVPStatus === 'going' ? 'going' : 'interested'}
+              </Text>
             </View>
             <TouchableOpacity
               style={styles.removeRsvpButton}
               onPress={handleRemoveRSVP}
-              disabled={isRemovingRsvp}
-            >
+              disabled={isRemovingRsvp}>
               {isRemovingRsvp ? (
                 <ActivityIndicator size="small" color={colors.text} />
               ) : (
                 <Text style={styles.removeRsvpText}>Remove</Text>
               )}
             </TouchableOpacity>
-           </View>
+          </View>
         ) : (
           <View style={styles.rsvpButtons}>
             <TouchableOpacity
@@ -362,37 +435,51 @@ const EventDetailsScreen: React.FC = () => {
                 // selectedRsvpStatus === 'interested' && styles.rsvpOutlineButtonActive //if you want to have colorful backrfound with text
               ]}
               onPress={() => handleRSVP('interested')}
-              disabled={isRsvping}
-            >
+              disabled={isRsvping}>
               {isRsvping && selectedRsvpStatus === 'interested' ? (
                 <ActivityIndicator size="small" color={colors.text} />
               ) : (
                 <>
-                  <CommonMaterialCommunityIcons name={selectedRsvpStatus === 'interested' ? "heart" : "heart-outline"} size={18} color={colors.iconColor} />
+                  <CommonMaterialCommunityIcons
+                    name={
+                      selectedRsvpStatus === 'interested'
+                        ? 'heart'
+                        : 'heart-outline'
+                    }
+                    size={18}
+                    color={colors.iconColor}
+                  />
                   <Text style={[styles.rsvpOutlineButtonText]}>Interested</Text>
                 </>
               )}
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[
                 styles.rsvpOutlineButton,
                 // selectedRsvpStatus === 'going' && styles.rsvpOutlineButtonActive
               ]}
               onPress={() => handleRSVP('going')}
-              disabled={isRsvping}
-            >
+              disabled={isRsvping}>
               {isRsvping && selectedRsvpStatus === 'going' ? (
                 <ActivityIndicator size="small" color={colors.text} />
               ) : (
                 <>
-                  <CommonMaterialCommunityIcons name="check" size={18} color={
-                    // selectedRsvpStatus === 'going' ? colors.accentPrimary : colors.iconColor
-                    colors.iconColor
-                  } />
-                  <Text style={[styles.rsvpOutlineButtonText, 
-                    // selectedRsvpStatus === 'going' && { color: colors.accentPrimary }
-                    ]}>Going</Text>
+                  <CommonMaterialCommunityIcons
+                    name="check"
+                    size={18}
+                    color={
+                      // selectedRsvpStatus === 'going' ? colors.accentPrimary : colors.iconColor
+                      colors.iconColor
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.rsvpOutlineButtonText,
+                      // selectedRsvpStatus === 'going' && { color: colors.accentPrimary }
+                    ]}>
+                    Going
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
