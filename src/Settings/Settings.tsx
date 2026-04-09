@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon, ChevronForwardIcon } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
 import { GlobalColors } from '../styles/GlobalColors';
+import useTranslation from '../Hooks/useTranslation';
 
 interface SettingsItemProps {
   icon: string;
@@ -28,6 +29,7 @@ interface SettingsItemProps {
 const Settings = () => {
   const navigation = useNavigation();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
 
   React.useEffect(() => {
@@ -41,8 +43,7 @@ const Settings = () => {
     trackEvent('settings_boost_pressed', {
       user_id: currentUser?._id,
     });
-    // Navigate to boost settings or show boost flow
-    Alert.alert('Boost Settings', 'Configure your stream boost preferences');
+    Alert.alert(t('settings.sections.boost.title'), t('common.comingSoon'));
   };
 
   const handleProfileAccount = () => {
@@ -105,14 +106,14 @@ const Settings = () => {
     trackEvent('settings_commenting_pressed', {
       user_id: currentUser?._id,
     });
-    Alert.alert('Commenting', 'Configure comment settings');
+    Alert.alert(t('settings.sections.commenting.title'), t('common.comingSoon'));
   };
 
   const handleDownloadData = () => {
     trackEvent('settings_download_data_pressed', {
       user_id: currentUser?._id,
     });
-    Alert.alert('Download Data', 'Request your data download');
+    Alert.alert(t('settings.sections.downloadData.title'), t('common.comingSoon'));
   };
 
   const SettingsItem: React.FC<SettingsItemProps> = ({
@@ -163,7 +164,7 @@ const Settings = () => {
         >
           <ChevronBackIcon size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{t('settings.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -171,8 +172,8 @@ const Settings = () => {
         {/* Boost Settings - Highlighted */}
         <SettingsItem
           icon="trending-up"
-          title="Boost Your Reach"
-          subtitle="with Recommended Settings"
+          title={t('settings.sections.boost.title')}
+          subtitle={t('settings.sections.boost.subtitle')}
           onPress={handleBoostSettings}
           isHighlighted={true}
         />
@@ -180,45 +181,45 @@ const Settings = () => {
         {/* Account Section */}
         <SettingsItem
           icon="person-outline"
-          title="Profile & Account"
+          title={t('settings.sections.profile.title')}
           onPress={handleProfileAccount}
         />
 
         <SettingsItem
           icon="notifications-outline"
-          title="Notifications"
+          title={t('settings.sections.notifications.title')}
           onPress={handleNotifications}
         />
 
         <SettingsItem
           icon="mail-outline"
-          title="Email"
+          title={t('settings.sections.email.title')}
           onPress={handleEmail}
         />
 
         <SettingsItem
           icon="lock-closed-outline"
-          title="Password"
+          title={t('settings.sections.password.title')}
           onPress={handlePassword}
         />
 
         {/* Streaming Section */}
         <SettingsItem
           icon="videocam-outline"
-          title="Streaming Preferences"
+          title={t('settings.sections.streaming.title')}
           onPress={handleStreamingPreferences}
         />
 
         {/* Voting Section */}
         <SettingsItem
           icon="flame-outline"
-          title="Voting Preferences"
+          title={t('settings.sections.voting.title')}
           subtitle={
             currentUser?.votingPreferences?.permanentOptOut
-              ? 'Opted out'
+              ? t('settings.sections.voting.optedOut')
               : currentUser?.votingPreferences?.enabled === false
-              ? 'Disabled'
-              : 'Enabled'
+              ? t('settings.sections.voting.disabled')
+              : t('settings.sections.voting.enabled')
           }
           onPress={handleVotingPreferences}
         />
@@ -226,60 +227,70 @@ const Settings = () => {
         {/* Privacy Section */}
         <SettingsItem
           icon="shield-checkmark-outline"
-          title="Privacy & Security"
+          title={t('settings.sections.privacy.title')}
           onPress={handlePrivacySecurity}
         />
 
         <SettingsItem
           icon="ban-outline"
-          title="Block List"
+          title={t('settings.sections.blockedUsers.title')}
           onPress={handleBlockList}
         />
 
         <SettingsItem
           icon="chatbubble-outline"
-          title="Commenting"
+          title={t('settings.sections.commenting.title')}
           onPress={handleCommenting}
         />
 
         {/* Data Section */}
         <SettingsItem
           icon="download-outline"
-          title="Download Data"
+          title={t('settings.sections.downloadData.title')}
           onPress={handleDownloadData}
         />
+
+        {/* Testing Section (Dev Only) */}
+        {__DEV__ && (
+          <SettingsItem
+            icon="location-outline"
+            title="Location Simulator Test"
+            subtitle="Test background location tracking"
+            onPress={() => (navigation as any).navigate('LocationSimulatorTest')}
+          />
+        )}
 
         {/* User Info Display */}
         {currentUser?._id && (
           <View style={styles.userInfoSection}>
-            <Text style={styles.userInfoTitle}>Account Information</Text>
+            <Text style={styles.userInfoTitle}>{t('settings.accountInfo.title')}</Text>
             <Text style={styles.userInfoText}>
-              Name: {currentUser.firstName} {currentUser.lastName}
+              {t('settings.accountInfo.name')}: {currentUser.firstName} {currentUser.lastName}
             </Text>
             <Text style={styles.userInfoText}>
-              Username: @{currentUser.userName}
+              {t('settings.accountInfo.username')}: @{currentUser.userName}
             </Text>
             <Text style={styles.userInfoText}>
-              Email: {currentUser.email} {currentUser.accountSettings?.emailVerified ? '✓' : '⚠️'}
+              {t('settings.accountInfo.email')}: {currentUser.email} {currentUser.accountSettings?.emailVerified ? t('common.verifiedCheck') : t('common.notVerifiedWarning')}
             </Text>
             <Text style={styles.userInfoText}>
-              Member since: {new Date(currentUser.createdAt).toLocaleDateString()}
+              {t('settings.accountInfo.memberSince')}: {new Date(currentUser.createdAt).toLocaleDateString()}
             </Text>
             {currentUser.followers && (
               <Text style={styles.userInfoText}>
-                Followers: {currentUser.followers.length} | Following: {currentUser.following?.length || 0}
+                {t('settings.accountInfo.followers')}: {currentUser.followers.length} | {t('settings.accountInfo.following')}: {currentUser.following?.length || 0}
               </Text>
             )}
             {currentUser.bio && (
               <Text style={styles.userInfoText}>
-                Bio: {currentUser.bio}
+                {t('settings.accountInfo.bio')}: {currentUser.bio}
               </Text>
             )}
             <Text style={styles.userInfoText}>
-              Profile: {currentUser.privacySettings?.profileVisibility || 'Public'}
+              {t('settings.accountInfo.profile')}: {currentUser.privacySettings?.profileVisibility || t('common.public')}
             </Text>
             <Text style={styles.userInfoText}>
-              2FA: {currentUser.accountSettings?.twoFactorEnabled ? 'Enabled ✓' : 'Disabled ⚠️'}
+              {t('settings.accountInfo.twoFA')}: {currentUser.accountSettings?.twoFactorEnabled ? t('common.enabled') + ' ' + t('common.verifiedCheck') : t('common.disabled') + ' ' + t('common.notVerifiedWarning')}
             </Text>
           </View>
         )}

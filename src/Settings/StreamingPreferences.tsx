@@ -29,6 +29,7 @@ const getIconComponent = (iconName: string) => {
   }
 };
 import { useAnalytics } from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import {
   useGetUserSettingsQuery,
   useUpdateStreamingPreferencesMutation,
@@ -56,6 +57,7 @@ const StreamingPreferences = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   
   const [settings, setSettings] = useState<StreamingPreferencesType>({
@@ -69,27 +71,27 @@ const StreamingPreferences = () => {
   const [updateStreamingPreferences, {isLoading: updateLoading}] = useUpdateStreamingPreferencesMutation();
 
   const categories = [
-    { label: 'Music', value: 'music', icon: 'musical-notes' },
-    { label: 'Gaming', value: 'gaming', icon: 'game-controller' },
-    { label: 'Talk Show', value: 'talk', icon: 'chatbubbles' },
-    { label: 'Sports', value: 'sports', icon: 'football' },
-    { label: 'Art', value: 'art', icon: 'brush' },
-    { label: 'Food', value: 'food', icon: 'restaurant' },
-    { label: 'Travel', value: 'travel', icon: 'airplane' },
-    { label: 'Other', value: 'other', icon: 'ellipsis-horizontal' },
+    { label: t('streaming.categories.music'), value: 'music', icon: 'musical-notes' },
+    { label: t('streaming.categories.gaming'), value: 'gaming', icon: 'game-controller' },
+    { label: t('streaming.categories.talk'), value: 'talk', icon: 'chatbubbles' },
+    { label: t('streaming.categories.sports'), value: 'sports', icon: 'football' },
+    { label: t('streaming.categories.art'), value: 'art', icon: 'brush' },
+    { label: t('streaming.categories.food'), value: 'food', icon: 'restaurant' },
+    { label: t('streaming.categories.travel'), value: 'travel', icon: 'airplane' },
+    { label: t('streaming.categories.other'), value: 'other', icon: 'ellipsis-horizontal' },
   ];
 
   const qualityOptions = [
-    { label: 'Auto (Recommended)', value: 'auto', description: 'Automatically adjust based on connection' },
-    { label: 'High Quality', value: 'high', description: '1080p - Best quality, uses more data' },
-    { label: 'Medium Quality', value: 'medium', description: '720p - Good balance of quality and data' },
-    { label: 'Low Quality', value: 'low', description: '480p - Uses less data' },
+    { label: t('streaming.quality.auto'), value: 'auto', description: t('streaming.quality.autoDesc') },
+    { label: t('streaming.quality.high'), value: 'high', description: t('streaming.quality.highDesc') },
+    { label: t('streaming.quality.medium'), value: 'medium', description: t('streaming.quality.mediumDesc') },
+    { label: t('streaming.quality.low'), value: 'low', description: t('streaming.quality.lowDesc') },
   ];
 
   const moderationOptions = [
-    { label: 'Open Chat', value: 'open', description: 'Anyone can comment' },
-    { label: 'Followers Only', value: 'followers', description: 'Only followers can comment' },
-    { label: 'Disabled', value: 'disabled', description: 'No comments allowed' },
+    { label: t('streaming.moderation.open'), value: 'open', description: t('streaming.moderation.openDesc') },
+    { label: t('streaming.moderation.followers'), value: 'followers', description: t('streaming.moderation.followersDesc') },
+    { label: t('streaming.moderation.disabled'), value: 'disabled', description: t('streaming.moderation.disabledDesc') },
   ];
 
   useEffect(() => {
@@ -132,55 +134,55 @@ const StreamingPreferences = () => {
         };
         dispatch(setCurrentUser(updatedUser));
         
-        Alert.alert('Success', 'Streaming preferences updated successfully');
+        Alert.alert(t('common.success'), t('streaming.updateSuccess'));
         navigation.goBack();
       } else {
-        Alert.alert('Error', response.message || 'Failed to update settings');
+        Alert.alert(t('common.error'), response.message || t('streaming.updateFailed'));
       }
     } catch (error) {
       console.error('Error updating streaming preferences:', error);
-      Alert.alert('Error', 'Failed to update streaming preferences');
+      Alert.alert(t('common.error'), t('streaming.updateFailed'));
     }
   };
 
   const showCategoryOptions = () => {
     Alert.alert(
-      'Default Category',
-      'Choose your default streaming category',
+      t('streaming.defaultCategory'),
+      t('streaming.defaultCategoryDesc'),
       [
         ...categories.map(category => ({
           text: category.label,
           onPress: () => handleUpdate('defaultCategory', category.value),
         })),
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
       ]
     );
   };
 
   const showQualityOptions = () => {
     Alert.alert(
-      'Video Quality',
-      'Choose your preferred streaming quality',
+      t('streaming.videoQuality'),
+      t('streaming.videoQualityDesc'),
       [
         ...qualityOptions.map(option => ({
           text: `${option.label} - ${option.description}`,
           onPress: () => handleUpdate('qualityPreference', option.value),
         })),
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
       ]
     );
   };
 
   const showModerationOptions = () => {
     Alert.alert(
-      'Chat Moderation',
-      'Choose who can comment on your streams',
+      t('streaming.chatModeration'),
+      t('streaming.chatModerationDesc'),
       [
         ...moderationOptions.map(option => ({
           text: `${option.label} - ${option.description}`,
           onPress: () => handleUpdate('chatModeration', option.value),
         })),
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
       ]
     );
   };
@@ -242,17 +244,17 @@ const StreamingPreferences = () => {
 
   const getCategoryLabel = (value: string) => {
     const category = categories.find(cat => cat.value === value);
-    return category ? category.label : 'Other';
+    return category ? category.label : t('streaming.categories.other');
   };
 
   const getQualityLabel = (value: string) => {
     const quality = qualityOptions.find(opt => opt.value === value);
-    return quality ? quality.label : 'Auto';
+    return quality ? quality.label : t('streaming.quality.auto');
   };
 
   const getModerationLabel = (value: string) => {
     const moderation = moderationOptions.find(opt => opt.value === value);
-    return moderation ? moderation.label : 'Open Chat';
+    return moderation ? moderation.label : t('streaming.moderation.open');
   };
 
   return (
@@ -269,7 +271,7 @@ const StreamingPreferences = () => {
           {(updateLoading || settingsLoading) ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text style={styles.saveButtonText}>Save Changes</Text>
+            <Text style={styles.saveButtonText}>{t('common.saveChanges')}</Text>
           )}
         </TouchableOpacity>
         <View style={styles.placeholder} />
@@ -277,47 +279,47 @@ const StreamingPreferences = () => {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Stream Settings</Text>
+          <Text style={styles.sectionTitle}>{t('streaming.streamSettings')}</Text>
           <Text style={styles.sectionDescription}>
-            Configure your default streaming preferences
+            {t('streaming.streamSettingsDesc')}
           </Text>
         </View>
 
         <SettingPicker
           icon="grid"
-          title="Default Category"
-          subtitle="Your preferred streaming category"
+          title={t('streaming.defaultCategory')}
+          subtitle={t('streaming.defaultCategorySubtitle')}
           value={getCategoryLabel(settings.defaultCategory)}
           onSelect={showCategoryOptions}
         />
 
         <SettingPicker
           icon="videocam"
-          title="Video Quality"
-          subtitle="Streaming quality preference"
+          title={t('streaming.videoQuality')}
+          subtitle={t('streaming.videoQualitySubtitle')}
           value={getQualityLabel(settings.qualityPreference)}
           onSelect={showQualityOptions}
         />
 
         <SettingToggle
           icon="recording"
-          title="Auto Record"
-          subtitle="Automatically save your streams"
+          title={t('streaming.autoRecord')}
+          subtitle={t('streaming.autoRecordSubtitle')}
           value={settings.autoRecord}
           onToggle={(value) => handleUpdate('autoRecord', value)}
         />
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Chat & Interaction</Text>
+          <Text style={styles.sectionTitle}>{t('streaming.chatInteraction')}</Text>
           <Text style={styles.sectionDescription}>
-            Manage how viewers can interact with your streams
+            {t('streaming.chatInteractionDesc')}
           </Text>
         </View>
 
         <SettingPicker
           icon="chatbubbles"
-          title="Chat Moderation"
-          subtitle="Who can comment on your streams"
+          title={t('streaming.chatModeration')}
+          subtitle={t('streaming.chatModerationSubtitle')}
           value={getModerationLabel(settings.chatModeration)}
           onSelect={showModerationOptions}
         />
@@ -325,30 +327,30 @@ const StreamingPreferences = () => {
         <View style={styles.tipsSection}>
           <View style={styles.tipsHeader}>
             <BulbIcon size={24} color="#8b5cf6" />
-            <Text style={styles.tipsTitle}>Streaming Tips</Text>
+            <Text style={styles.tipsTitle}>{t('streaming.streamingTips')}</Text>
           </View>
           <Text style={styles.tipsText}>
-            • Choose 'Auto' quality for the best viewer experience{'\n'}
-            • Enable auto-record to save your best moments{'\n'}
-            • Use follower-only chat to reduce spam{'\n'}
-            • Pick a category that matches your content for better discovery
+            • {t('streaming.tips.autoQuality')}{'\n'}
+            • {t('streaming.tips.autoRecord')}{'\n'}
+            • {t('streaming.tips.followerChat')}{'\n'}
+            • {t('streaming.tips.categoryMatch')}
           </Text>
         </View>
 
         <View style={styles.statsSection}>
-          <Text style={styles.statsTitle}>Your Streaming Stats</Text>
+          <Text style={styles.statsTitle}>{t('streaming.yourStats')}</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Total Streams</Text>
+              <Text style={styles.statLabel}>{t('streaming.stats.totalStreams')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Hours Streamed</Text>
+              <Text style={styles.statLabel}>{t('streaming.stats.hoursStreamed')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Peak Viewers</Text>
+              <Text style={styles.statLabel}>{t('streaming.stats.peakViewers')}</Text>
             </View>
           </View>
         </View>

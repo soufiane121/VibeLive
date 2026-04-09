@@ -15,6 +15,7 @@ import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon, BanIcon, PersonIcon, CheckmarkIcon, InformationCircleIcon } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import {
   useGetBlockedUsersQuery,
   useUnblockUserMutation,
@@ -24,6 +25,7 @@ import {
 const BlockedUsers = () => {
   const navigation = useNavigation();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   
   const {data: blockedUsersData, isLoading: loading, refetch} = useGetBlockedUsersQuery();
@@ -41,12 +43,12 @@ const BlockedUsers = () => {
 
   const handleUnblockUser = (blockedUser: BlockedUser) => {
     Alert.alert(
-      'Unblock User',
-      `Are you sure you want to unblock ${blockedUser.userId.firstName} ${blockedUser.userId.lastName}?`,
+      t('blockedUsers.unblockTitle'),
+      t('blockedUsers.unblockConfirm', { name: `${blockedUser.userId.firstName} ${blockedUser.userId.lastName}` }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Unblock',
+          text: t('common.unblock'),
           style: 'destructive',
           onPress: () => handleUnblock(blockedUser.userId._id),
         },
@@ -60,7 +62,7 @@ const BlockedUsers = () => {
       const response = await unblockUser({userId}).unwrap();
       
       if (response.success) {
-        Alert.alert('Success', 'User unblocked successfully');
+        Alert.alert(t('common.success'), t('blockedUsers.unblockSuccess'));
         refetch(); // Refresh the blocked users list
         
         trackEvent('user_unblocked', {
@@ -68,11 +70,11 @@ const BlockedUsers = () => {
           user_id: currentUser?._id,
         });
       } else {
-        Alert.alert('Error', response.message || 'Failed to unblock user');
+        Alert.alert(t('common.error'), response.message || t('blockedUsers.unblockFailed'));
       }
     } catch (error) {
       console.error('Error unblocking user:', error);
-      Alert.alert('Error', 'Failed to unblock user');
+      Alert.alert(t('common.error'), t('blockedUsers.unblockFailed'));
     } finally {
       setUnblockingUserId(null);
     }
@@ -99,7 +101,7 @@ const BlockedUsers = () => {
           </Text>
           <Text style={styles.userHandle}>@{blockedUser.userId.userName}</Text>
           <Text style={styles.blockReason}>
-            Blocked: {blockedUser.reason}
+            {t('blockedUsers.blockedReason', { reason: blockedUser.reason })}
           </Text>
           <Text style={styles.blockDate}>
             {new Date(blockedUser.blockedAt).toLocaleDateString()}
@@ -116,7 +118,7 @@ const BlockedUsers = () => {
         ) : (
           <>
             <CheckmarkIcon size={16} color="#fff" />
-            <Text style={styles.unblockText}>Unblock</Text>
+            <Text style={styles.unblockText}>{t('common.unblock')}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -135,33 +137,33 @@ const BlockedUsers = () => {
         >
           <ChevronBackIcon size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Blocked Users</Text>
+        <Text style={styles.headerTitle}>{t('blockedUsers.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8b5cf6" />
-          <Text style={styles.loadingText}>Loading blocked users...</Text>
+          <Text style={styles.loadingText}>{t('blockedUsers.loading')}</Text>
         </View>
       ) : (
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {blockedUsers.length === 0 ? (
             <View style={styles.emptyContainer}>
               <BanIcon size={64} color="#374151" />
-              <Text style={styles.emptyTitle}>No Blocked Users</Text>
+              <Text style={styles.emptyTitle}>{t('blockedUsers.emptyTitle')}</Text>
               <Text style={styles.emptyDescription}>
-                You haven't blocked any users yet. When you block someone, they won't be able to see your profile or interact with you.
+                {t('blockedUsers.emptyDescription')}
               </Text>
             </View>
           ) : (
             <>
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>
-                  {blockedUsers.length} Blocked User{blockedUsers.length !== 1 ? 's' : ''}
+                  {blockedUsers.length} {blockedUsers.length === 1 ? t('blockedUsers.blockedUserSingular') : t('blockedUsers.blockedUserPlural')}
                 </Text>
                 <Text style={styles.sectionDescription}>
-                  Blocked users can't see your profile, send you messages, or interact with your content.
+                  {t('blockedUsers.blockedDescription')}
                 </Text>
               </View>
 
@@ -175,7 +177,7 @@ const BlockedUsers = () => {
               <View style={styles.infoSection}>
                 <InformationCircleIcon size={20} color="#8b5cf6" />
                 <Text style={styles.infoText}>
-                  When you unblock someone, they'll be able to see your profile and interact with you again. They won't be notified that you've unblocked them.
+                  {t('blockedUsers.unblockInfo')}
                 </Text>
               </View>
             </>

@@ -165,7 +165,6 @@ const EventsListScreen: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
   const {coordinates} = useGetLocation();
-  console.log('from event list screen', {coordinates});
 
   const {
     data: eventsResponse,

@@ -52,6 +52,7 @@ import {
   VenueData,
 } from '../../../features/voting/VotingApi';
 import HeatMapComponentStyles from './helperMap';
+import geofenceMonitor from '../../Services/GeofenceMonitorService';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -242,7 +243,7 @@ const MapContainer = () => {
   const {coordinates} = useGetLocation();
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
-  const [featuresPointsData, setFeaturesPointsData] = useState([]);
+  const [featuresPointsData, setFeaturesPointsData] = useState<any[]>([]);
 
   // Fetch events for map
   const {data: eventsData} = useGetMapEventsQuery({
@@ -272,7 +273,16 @@ const MapContainer = () => {
     console.log('[Heatmap Debug] loading:', heatmapLoading);
     console.log('[Heatmap Debug] error:', heatmapError);
     console.log('[Heatmap Debug] data:', heatmapData ? `${heatmapData.heatmap?.length || 0} venues` : 'null');
+
   }, [coordinates, heatmapData, heatmapError, heatmapLoading]);
+
+  useEffect(() => {
+    // only to mimic user walk - ONLY in development mode
+    if (__DEV__) {
+      geofenceMonitor.playTestDwell();
+    }
+  }, [])
+  
 
   const heatmapGeoJSON = useMemo(() => {
     const venues = heatmapData?.heatmap || [];
@@ -497,6 +507,7 @@ const MapContainer = () => {
 
     return () => {
       pulseAnimation.stopAnimation();
+      pulseAnimation.removeAllListeners(); // Prevent memory leak
     };
   }, [pulseAnimation]);
 

@@ -12,6 +12,7 @@ import {GlobalColors} from '../../../styles/GlobalColors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 // import Button from '../../UIComponents/Button';
 import {tags} from '../../../../tags';
+import useTranslation from '../../../Hooks/useTranslation';
 
 interface OnboardingInterestsProps {
   navigation: any;
@@ -27,6 +28,7 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
   navigation,
   route,
 }) => {
+  const { t } = useTranslation();
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -57,10 +59,10 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
     // Validation: Ensure at least one interest is selected
     if (selectedTags.length === 0) {
       Alert.alert(
-        'Select Your Interests',
-        'Please select at least one interest to personalize your VibeLive experience.',
+        t('onboarding.selectInterests'),
+        t('onboarding.interestsDesc'),
         [
-          {text: 'OK', style: 'default'}
+          {text: t('common.ok'), style: 'default'}
         ]
       );
       return;
@@ -69,11 +71,11 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
     // Validation: Recommend selecting more interests for better experience
     if (selectedTags.length < 3) {
       Alert.alert(
-        'Enhance Your Experience',
-        `You've selected ${selectedTags.length} interest${selectedTags.length === 1 ? '' : 's'}. We recommend selecting at least 3 interests for the best personalized content. Continue anyway?`,
+        t('onboarding.enhanceExperience'),
+        t('onboarding.interestsRecommend', { count: selectedTags.length }),
         [
-          {text: 'Add More', style: 'cancel'},
-          {text: 'Continue', onPress: proceedToNext, style: 'default'},
+          {text: t('onboarding.addMore'), style: 'cancel'},
+          {text: t('common.continue'), onPress: proceedToNext, style: 'default'},
         ]
       );
       return;
@@ -173,25 +175,25 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, {width: '75%'}]} />
         </View>
-        <Text style={styles.progressText}>Step 3 of 4</Text>
+        <Text style={styles.progressText}>{t('onboarding.step3Of4')}</Text>
       </View>
 
       {/* Content */}
       <View style={styles.content}>
-        <Text style={styles.title}>What gets you excited?</Text>
+        <Text style={styles.title}>{t('onboarding.whatExcitesYou')}</Text>
         <Text style={styles.subtitle}>
-          Select your interests so we can show you the most relevant events and streams
+          {t('onboarding.selectInterestsSubtitle')}
         </Text>
 
         {/* Selection Counter */}
         <View style={styles.selectionCounter}>
           <Text style={styles.selectionText}>
-            {selectedTags.length} interests selected
+            {t('onboarding.interestsSelected', { count: selectedTags.length })}
           </Text>
           {selectedTags.length >= 3 && (
             <View style={styles.recommendedBadge}>
               <Icon name="check-circle" size={16} color={GlobalColors.Common.successIcon} />
-              <Text style={styles.recommendedText}>Great selection!</Text>
+              <Text style={styles.recommendedText}>{t('onboarding.greatSelection')}</Text>
             </View>
           )}
         </View>
@@ -214,13 +216,15 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
           onPress={validateAndContinue}
           disabled={selectedTags.length === 0}>
           <Text style={styles.continueButtonText}>
-            {`Continue${selectedTags.length > 0 ? ` (${selectedTags.length} selected)` : ''}`}
+            {selectedTags.length > 0 
+              ? t('onboarding.continueWithCount', { count: selectedTags.length })
+              : t('common.continue')}
           </Text>
         </TouchableOpacity>
         
         {selectedTags.length === 0 && (
           <Text style={styles.helpText}>
-            Select at least one interest to continue
+            {t('onboarding.selectOneInterest')}
           </Text>
         )}
       </View>

@@ -1,17 +1,22 @@
 import {AppState, AppStateStatus} from 'react-native';
-import Geolocation from '@react-native-community/geolocation';
+import * as Location from 'expo-location';
 import {baseUrl} from '../../baseUrl';
 import {getLocalData} from '../Utils/LocalStorageHelper';
 
-const LOCATION_UPDATE_INTERVAL_MS = 5000; // TODO:: MAKE IT 15000
-const MIN_DISTANCE_CHANGE_METERS = 1;
-const BATTERY_CHECK_INTERVAL_MS = 60000;
+// Configuration constants
+const LOCATION_UPDATE_INTERVAL_MS = 15000; // 15 seconds - balanced for battery vs responsiveness
+const BACKGROUND_UPDATE_INTERVAL_MS = 60000; // 60 seconds in background for battery savings
+const MIN_DISTANCE_CHANGE_METERS = 5; // Minimum movement to trigger update (optimized for geofencing)
 const EARTH_RADIUS_METERS = 6371000;
 const METERS_PER_DEGREE = 111_320;
 
-// Precompute squared threshold for fast stage
+// Precompute squared threshold for fast distance check
 const FAST_THRESHOLD_DEG = MIN_DISTANCE_CHANGE_METERS / METERS_PER_DEGREE;
 const FAST_THRESHOLD_DEG_SQ = FAST_THRESHOLD_DEG * FAST_THRESHOLD_DEG;
+
+// Expo location accuracy mapping
+const FOREGROUND_ACCURACY = Location.Accuracy.Balanced;
+const BACKGROUND_ACCURACY = Location.Accuracy.Low;
 
 interface LocationUpdate {
   latitude: number;
@@ -30,9 +35,10 @@ type GeofenceCallback = (venues: any[]) => void;
 type ErrorCallback = (error: string) => void;
 
 class GeofenceMonitorService {
-  private watchId: number | null = null;
+  private locationSubscription: Location.LocationSubscription | null = null;
   private updateTimer: ReturnType<typeof setInterval> | null = null;
   private lastLocation: LocationUpdate | null = null;
+  private lastSentLocation: LocationUpdate | null = null; // Track what was actually sent to server
   private config: GeofenceConfig = {
     enabled: true,
     radiusMeters: 5,
@@ -41,141 +47,212 @@ class GeofenceMonitorService {
   private onVenuesDetected: GeofenceCallback | null = null;
   private onError: ErrorCallback | null = null;
   private appState: AppStateStatus = 'active';
-  private appStateSubscription: any = null;
+  private appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
   private isMonitoring: boolean = false;
+  private permissionGranted: boolean = false;
+  private initializationMutex: boolean = false;
 
-  configure(config: Partial<GeofenceConfig>) {
+  configure(config: Partial<GeofenceConfig>): void {
     this.config = {...this.config, ...config};
   }
 
-  startMonitoring(
-    onVenuesDetected: GeofenceCallback,
-    onError?: ErrorCallback,
-  ) {
-    if (this.isMonitoring) return;
+  /**
+   * Initialize location permissions
+   */
+  private async _initializePermissions(): Promise<boolean> {
+    if (this.permissionGranted) return true;
+    if (this.initializationMutex) return this.permissionGranted;
+
+    this.initializationMutex = true;
+
+    try {
+      const {status: foregroundStatus} = await Location.getForegroundPermissionsAsync();
+      
+      if (foregroundStatus !== 'granted') {
+        const {status} = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('[GeofenceMonitor] Foreground permission denied');
+          this.onError?.('Location permission denied');
+          return false;
+        }
+      }
+
+      this.permissionGranted = true;
+      console.log('[GeofenceMonitor] Permissions granted');
+      return true;
+    } catch (error: any) {
+      console.error('[GeofenceMonitor] Permission error:', error.message);
+      this.onError?.(error.message);
+      return false;
+    } finally {
+      this.initializationMutex = false;
+    }
+  }
+
+  async startMonitoring(onVenuesDetected: GeofenceCallback, onError?: ErrorCallback): Promise<void> {
+    if (this.isMonitoring) {
+      console.log('[GeofenceMonitor] Already monitoring, skipping...');
+      return;
+    }
 
     this.onVenuesDetected = onVenuesDetected;
     this.onError = onError || null;
-    this.isMonitoring = true;
-    console.log('we start MONITORING');
 
+    // Initialize permissions first
+    const hasPermission = await this._initializePermissions();
+    if (!hasPermission) {
+      console.log('[GeofenceMonitor] Cannot start monitoring: no permission');
+      return;
+    }
+
+    this.isMonitoring = true;
+    console.log('[GeofenceMonitor] Starting monitoring...');
+
+    // Setup app state listener
+    if (this.appStateSubscription) {
+      this.appStateSubscription.remove();
+    }
     this.appStateSubscription = AppState.addEventListener(
       'change',
       this._handleAppStateChange,
     );
 
-    this._startLocationUpdates();
+    // Start location updates
+    await this._startLocationUpdates();
     console.log('[GeofenceMonitor] Monitoring started');
   }
 
-  stopMonitoring() {
+  async stopMonitoring(): Promise<void> {
     this.isMonitoring = false;
 
-    if (this.watchId !== null) {
-      Geolocation.clearWatch(this.watchId);
-      this.watchId = null;
+    // Stop location subscription
+    if (this.locationSubscription) {
+      this.locationSubscription.remove();
+      this.locationSubscription = null;
     }
 
+    // Clear update timer
     if (this.updateTimer) {
       clearInterval(this.updateTimer);
       this.updateTimer = null;
     }
 
+    // Remove app state listener
     if (this.appStateSubscription) {
       this.appStateSubscription.remove();
       this.appStateSubscription = null;
     }
 
     this.lastLocation = null;
+    this.lastSentLocation = null;
     console.log('[GeofenceMonitor] Monitoring stopped');
   }
 
-  private _handleAppStateChange = (nextAppState: AppStateStatus) => {
-    if (this.appState === 'active' && nextAppState.match(/inactive|background/)) {
+  private _handleAppStateChange = (nextAppState: AppStateStatus): void => {
+    const wasActive = this.appState === 'active';
+    const isNowActive = nextAppState === 'active';
+    const isNowBackground = nextAppState === 'background' || nextAppState === 'inactive';
+
+    if (wasActive && isNowBackground) {
+      console.log('[GeofenceMonitor] Switching to background mode');
       this._switchToBackgroundMode();
-    } else if (
-      this.appState.match(/inactive|background/) &&
-      nextAppState === 'active'
-    ) {
+    } else if (!wasActive && isNowActive) {
+      console.log('[GeofenceMonitor] Switching to foreground mode');
       this._switchToForegroundMode();
     }
+
     this.appState = nextAppState;
   };
 
-  private _switchToBackgroundMode() {
+  private _switchToBackgroundMode(): void {
+    // Stop current subscription and timer
+    if (this.locationSubscription) {
+      this.locationSubscription.remove();
+      this.locationSubscription = null;
+    }
     if (this.updateTimer) {
       clearInterval(this.updateTimer);
     }
+
+    // Use longer interval in background
     this.updateTimer = setInterval(() => {
-      this._getCurrentPosition();
-    }, LOCATION_UPDATE_INTERVAL_MS * 4);
+      this._getCurrentPosition(BACKGROUND_ACCURACY);
+    }, BACKGROUND_UPDATE_INTERVAL_MS);
   }
 
-  private _switchToForegroundMode() {
+  private async _switchToForegroundMode(): Promise<void> {
     if (this.updateTimer) {
       clearInterval(this.updateTimer);
+      this.updateTimer = null;
     }
-    this._startLocationUpdates();
+    await this._startLocationUpdates();
   }
 
-  private _startLocationUpdates() {
-    this._getCurrentPosition();
+  private async _startLocationUpdates(): Promise<void> {
+    // Get initial position immediately
+    await this._getCurrentPosition(FOREGROUND_ACCURACY);
 
-    this.updateTimer = setInterval(() => {
-      this._getCurrentPosition();
-    }, LOCATION_UPDATE_INTERVAL_MS);
-  }
-
-  private _getCurrentPosition() {
-    if (!this.config.enabled || !this.isMonitoring) return;
-
+    // Use watchPositionAsync for efficient foreground updates
     try {
-      Geolocation.getCurrentPosition(
-        (position: any) => {
-          const {latitude, longitude, accuracy} = position.coords;
-          const update: LocationUpdate = {
-            latitude,
-            longitude,
-            accuracy: accuracy || 10,
-            timestamp: position.timestamp,
-          };
-
-          // TODO: BEFORE IT WAS LIKE THIS TO CHECK IF SUER MOVED ENOUGH BEFORE SEND UPDATE LOCATION, go agaisnt 5m 
-          if (this._hasMovedEnough(update)) {
-            this.lastLocation = update;
-            this._sendLocationUpdate(update);
-          }
-
-          // Always send to server — server has its own drift/dwell detection.
-          // Stationary users ARE the target (dwelling at a venue).
-          // TODO: comment because it was sending call everytime, and uncomment _hasMovedEnough
-          // this.lastLocation = update;
-          // this._sendLocationUpdate(update);
-        },
-        (error: any) => {
-          console.log('[GeofenceMonitor] Location error:', error.message);
-          this.onError?.(error.message);
-        },
+      this.locationSubscription = await Location.watchPositionAsync(
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 5000,
+          accuracy: FOREGROUND_ACCURACY,
+          distanceInterval: MIN_DISTANCE_CHANGE_METERS,
+          timeInterval: LOCATION_UPDATE_INTERVAL_MS,
+        },
+        (location) => {
+          this._handleLocationUpdate(location);
         },
       );
     } catch (error: any) {
-      console.log('[GeofenceMonitor] getCurrentPosition error:', error.message);
+      console.error('[GeofenceMonitor] watchPositionAsync error:', error.message);
+      this.onError?.(error.message);
+      
+      // Fallback to interval-based polling
+      this.updateTimer = setInterval(() => {
+        this._getCurrentPosition(FOREGROUND_ACCURACY);
+      }, LOCATION_UPDATE_INTERVAL_MS);
     }
   }
 
+  private async _getCurrentPosition(accuracy: Location.Accuracy): Promise<void> {
+    if (!this.config.enabled || !this.isMonitoring) return;
 
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        accuracy,
+      });
+      this._handleLocationUpdate(location);
+    } catch (error: any) {
+      console.log('[GeofenceMonitor] getCurrentPosition error:', error.message);
+      this.onError?.(error.message);
+    }
+  }
 
-  private _hasMovedEnough(newLocation: LocationUpdate): boolean {
-    const last = this.lastLocation;
+  private _handleLocationUpdate(location: Location.LocationObject): void {
+    const update: LocationUpdate = {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      accuracy: location.coords.accuracy || 10,
+      timestamp: location.timestamp || Date.now(),
+    };
 
-    if (!last) return true;
+    // Always update lastLocation for internal tracking
+    this.lastLocation = update;
 
-    const lat1 = last.latitude;
-    const lon1 = last.longitude;
+    // Only send to server if moved enough (reduces API calls)
+    if (this._hasMovedEnough(update, this.lastSentLocation)) {
+      this.lastSentLocation = update;
+      this._sendLocationUpdate(update);
+    }
+  }
+
+  private _hasMovedEnough(newLocation: LocationUpdate, lastSent: LocationUpdate | null): boolean {
+    // If never sent, always send
+    if (!lastSent) return true;
+
+    const lat1 = lastSent.latitude;
+    const lon1 = lastSent.longitude;
     const lat2 = newLocation.latitude;
     const lon2 = newLocation.longitude;
 
@@ -220,10 +297,7 @@ class GeofenceMonitorService {
 
     const a =
       sinDLat * sinDLat +
-      Math.cos(lat1Rad) *
-        Math.cos(lat2Rad) *
-        sinDLon *
-        sinDLon;
+      Math.cos(lat1Rad) * Math.cos(lat2Rad) * sinDLon * sinDLon;
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -231,17 +305,8 @@ class GeofenceMonitorService {
 
     return distance >= MIN_DISTANCE_CHANGE_METERS;
   }
-  // private _hasMovedEnough(newLocation: LocationUpdate): boolean {
-  //   if (!this.lastLocation) return true;
 
-  //   const dlat = newLocation.latitude - this.lastLocation.latitude;
-  //   const dlng = newLocation.longitude - this.lastLocation.longitude;
-  //   const distanceApprox = Math.sqrt(dlat * dlat + dlng * dlng) * 111000;
-
-  //   return distanceApprox >= MIN_DISTANCE_CHANGE_METERS;
-  // }
-
-  private async _sendLocationUpdate(location: LocationUpdate) {
+  private async _sendLocationUpdate(location: LocationUpdate): Promise<void> {
     try {
       const token = await getLocalData({key: 'token'});
       if (!token) return;
@@ -277,6 +342,122 @@ class GeofenceMonitorService {
 
   getLastLocation(): LocationUpdate | null {
     return this.lastLocation;
+  }
+  // ═══════════════════════════════════════════════════════════════════════
+  // GPX TRACK PLAYER - For testing dwell detection
+  // ═══════════════════════════════════════════════════════════════════════
+
+  private gpxTimer: ReturnType<typeof setTimeout> | null = null;
+  private gpxPoints: Array<{lat: number; lng: number; delayMs: number}> = [];
+  sendManualPosition(lat: number, lng: number) {
+    const update: LocationUpdate = {
+      latitude: lat,
+      longitude: lng,
+      accuracy: 5,
+      timestamp: Date.now(),
+    };
+
+    this.lastLocation = update;
+    this._sendLocationUpdate(update);
+  }
+  /**
+   * Play GPX track with proper timing to trigger backend dwell
+   *
+   * Example - triggers 3-minute bar dwell:
+   * geofenceMonitor.playGpxTrack([
+   *   { lat: 35.225845, lng: -80.853607, delayMs: 0 },      // start
+   *   { lat: 35.215000, lng: -80.830000, delayMs: 5000 }, // +5s
+   *   { lat: 35.200000, lng: -80.800000, delayMs: 10000 }, // +10s
+   *   { lat: 35.185000, lng: -80.770000, delayMs: 15000 },
+   *   { lat: 35.170000, lng: -80.740000, delayMs: 20000 },
+   *   { lat: 35.153980, lng: -80.713790, delayMs: 25000 }, // arrive B
+   *   // NOW DWELL: same spot, 30s apart, for 3+ minutes
+   *   { lat: 35.153980, lng: -80.713790, delayMs: 55000 },  // +30s
+   *   { lat: 35.153982, lng: -80.713788, delayMs: 85000 },  // +30s
+   *   { lat: 35.153978, lng: -80.713792, delayMs: 115000 }, // +30s
+   *   { lat: 35.153981, lng: -80.713789, delayMs: 145000 }, // +30s
+   *   { lat: 35.153979, lng: -80.713791, delayMs: 175000 }, // +30s
+   *   { lat: 35.153980, lng: -80.713790, delayMs: 205000 }, // ✓ 3min dwell!
+   * ]);
+   */
+
+  playGpxTrack(points: Array<{lat: number; lng: number; delayMs: number}>) {
+    if (this.gpxTimer) {
+      this.stopGpxTrack();
+    }
+
+    this.gpxPoints = points;
+    console.log(`[GPX] Playing ${points.length} points`);
+
+    let index = 0;
+
+    const playNext = () => {
+      if (index >= points.length) {
+        console.log('[GPX] Track complete');
+        return;
+      }
+
+      const point = points[index];
+      const elapsed = Date.now() - startTime;
+      const waitMs = Math.max(0, point.delayMs - elapsed);
+
+      this.gpxTimer = setTimeout(() => {
+        // Send to backend
+        const update: LocationUpdate = {
+          latitude: point.lat,
+          longitude: point.lng,
+          accuracy: 5 + Math.random() * 5,
+          timestamp: Date.now(),
+        };
+
+        console.log(
+          `[GPX] ${index + 1}/${points.length} at t=${point.delayMs}ms`,
+        );
+
+        this.lastLocation = update;
+        this._sendLocationUpdate(update);
+
+        index++;
+        playNext();
+      }, waitMs);
+    };
+
+    const startTime = Date.now();
+    playNext();
+  }
+
+  stopGpxTrack() {
+    if (this.gpxTimer) {
+      clearTimeout(this.gpxTimer);
+      this.gpxTimer = null;
+      console.log('[GPX] Stopped');
+    }
+  }
+
+  isPlayingGpx(): boolean {
+    return this.gpxTimer !== null;
+  }
+
+  // This WILL trigger dwell (3+ minutes at B with 30s intervals)
+  playTestDwell() {
+    geofenceMonitor.playGpxTrack([
+      // Walk to venue B (5s intervals)
+      {lat: 35.225845, lng: -80.853607, delayMs: 0},
+      {lat: 35.215, lng: -80.83, delayMs: 5000},
+      {lat: 35.2, lng: -80.8, delayMs: 10000},
+      {lat: 35.185, lng: -80.77, delayMs: 15000},
+      {lat: 35.17, lng: -80.74, delayMs: 20000},
+      {lat: 35.15398, lng: -80.71379, delayMs: 25000}, // arrive
+
+      // DWELL at B: 30s intervals × 7 points = 3.5 minutes
+      {lat: 35.15398, lng: -80.71379, delayMs: 55000},
+      {lat: 35.153982, lng: -80.713788, delayMs: 85000},
+      {lat: 35.153978, lng: -80.713792, delayMs: 115000},
+      {lat: 35.153981, lng: -80.713789, delayMs: 145000},
+      {lat: 35.153979, lng: -80.713791, delayMs: 175000},
+      {lat: 35.15398, lng: -80.71379, delayMs: 205000},
+      {lat: 35.153982, lng: -80.713788, delayMs: 235000}, // ✓ triggers dwell!
+    ]);
   }
 }
 

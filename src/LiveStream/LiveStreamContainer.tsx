@@ -43,6 +43,7 @@ import RTMPStreamingHelper from './RTMPStreamingHelper';
 import {useNavigation, CommonActions} from '@react-navigation/native';
 import ChatList from '../WatchStream/ChatList';
 import {useSocketInstance} from '../CustomHooks/useSocketInstance';
+import useTranslation from '../Hooks/useTranslation';
 
 interface BoostPurchaseData {
   tier: 'basic' | 'premium' | 'ultimate' | 'visibility' | 'prime' | 'viral';
@@ -69,6 +70,7 @@ interface LiveStreamContainerProps {
   onBackToEventSelections?: () => void;
 }
 export default function LiveStreamContainer(props: LiveStreamContainerProps) {
+  const { t } = useTranslation();
   const {
     streamEventType,
     streamTitle,
@@ -398,8 +400,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
 
         // Show alert to user
         Alert.alert(
-          'Streaming Stopped',
-          `Streaming has been stopped: ${data.message}`,
+          t('streaming.stopped'),
+          t('streaming.stoppedMessage', { message: data.message }),
         );
       });
 
@@ -449,9 +451,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setStreamKey(null);
 
         // Show alert to user
-        Alert.alert('Boost Limit Reached', `${data.message}`, [
+        Alert.alert(t('streaming.boostLimitReached'), t('streaming.boostLimitMessage', { message: data.message }), [
           {
-            text: 'OK',
+            text: t('common.ok'),
             onPress: () => {
               // Navigate back or show upgrade options
             },
@@ -518,8 +520,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       // Handle stream-start-blocked event
       socket.on('stream-start-blocked', data => {
         Alert.alert(
-          'Cannot Start Streaming',
-          `Cannot start streaming: ${data.message}`,
+          t('streaming.cannotStart'),
+          t('streaming.cannotStartMessage', { message: data.message }),
         );
         setIsStreaming(false);
         setStreamHealth('disconnected');
@@ -552,8 +554,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     try {
       // Send stream metadata to backend for boost timeout tracking
       const streamRequestData = {
-        streamEventType: streamEventType || 'general',
-        streamTitle: streamTitle || 'Live Stream',
+        streamEventType: streamEventType || t('streaming.defaultType'),
+        streamTitle: streamTitle || t('streaming.defaultTitle'),
         subcategoriesTags: subcategoriesTags || [],
         parentCategory: parentCategory || '',
         // Include boost data if available
@@ -696,8 +698,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             streamId: streamId, // Send MUX stream ID for proper tracking
             playbackId: playbackId, // Send MUX playback ID for streaming
             coordinates,
-            streamEventType: streamEventType || 'default',
-            streamTitle: streamTitle || 'Untitled Stream',
+            streamEventType: streamEventType || t('streaming.defaultType'),
+            streamTitle: streamTitle || t('streaming.untitled'),
             muxStreamKey: streamKey,
             quality: 'production',
             dataFlowValidated: true,
@@ -792,7 +794,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         {!device && (
           <View style={styles.cameraPlaceholder}>
             <CameraIcon size={80} color="rgba(255,255,255,0.3)" />
-            <Text style={styles.placeholderText}>Live Camera Feed</Text>
+            <Text style={styles.placeholderText}>{t('streaming.liveCameraFeed')}</Text>
           </View>
         )}
 
@@ -894,11 +896,11 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             <View style={styles.headerLeft}>
               <View style={styles.liveIndicator}>
                 <View style={styles.liveDot} />
-                <Text style={styles.liveText}>LIVE</Text>
+                <Text style={styles.liveText}>{t('streaming.liveIndicator')}</Text>
               </View>
               <View style={styles.viewerPill}>
                 <CommonMaterialCommunityIcons name="account-group" size={14} color={colors.text} style={{marginRight: 4}} />
-                <Text style={styles.viewerCount}>{viewerCount} viewers</Text>
+                <Text style={styles.viewerCount}>{t('streaming.viewersCount', { count: viewerCount })}</Text>
               </View>
             </View>
 
@@ -922,7 +924,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         <View style={styles.locationPillContainer}>
           <View style={styles.locationPill}>
             <View style={styles.locationDot} />
-                <Text style={styles.locationText}>{`Streaming from ${venueTag}`}</Text>
+                <Text style={styles.locationText}>{t('streaming.fromVenue', { venue: venueTag })}</Text>
           </View>
         </View>
         
@@ -939,13 +941,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             //   handleClosePress(); // Show confirmation modal
             // } else {
             //   startStreaming();
-            // }
             if (!isMonthlyLimitReached) {
               startStreaming();
             }
           }}>
-              <CommonMaterialCommunityIcons name="bullseye" size={24} color={colors.text} style={{marginRight: 8}} />
-          <Text style={styles.streamButtonText}>{isStreaming ? 'Stop Streaming' : 'Go Live'}</Text>
+          <CommonMaterialCommunityIcons name="bullseye" size={24} color={colors.text} style={{marginRight: 8}} />
+          <Text style={styles.streamButtonText}>{isStreaming ? t('streaming.stopStreaming') : t('streaming.goLive')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -999,10 +1000,10 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       {/* Monthly Limit Modal */}
       <MonthlyLimitModal
         labelsData={{
-          title: 'Your free minutes are up this week.',
-          subTitle: 'Free minutes reset every Monday. Get more now to keep going live.',
-          boostButtonLabel: 'Get More Minutes',
-          cancelButtonLabel: 'Maybe Later',
+          title: t('streaming.freeMinutesUp'),
+          subTitle: t('streaming.freeMinutesReset'),
+          boostButtonLabel: t('streaming.getMoreMinutes'),
+          cancelButtonLabel: t('streaming.maybeLater'),
         }}
         visible={isMonthlyLimitReached || isWeeklyLimitReached}
         onBoostAndGoLive={handleBoostAndGoLive}
@@ -1021,10 +1022,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       {showSevenMinuteWarning && (
         <View style={styles.warningOverlay}>
           <View style={styles.warningContainer}>
-            <Text style={styles.warningTitle}>⚠️ Stream Ending Soon</Text>
+            <Text style={styles.warningTitle}>{t('streaming.streamEndingSoon')}</Text>
             <Text style={styles.warningMessage}>
-              Your free stream will end in 3 minutes. Boost your stream to
-              continue streaming unlimited!
+              {t('streaming.streamEndingMessage')}
             </Text>
             <View style={styles.warningActions}>
               <TouchableOpacity
@@ -1033,12 +1033,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
                   dismissSevenMinuteWarning();
                   handleBoostAndGoLive();
                 }}>
-                <Text style={styles.boostWarningButtonText}>Boost Stream</Text>
+                <Text style={styles.boostWarningButtonText}>{t('streaming.boostStream')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.continueWarningButton}
                 onPress={dismissSevenMinuteWarning}>
-                <Text style={styles.continueWarningButtonText}>Continue</Text>
+                <Text style={styles.continueWarningButtonText}>{t('common.continue')}</Text>
               </TouchableOpacity>
             </View>
           </View>

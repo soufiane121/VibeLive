@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import type {VoteConfirmation} from '../../Services/VotingNotificationHandler';
+import useTranslation from '../../Hooks/useTranslation';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const TOAST_DURATION_MS = 2500;
@@ -19,6 +20,7 @@ interface VoteToastProps {
 }
 
 const VoteToast: React.FC<VoteToastProps> = ({confirmation, onDismiss}) => {
+  const { t } = useTranslation();
   const translateY = useRef(new Animated.Value(-120)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,7 +94,7 @@ const VoteToast: React.FC<VoteToastProps> = ({confirmation, onDismiss}) => {
         <Text style={styles.emoji}>{emoji}</Text>
         <View style={styles.textContainer}>
           <Text style={[styles.title, {color: accentColor}]}>
-            {isHot ? 'Hot!' : 'Dead'}
+            {isHot ? t('voting.hotExclamation') : t('voting.dead')}
           </Text>
           <Text style={styles.message} numberOfLines={1}>
             {confirmation.message}

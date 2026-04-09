@@ -15,6 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useSignUpMutation} from '../../../../features/registrations/LoginSliceApi';
 import {useDispatch} from 'react-redux';
 import {setCurrentUser} from '../../../../features/registrations/CurrentUser';
+import useTranslation from '../../../Hooks/useTranslation';
 
 interface OnboardingNotificationsProps {
   navigation: any;
@@ -25,6 +26,7 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
   navigation,
   route,
 }) => {
+  const { t } = useTranslation();
   const [hasNotificationPermission, setHasNotificationPermission] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
@@ -38,11 +40,11 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
           {
-            title: 'Notification Permission',
-            message: 'VibeLive wants to send you notifications about hot events near you.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
+            title: t('onboarding.notificationPermissionTitle'),
+            message: t('onboarding.notificationPermissionMessage'),
+            buttonNeutral: t('onboarding.askMeLater'),
+            buttonNegative: t('common.cancel'),
+            buttonPositive: t('common.ok'),
           },
         );
         const isGranted = granted === PermissionsAndroid.RESULTS.GRANTED;
@@ -50,11 +52,11 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
         
         if (!isGranted) {
           Alert.alert(
-            'Notifications Blocked',
-            'You\'re missing out on hot events and breaking news! Enable notifications in your device settings to stay in the loop.',
+            t('onboarding.notificationsBlocked'),
+            t('onboarding.notificationsBlockedDesc'),
             [
-              {text: 'Cancel', style: 'cancel'},
-              {text: 'Open Settings', onPress: () => Linking.openSettings()},
+              {text: t('common.cancel'), style: 'cancel'},
+              {text: t('onboarding.openSettings'), onPress: () => Linking.openSettings()},
             ]
           );
         }
@@ -64,7 +66,7 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
       }
     } catch (error) {
       console.log('Notification permission request error:', error);
-      Alert.alert('Error', 'Failed to request notification permission');
+      Alert.alert(t('common.error'), t('onboarding.notificationPermissionFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -76,10 +78,10 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
     // Validation: Check if all required data is present
     if (!signupData.firstName || !signupData.lastName || !signupData.age) {
       Alert.alert(
-        'Missing Information',
-        'Some required information is missing. Please go back and complete all steps.',
+        t('onboarding.missingInfo'),
+        t('onboarding.missingInfoDesc'),
         [
-          {text: 'Go Back', onPress: () => navigation.goBack()},
+          {text: t('onboarding.goBack'), onPress: () => navigation.goBack()},
         ]
       );
       return;
@@ -87,10 +89,10 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
 
     if (!signupData.userName || !signupData.email || !signupData.password) {
       Alert.alert(
-        'Account Information Missing',
-        'Your account information is incomplete. Please restart the signup process.',
+        t('onboarding.accountInfoMissing'),
+        t('onboarding.accountInfoMissingDesc'),
         [
-          {text: 'OK', onPress: () => navigation.navigate('SignUp')},
+          {text: t('common.ok'), onPress: () => navigation.navigate('SignUp')},
         ]
       );
       return;
@@ -128,7 +130,7 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
       });
     } catch (error) {
       console.log('Signup error:', error?.data);
-      Alert.alert('Signup Error', 'Failed to create account. Please try again.');
+      Alert.alert(t('onboarding.signupError'), t('onboarding.signupFailed'));
     } finally {
       setIsSigningUp(false);
     }
@@ -136,11 +138,11 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
 
   const handleSkip = () => {
     Alert.alert(
-      'Skip Notifications?',
-      'You\'ll miss out on:\n• Breaking: Hot events near you\n• Live alerts when friends go live\n• Last-minute invites to exclusive events\n\nAre you sure?',
+      t('onboarding.skipNotifications'),
+      t('onboarding.skipNotificationsDesc'),
       [
-        {text: 'Go Back', style: 'cancel'},
-        {text: 'Skip Anyway', onPress: completeSignUp, style: 'destructive'},
+        {text: t('onboarding.goBack'), style: 'cancel'},
+        {text: t('onboarding.skipAnyway'), onPress: completeSignUp, style: 'destructive'},
       ]
     );
   };
@@ -163,7 +165,7 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, {width: '100%'}]} />
         </View>
-        <Text style={styles.progressText}>Step 4 of 4</Text>
+        <Text style={styles.progressText}>{t('onboarding.step4Of4')}</Text>
       </View>
 
       {/* Main Content */}
@@ -179,9 +181,9 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
           </View>
         </View>
 
-        <Text style={styles.title}>Never miss the action</Text>
+        <Text style={styles.title}>{t('onboarding.neverMissAction')}</Text>
         <Text style={styles.subtitle}>
-          Get notified when something hot is happening near you
+          {t('onboarding.neverMissActionDesc')}
         </Text>
 
         {/* FOMO Alerts */}
@@ -189,41 +191,41 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
           <View style={styles.fomoAlert}>
             <Icon name="lightning-bolt" size={20} color={GlobalColors.Settings.accent} />
             <Text style={styles.fomoText}>
-              <Text style={styles.fomoHighlight}>Breaking:</Text> Hot Event Alert - 47 people just joined a party 0.3 miles away
+              <Text style={styles.fomoHighlight}>{t('onboarding.fomoBreaking')}</Text>{t('onboarding.fomoHotEvent')}
             </Text>
           </View>
           <View style={styles.fomoAlert}>
             <Icon name="account-group" size={20} color={GlobalColors.Settings.accent} />
             <Text style={styles.fomoText}>
-              <Text style={styles.fomoHighlight}>Live Now:</Text> Sarah_NYC just went live at the rooftop bar you love
+              <Text style={styles.fomoHighlight}>{t('onboarding.fomoLiveNow')}</Text>{t('onboarding.fomoLiveEvent')}
             </Text>
           </View>
           <View style={styles.fomoAlert}>
             <Icon name="star" size={20} color={GlobalColors.Settings.accent} />
             <Text style={styles.fomoText}>
-              <Text style={styles.fomoHighlight}>Exclusive:</Text> VIP invite to tonight's underground music event
+              <Text style={styles.fomoHighlight}>{t('onboarding.fomoExclusive')}</Text>{t('onboarding.fomoVipEvent')}
             </Text>
           </View>
         </View>
 
         {/* Benefits */}
         <View style={styles.benefitsContainer}>
-          <Text style={styles.benefitsTitle}>You'll get notified about:</Text>
+          <Text style={styles.benefitsTitle}>{t('onboarding.benefitsTitle')}</Text>
           <View style={styles.benefit}>
             <Icon name="fire" size={18} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Breaking events happening right now</Text>
+            <Text style={styles.benefitText}>{t('onboarding.benefitBreaking')}</Text>
           </View>
           <View style={styles.benefit}>
             <Icon name="video" size={18} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Friends going live nearby</Text>
+            <Text style={styles.benefitText}>{t('onboarding.benefitFriends')}</Text>
           </View>
           <View style={styles.benefit}>
             <Icon name="ticket" size={18} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Last-minute invites & exclusive events</Text>
+            <Text style={styles.benefitText}>{t('onboarding.benefitExclusive')}</Text>
           </View>
           <View style={styles.benefit}>
             <Icon name="heart" size={18} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Events matching your interests</Text>
+            <Text style={styles.benefitText}>{t('onboarding.benefitInterests')}</Text>
           </View>
         </View>
 
@@ -231,7 +233,7 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
         {isNotificationGranted && (
           <View style={styles.successContainer}>
             <Icon name="check-circle" size={24} color={GlobalColors.Common.successIcon} />
-            <Text style={styles.successText}>You're all set! Welcome to VibeLive</Text>
+            <Text style={styles.successText}>{t('onboarding.welcomeMessage')}</Text>
           </View>
         )}
       </View>
@@ -245,11 +247,11 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
               onPress={requestNotificationPermission}
               disabled={isLoading}>
               <Text style={styles.enableButtonText}>
-                {isLoading ? "Requesting Permission..." : "Enable Notifications"}
+                {isLoading ? t('onboarding.requestingPermission') : t('onboarding.enableNotifications')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipButtonText}>Skip and finish setup</Text>
+              <Text style={styles.skipButtonText}>{t('onboarding.skipFinish')}</Text>
             </TouchableOpacity>
           </>
         ) : (
@@ -258,7 +260,7 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
             onPress={validateAndCompleteSignUp}
             disabled={isSigningUp || isSignUpLoading}>
             <Text style={styles.completeButtonText}>
-              {isSigningUp ? "Creating Your Account..." : "Complete Setup"}
+              {isSigningUp ? t('onboarding.creatingAccount') : t('onboarding.completeSetup')}
             </Text>
           </TouchableOpacity>
         )}
@@ -268,7 +270,7 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
       <View style={styles.privacyContainer}>
         <Icon name="shield-check" size={16} color={GlobalColors.Settings.textMuted} />
         <Text style={styles.privacyText}>
-          You can customize notification preferences anytime in settings
+          {t('onboarding.customizePrefs')}
         </Text>
       </View>
     </View>

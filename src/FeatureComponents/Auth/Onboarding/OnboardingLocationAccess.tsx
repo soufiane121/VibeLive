@@ -12,6 +12,7 @@ import {GlobalColors} from '../../../styles/GlobalColors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 // import Button from '../../UIComponents/Button';
 import useGetLocation from '../../../CustomHooks/useGetLocation';
+import useTranslation from '../../../Hooks/useTranslation';
 
 interface OnboardingLocationAccessProps {
   navigation: any;
@@ -22,6 +23,7 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
   navigation,
   route,
 }) => {
+  const { t } = useTranslation();
   const {coordinates, hasPermission, requestLocationPermission} = useGetLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [isLocationSkipped, setIsLocationSkipped] = useState(false);
@@ -34,17 +36,17 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
       const granted = await requestLocationPermission();
       if (!granted) {
         Alert.alert(
-          'Location Access Required',
-          'VibeLive needs location access to show you nearby events and streams. Please enable location in your device settings.',
+          t('onboarding.locationAccessRequired'),
+          t('onboarding.locationAccessDesc'),
           [
-            {text: 'Cancel', style: 'cancel'},
-            {text: 'Open Settings', onPress: () => Linking.openSettings()},
+            {text: t('common.cancel'), style: 'cancel'},
+            {text: t('onboarding.openSettings'), onPress: () => Linking.openSettings()},
           ]
         );
       }
     } catch (error) {
       console.log('Permission request error:', error);
-      Alert.alert('Error', 'Failed to request location permission');
+      Alert.alert(t('common.error'), t('onboarding.locationPermissionFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -54,10 +56,10 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
     // Validation: Check if location permission is granted or user explicitly skipped
     if (!hasPermission && !isLocationSkipped) {
       Alert.alert(
-        'Location Access Required',
-        'Please enable location access or choose to skip this step to continue.',
+        t('onboarding.locationAccessRequired'),
+        t('onboarding.locationEnableOrSkip'),
         [
-          {text: 'OK', style: 'default'}
+          {text: t('common.ok'), style: 'default'}
         ]
       );
       return;
@@ -75,11 +77,11 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
 
   const handleSkip = () => {
     Alert.alert(
-      'Skip Location Access?',
-      'Without location access, you\'ll miss out on discovering hot events and streams happening right around you. Are you sure?',
+      t('onboarding.skipLocation'),
+      t('onboarding.skipLocationDesc'),
       [
-        {text: 'Go Back', style: 'cancel'},
-        {text: 'Skip Anyway', onPress: () => {
+        {text: t('onboarding.goBack'), style: 'cancel'},
+        {text: t('onboarding.skipAnyway'), onPress: () => {
           setIsLocationSkipped(true);
           validateAndContinue();
         }, style: 'destructive'},
@@ -105,7 +107,7 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, {width: '50%'}]} />
         </View>
-        <Text style={styles.progressText}>Step 2 of 4</Text>
+        <Text style={styles.progressText}>{t('onboarding.step2Of4')}</Text>
       </View>
 
       {/* Main Content */}
@@ -120,20 +122,20 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
           </View>
         </View>
 
-        <Text style={styles.title}>Don't miss what's happening nearby</Text>
+        <Text style={styles.title}>{t('onboarding.dontMissNearby')}</Text>
         <Text style={styles.subtitle}>
-          We need your location to show you the hottest events and live streams in your area
+          {t('onboarding.locationSubtitle')}
         </Text>
 
         {/* FOMO Stats */}
         <View style={styles.fomoContainer}>
           <View style={styles.fomoStat}>
             <Text style={styles.fomoNumber}>47</Text>
-            <Text style={styles.fomoLabel}>Events near you right now</Text>
+            <Text style={styles.fomoLabel}>{t('onboarding.eventsNearYou')}</Text>
           </View>
           <View style={styles.fomoStat}>
             <Text style={styles.fomoNumber}>2.3k</Text>
-            <Text style={styles.fomoLabel}>People streaming nearby</Text>
+            <Text style={styles.fomoLabel}>{t('onboarding.peopleStreamingNearby')}</Text>
           </View>
         </View>
 
@@ -141,15 +143,15 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
         <View style={styles.benefitsContainer}>
           <View style={styles.benefit}>
             <Icon name="lightning-bolt" size={20} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Discover events happening around you</Text>
+            <Text style={styles.benefitText}>{t('onboarding.locationBenefit1')}</Text>
           </View>
           <View style={styles.benefit}>
             <Icon name="account-group" size={20} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Connect with people in your area</Text>
+            <Text style={styles.benefitText}>{t('onboarding.locationBenefit2')}</Text>
           </View>
           <View style={styles.benefit}>
             <Icon name="bell-ring" size={20} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Get notified about nearby activities</Text>
+            <Text style={styles.benefitText}>{t('onboarding.locationBenefit3')}</Text>
           </View>
         </View>
 
@@ -157,7 +159,7 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
         {isLocationGranted && (
           <View style={styles.successContainer}>
             <Icon name="check-circle" size={24} color={GlobalColors.Common.successIcon} />
-            <Text style={styles.successText}>Location access granted!</Text>
+            <Text style={styles.successText}>{t('onboarding.locationGranted')}</Text>
           </View>
         )}
       </View>
@@ -171,18 +173,18 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
               onPress={handleRequestLocation}
               disabled={isLoading}>
               <Text style={styles.enableButtonText}>
-                {isLoading ? "Requesting Access..." : "Enable Location Access"}
+                {isLoading ? t('onboarding.requestingAccess') : t('onboarding.enableLocation')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipButtonText}>Skip for now</Text>
+              <Text style={styles.skipButtonText}>{t('onboarding.skipForNow')}</Text>
             </TouchableOpacity>
           </>
         ) : (
           <TouchableOpacity
             style={styles.continueButton}
             onPress={validateAndContinue}>
-            <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={styles.continueButtonText}>{t('common.continue')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -191,7 +193,7 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
       <View style={styles.privacyContainer}>
         <Icon name="shield-check" size={16} color={GlobalColors.Settings.textMuted} />
         <Text style={styles.privacyText}>
-          Your location is only used to show nearby content and is never shared with other users
+          {t('onboarding.locationPrivacy')}
         </Text>
       </View>
     </View>

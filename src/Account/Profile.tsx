@@ -29,8 +29,6 @@ const Profile = () => {
   const navigation = useNavigation();
   const { trackEvent } = useAnalytics();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
-  console.log("from profile",{currentUser});
-  
   
   // --- DATA INTEGRATION COMMENTS ---
   // Followers/Following: Uses currentUser.followers/following arrays. If these are not set by backend, will default to 0.

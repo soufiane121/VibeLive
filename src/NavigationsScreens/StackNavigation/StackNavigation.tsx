@@ -42,6 +42,7 @@ import Settings from '../../Settings/Settings';
 import VenueClaimWebRedirect from '../../FeatureComponents/VenueClaim/VenueClaimWebRedirect';
 import VenueClaimStatusScreen from '../../FeatureComponents/VenueClaim/VenueClaimStatusScreen';
 import VenueTaggingScreen from '../../FeatureComponents/VenueClaim/VenueTaggingScreen';
+import LocationSimulatorTest from '../../FeatureComponents/Testing/LocationSimulatorTest';
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -77,77 +78,87 @@ const StackNavigation = () => {
 
   return (
     <>
-    <VotingInitializer />
-    <Stack.Navigator
-      screenOptions={{
-        animation: 'fade',
-        headerBackVisible: false,
-        headerShown: false,
-      }}>
-      {!isSuccess && !data?.['_id'] && (
-        <>
-          <Stack.Screen name="Login" component={LoginContainer} />
-          <Stack.Screen
-            name="sign-up"
-            component={SignUpContainer}
-            options={{headerShown: false}}
-          />
-        </>
-      )}
-      <Stack.Screen name="Bottom" component={BottomNavigation} />
-      <Stack.Screen name="StreamPlayer" component={StreamPlayer} />
-      <Stack.Screen name="carrouselSwiper" component={CarrouselContainer} />
-      {/* Settings Screens */}
-      <Stack.Screen
-        name="NotificationSettings"
-        component={NotificationSettings}
-      />
-      <Stack.Screen name="PrivacySettings" component={PrivacySettings} />
-      <Stack.Screen
-        name="StreamingPreferences"
-        component={StreamingPreferences}
-      />
-      <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
-      <Stack.Screen name="PasswordSettings" component={PasswordSettings} />
-      <Stack.Screen name="EmailSettings" component={EmailSettings} />
-      {/* Events Screens */}
-      <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
-      <Stack.Screen name="EventCreationFlow" component={EventCreationFlow} />
-      {/* LiveStream Screens */}
-      <Stack.Screen
-        name="SubcategorySelection"
-        component={SubcategorySelection}
-      />
-      {/* Voting Screens */}
-      <Stack.Screen name="VenueSelection" component={VenueSelectionScreen} />
-      <Stack.Screen name="VenueOwnerDashboard" component={VenueOwnerDashboard} />
-      <Stack.Screen name="VotingPreferences" component={VotingPreferences} />
-      {/* Squad Screens */}
-      <Stack.Screen name="SquadJoin" component={SquadJoinScreen} />
-      {/* Settings main screen (accessible from Profile) */}
-      <Stack.Screen name="Settings" component={Settings} />
-      {/* Venue Claim Screens — claim flow redirects to web */}
-      <Stack.Screen name="VenueSearch" component={VenueClaimWebRedirect} />
-      <Stack.Screen name="VenueClaimStatus" component={VenueClaimStatusScreen} />
-      <Stack.Screen name="VenueTagging" component={VenueTaggingScreen} />
-      {/* Onboarding Screens */}
-      <Stack.Screen
-        name="OnboardingAccountCreation"
-        component={OnboardingAccountCreation}
-      />
-      <Stack.Screen
-        name="OnboardingLocationAccess"
-        component={OnboardingLocationAccess}
-      />
-      <Stack.Screen
-        name="OnboardingInterests"
-        component={OnboardingInterests}
-      />
-      <Stack.Screen
-        name="OnboardingNotifications"
-        component={OnboardingNotifications}
-      />
-    </Stack.Navigator>
+      <VotingInitializer />
+      <Stack.Navigator
+        screenOptions={{
+          animation: 'fade',
+          headerBackVisible: false,
+          headerShown: false,
+        }}>
+        {!isSuccess && !data?.['_id'] && (
+          <>
+            <Stack.Screen name="Login" component={LoginContainer} />
+            <Stack.Screen
+              name="sign-up"
+              component={SignUpContainer}
+              options={{headerShown: false}}
+            />
+          </>
+        )}
+        <Stack.Screen name="Bottom" component={BottomNavigation} />
+        <Stack.Screen name="StreamPlayer" component={StreamPlayer} />
+        <Stack.Screen name="carrouselSwiper" component={CarrouselContainer} />
+        {/* Settings Screens */}
+        <Stack.Screen
+          name="NotificationSettings"
+          component={NotificationSettings}
+        />
+        <Stack.Screen name="PrivacySettings" component={PrivacySettings} />
+        <Stack.Screen
+          name="StreamingPreferences"
+          component={StreamingPreferences}
+        />
+        <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
+        <Stack.Screen name="PasswordSettings" component={PasswordSettings} />
+        <Stack.Screen name="EmailSettings" component={EmailSettings} />
+        {/* Events Screens */}
+        <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
+        <Stack.Screen name="EventCreationFlow" component={EventCreationFlow} />
+        {/* LiveStream Screens */}
+        <Stack.Screen
+          name="SubcategorySelection"
+          component={SubcategorySelection}
+        />
+        {/* Voting Screens */}
+        <Stack.Screen name="VenueSelection" component={VenueSelectionScreen} />
+        <Stack.Screen
+          name="VenueOwnerDashboard"
+          component={VenueOwnerDashboard}
+        />
+        <Stack.Screen name="VotingPreferences" component={VotingPreferences} />
+        {/* Squad Screens */}
+        <Stack.Screen name="SquadJoin" component={SquadJoinScreen} />
+        {/* Settings main screen (accessible from Profile) */}
+        <Stack.Screen name="Settings" component={Settings} />
+        {/* Venue Claim Screens — claim flow redirects to web */}
+        <Stack.Screen name="VenueSearch" component={VenueClaimWebRedirect} />
+        <Stack.Screen
+          name="VenueClaimStatus"
+          component={VenueClaimStatusScreen}
+        />
+        <Stack.Screen name="VenueTagging" component={VenueTaggingScreen} />
+        {/* Onboarding Screens */}
+        <Stack.Screen
+          name="OnboardingAccountCreation"
+          component={OnboardingAccountCreation}
+        />
+        <Stack.Screen
+          name="OnboardingLocationAccess"
+          component={OnboardingLocationAccess}
+        />
+        <Stack.Screen
+          name="OnboardingInterests"
+          component={OnboardingInterests}
+        />
+        <Stack.Screen
+          name="OnboardingNotifications"
+          component={OnboardingNotifications}
+        />
+        <Stack.Screen
+          name="LocationSimulatorTest"
+          component={LocationSimulatorTest}
+        />
+      </Stack.Navigator>
     </>
   );
 };

@@ -18,6 +18,7 @@
 		90EC970904B06F575ACCD069 /* Pods_VibeLive_VibeLiveTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63029DBD9A185D1A4A02F834 /* Pods_VibeLive_VibeLiveTests.framework */; };
 		A70971382F552B4E008D5198 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A70971372F552B4E008D5198 /* StoreKit.framework */; };
 		A70BD8C82E3C0A690014C36E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A70BD8C72E3C0A690014C36E /* GoogleService-Info.plist */; };
+		A77B2D1F2F85DD790082C20C /* walk_to_b.gpx in Resources */ = {isa = PBXBuildFile; fileRef = A77B2D1E2F85DD790082C20C /* walk_to_b.gpx */; };
 		A7BC4D152E45919600EA3001 /* OneSignalNotificationServiceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A7BC4D0E2E45919600EA3001 /* OneSignalNotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B64695F30508D7638895C962 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B041F3F62509E7705BC259D9 /* ExpoModulesProvider.swift */; };
 		CCD89B9E56784D4EC57845ED /* Pods_OneSignalNotificationServiceExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E899C8A6DE94EA8E1C3B74D /* Pods_OneSignalNotificationServiceExtension.framework */; };
@@ -79,6 +80,7 @@
 		A70971372F552B4E008D5198 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		A70BD8C72E3C0A690014C36E /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A736F59E2F5147B10033964B /* VibeLiveRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = VibeLiveRelease.entitlements; path = VibeLive/VibeLiveRelease.entitlements; sourceTree = "<group>"; };
+		A77B2D1E2F85DD790082C20C /* walk_to_b.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = walk_to_b.gpx; sourceTree = "<group>"; };
 		A7BC4D092E45901200EA3001 /* VibeLive.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = VibeLive.entitlements; path = VibeLive/VibeLive.entitlements; sourceTree = "<group>"; };
 		A7BC4D0E2E45919600EA3001 /* OneSignalNotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OneSignalNotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B041F3F62509E7705BC259D9 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-VibeLive/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
@@ -213,6 +215,7 @@
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
 				AFD2223A5153D5E682C9651A /* ExpoModulesProviders */,
+				A77B2D1E2F85DD790082C20C /* walk_to_b.gpx */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -387,6 +390,7 @@
 				A70BD8C82E3C0A690014C36E /* GoogleService-Info.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				06CBC602CD694910E79B248B /* PrivacyInfo.xcprivacy in Resources */,
+				A77B2D1F2F85DD790082C20C /* walk_to_b.gpx in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

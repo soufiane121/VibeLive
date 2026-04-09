@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {GlobalColors} from '../../../styles/GlobalColors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import useTranslation from '../../../Hooks/useTranslation';
 // import Button from '../../../UIComponents/Button';
 
 interface OnboardingAccountCreationProps {
@@ -21,6 +22,7 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
   navigation,
   route,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -44,7 +46,7 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
       newErrors.push('firstName');
     } else if (form.firstName.trim().length < 2) {
       newErrors.push('firstName');
-      Alert.alert('Invalid Name', 'First name must be at least 2 characters long.');
+      Alert.alert(t('onboarding.invalidName'), t('onboarding.firstNameMinLength'));
       return false;
     }
     
@@ -53,14 +55,14 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
       newErrors.push('lastName');
     } else if (form.lastName.trim().length < 2) {
       newErrors.push('lastName');
-      Alert.alert('Invalid Name', 'Last name must be at least 2 characters long.');
+      Alert.alert(t('onboarding.invalidName'), t('onboarding.lastNameMinLength'));
       return false;
     }
     
     // Age validation
     if (!form.age.trim()) {
       newErrors.push('age');
-      Alert.alert('Age Required', 'Please enter your age to continue.');
+      Alert.alert(t('onboarding.ageRequired'), t('onboarding.enterAgeToContinue'));
       return false;
     }
     
@@ -76,8 +78,8 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
     if (ageNum < 18) {
       newErrors.push('age');
       Alert.alert(
-        'Age Restriction', 
-        'VibeLive is only available to users 18 years of age or older. We apologize for any inconvenience.'
+        t('onboarding.ageRestriction'), 
+        t('onboarding.ageRestrictionDesc')
       );
       return false;
     }
@@ -85,7 +87,7 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
     // For users 18+, require checkbox confirmation
     if (ageNum >= 18 && !form.isOver18) {
       newErrors.push('isOver18');
-      Alert.alert('Age Confirmation', 'Please confirm you are 18 or older to continue.');
+      Alert.alert(t('onboarding.ageConfirmation'), t('onboarding.confirmAge18'));
       return false;
     }
 
@@ -129,9 +131,9 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
             color={GlobalColors.Settings.text}
           />
         </TouchableOpacity>
-        <Text style={styles.title}>Tell us about yourself</Text>
+        <Text style={styles.title}>{t('onboarding.tellAboutYourself')}</Text>
         <Text style={styles.subtitle}>
-          Let's personalize your VibeLive experience
+          {t('onboarding.personalizeExperience')}
         </Text>
       </View>
 
@@ -140,17 +142,17 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, {width: '25%'}]} />
         </View>
-        <Text style={styles.progressText}>Step 1 of 4</Text>
+        <Text style={styles.progressText}>{t('onboarding.step1Of4')}</Text>
       </View>
 
       {/* Form */}
       <View style={styles.formContainer}>
         <View style={styles.nameRow}>
           <View style={styles.nameInputContainer}>
-            <Text style={styles.label}>First Name</Text>
+            <Text style={styles.label}>{t('onboarding.firstName')}</Text>
             <TextInput
               style={getInputStyle('firstName')}
-              placeholder="First Name"
+              placeholder={t('onboarding.firstNamePlaceholder')}
               placeholderTextColor={GlobalColors.Settings.textMuted}
               value={form.firstName}
               onChangeText={(text) => handleChange('firstName', text)}
@@ -159,15 +161,15 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
             />
             {errors.includes('firstName') && (
               <Text style={styles.errorText}>
-                {!form.firstName.trim() ? 'First name is required' : 'First name must be at least 2 characters'}
+                {!form.firstName.trim() ? t('onboarding.firstNameRequired') : t('onboarding.firstNameMinChars')}
               </Text>
             )}
           </View>
           <View style={styles.nameInputContainer}>
-            <Text style={styles.label}>Last Name</Text>
+            <Text style={styles.label}>{t('onboarding.lastName')}</Text>
             <TextInput
               style={getInputStyle('lastName')}
-              placeholder="Enter your last name"
+              placeholder={t('onboarding.lastNamePlaceholder')}
               placeholderTextColor={GlobalColors.Settings.textMuted}
               value={form.lastName}
               onChangeText={text => handleChange('lastName', text)}
@@ -176,17 +178,17 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
             />
             {errors.includes('lastName') && (
               <Text style={styles.errorText}>
-                {!form.lastName.trim() ? 'Last name is required' : 'Last name must be at least 2 characters'}
+                {!form.lastName.trim() ? t('onboarding.lastNameRequired') : t('onboarding.lastNameMinChars')}
               </Text>
             )}
           </View>
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Age</Text>
+          <Text style={styles.label}>{t('onboarding.age')}</Text>
           <TextInput
             style={getInputStyle('age')}
-            placeholder="Enter your age"
+            placeholder={t('onboarding.agePlaceholder')}
             placeholderTextColor={GlobalColors.Settings.textMuted}
             value={form.age}
             onChangeText={text => handleChange('age', text)}
@@ -195,7 +197,7 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
           />
           {errors.includes('age') && (
             <Text style={styles.errorText}>
-              {!form.age.trim() ? 'Age is required' : 'Please enter a valid age (18+)'}
+              {!form.age.trim() ? t('onboarding.ageRequired') : t('onboarding.ageValid18')}
             </Text>
           )}
         </View>
@@ -219,7 +221,7 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
               )}
             </View>
             <Text style={styles.checkboxText}>
-              I confirm that I am 18 years of age or older
+              {t('onboarding.confirm18Checkbox')}
             </Text>
           </TouchableOpacity>
         )}
@@ -233,8 +235,8 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
           />
           <Text style={styles.infoText}>
             {parseInt(form.age) >= 18
-              ? 'You must be 18+ to access all VibeLive features'
-              : 'You must be 18 or older to join VibeLive'}
+              ? t('onboarding.mustBe18Plus')
+              : t('onboarding.mustBe18OrOlder')}
           </Text>
         </View>
       </View>
@@ -249,7 +251,7 @@ const OnboardingAccountCreation: React.FC<OnboardingAccountCreationProps> = ({
           ]}
           onPress={handleContinue}
           disabled={!form.firstName || !form.lastName || !form.age || (parseInt(form.age) >= 18 && !form.isOver18)}>
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{t('common.continue')}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

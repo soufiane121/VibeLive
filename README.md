@@ -16,6 +16,9 @@ npm start
 
 # OR using Yarn
 yarn start
+
+# get ip address like 192.... 
+ifconfig
 ```
 
 ## Step 2: Start your Application

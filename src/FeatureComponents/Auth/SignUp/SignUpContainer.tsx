@@ -13,6 +13,7 @@ import {useDispatch} from 'react-redux';
 import {setCurrentUser} from '../../../../features/registrations/CurrentUser';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Button from '../../../UIComponents/Button';
+import useTranslation from '../../../Hooks/useTranslation';
 
 const COLORS = {
   primary: '#FF2D55',
@@ -48,6 +49,7 @@ const SignUpContainer = ({navigation}) => {
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { t } = useTranslation();
 
   const handleChange = (key, value) => {
     setForm({...form, [key]: value});
@@ -77,7 +79,7 @@ const SignUpContainer = ({navigation}) => {
       ]);
       setFieldErrors(prev => ({
         ...prev,
-        confirmPassword: 'Passwords do not match'
+        confirmPassword: t('errors.passwordsDoNotMatch')
       }));
       return;
     }
@@ -122,7 +124,7 @@ const SignUpContainer = ({navigation}) => {
       } else {
         setFieldErrors(prev => ({
           ...prev,
-          general: 'Failed to validate account information. Please try again.'
+          general: t('auth.signup.validationFailed')
         }));
       }
     }
@@ -141,14 +143,14 @@ const SignUpContainer = ({navigation}) => {
       style={styles.container}
       className="flex-1 bg-gray-900 justify-center px-8">
       <Text style={styles.title} className="text-yellow-500">
-        Create Account
+        {t('auth.signup.title')}
       </Text>
       {/* Username and Email in the same row */}
       <View style={styles.row}>
         <View style={styles.halfContainer}>
           <TextInput
             style={[getInputStyle('userName'), styles.halfInput]}
-            placeholder="Username"
+            placeholder={t('auth.signup.usernamePlaceholder')}
             placeholderTextColor="#888"
             value={form.userName}
             onChangeText={text => handleChange('userName', text)}
@@ -161,7 +163,7 @@ const SignUpContainer = ({navigation}) => {
         <View style={styles.halfContainer}>
           <TextInput
             style={[getInputStyle('email'), styles.halfInput]}
-            placeholder="Email"
+            placeholder={t('auth.signup.emailPlaceholder')}
             placeholderTextColor="#888"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -177,7 +179,7 @@ const SignUpContainer = ({navigation}) => {
       <TextInput
         style={[getInputStyle('phoneNumber'), styles.fullInput]}
         className="bg-gray-800 text-white p-4 rounded-lg mb-4"
-        placeholder="Phone Number"
+        placeholder={t('auth.signup.phonePlaceholder')}
         placeholderTextColor="#888"
         keyboardType="phone-pad"
         value={form.phoneNumber}
@@ -196,7 +198,7 @@ const SignUpContainer = ({navigation}) => {
       ]}>
         <TextInput
           style={styles.passwordInput}
-          placeholder="Password"
+          placeholder={t('auth.signup.passwordPlaceholder')}
           placeholderTextColor="#888"
           secureTextEntry={!showPassword}
           value={form.password}
@@ -224,7 +226,7 @@ const SignUpContainer = ({navigation}) => {
       ]}>
         <TextInput
           style={styles.passwordInput}
-          placeholder="Confirm Password"
+          placeholder={t('auth.signup.confirmPasswordPlaceholder')}
           placeholderTextColor="#888"
           secureTextEntry={!showConfirmPassword}
           value={form.confirmPassword}
@@ -249,7 +251,7 @@ const SignUpContainer = ({navigation}) => {
         </Text>
       )}
       <Button
-        btnText="Sign Up"
+        btnText={t('auth.signup.signUpButton')}
         btnStyle="disabled:bg-slate-50 bg-yellow-500 p-4 rounded-lg items-center w-full"
         textStyle="text-black font-bold text-lg"
         onPress={handleSignUp}
@@ -259,8 +261,8 @@ const SignUpContainer = ({navigation}) => {
         className="mt-6"
         onPress={() => navigation.navigate('Login')}>
         <Text className="text-gray-500 text-center">
-          You have an account already?{' '}
-          <Text className="text-yellow-500">Login</Text>
+          {t('auth.signup.hasAccount')}{' '}
+          <Text className="text-yellow-500">{t('auth.signup.loginLink')}</Text>
         </Text>
       </TouchableOpacity>
     </View>

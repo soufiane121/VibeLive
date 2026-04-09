@@ -11,6 +11,7 @@ import {
   PanResponder,
 } from 'react-native';
 import {GlobalColors, ColorScheme} from '../styles/GlobalColors';
+import useTranslation from '../Hooks/useTranslation';
 
 const {height: screenHeight} = Dimensions.get('window');
 const MODAL_HEIGHT = screenHeight * 0.7; // 70% of screen height for more content
@@ -36,6 +37,7 @@ const FreeStreamLimitModal: React.FC<FreeStreamLimitModalProps> = ({
   onCancel,
   freeStreamingStatus,
 }) => {
+  const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(MODAL_HEIGHT)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -99,7 +101,7 @@ const FreeStreamLimitModal: React.FC<FreeStreamLimitModalProps> = ({
   ).current;
 
   const formatResetDate = (dateString?: string) => {
-    if (!dateString) return 'Next Friday';
+    if (!dateString) return t('streaming.nextFriday');
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
@@ -141,27 +143,27 @@ const FreeStreamLimitModal: React.FC<FreeStreamLimitModalProps> = ({
           
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>You've used your free minutes.</Text>
+            <Text style={styles.title}>{t('streaming.usedFreeMinutes')}</Text>
             <Text style={styles.subtitle}>
-              {freeStreamingStatus?.weeklyStreamsUsed || 2}/2 weekly streams used
+              {t('streaming.weeklyStreamsUsed', { used: freeStreamingStatus?.weeklyStreamsUsed || 2, max: 2 })}
             </Text>
           </View>
 
           {/* Content */}
           <View style={styles.content}>
             <Text style={styles.message}>
-              Your stream is ending. Get more minutes to go live again tonight.
+              {t('streaming.streamEndingGetMinutes')}
             </Text>
 
             <View style={styles.resetInfo}>
               <Text style={styles.resetText}>
-                Free minutes reset every Monday. {formatResetDate(freeStreamingStatus?.nextResetDate) ? `Next reset: ${formatResetDate(freeStreamingStatus?.nextResetDate)}` : ''}
+                {t('streaming.freeMinutesResetNext', { nextReset: formatResetDate(freeStreamingStatus?.nextResetDate) })}
               </Text>
             </View>
 
             <View style={styles.minutesInfo}>
               <Text style={styles.minutesInfoText}>
-                Minutes never expire once purchased. Use them across any night out.
+                {t('streaming.minutesNeverExpireInfo')}
               </Text>
             </View>
           </View>
@@ -171,13 +173,13 @@ const FreeStreamLimitModal: React.FC<FreeStreamLimitModalProps> = ({
             <TouchableOpacity
               style={styles.boostButton}
               onPress={onBoostAndGoLive}>
-              <Text style={styles.boostButtonText}>Get More Minutes</Text>
+              <Text style={styles.boostButtonText}>{t('event.getMoreMinutes')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={onCancel}>
-              <Text style={styles.cancelButtonText}>Maybe Later</Text>
+              <Text style={styles.cancelButtonText}>{t('event.maybeLater')}</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>

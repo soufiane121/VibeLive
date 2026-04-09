@@ -8,6 +8,8 @@ PODS:
   - EXImageLoader (4.7.0):
     - ExpoModulesCore
     - React-Core
+  - EXLocation (17.0.1):
+    - ExpoModulesCore
   - Expo (51.0.39):
     - ExpoModulesCore
   - ExpoAsset (10.0.10):
@@ -43,6 +45,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - EXTaskManager (11.8.2):
+    - ExpoModulesCore
+    - UMAppLoader
   - FBLazyVector (0.75.4)
   - Firebase/CoreOnly (11.15.0):
     - FirebaseCore (~> 11.15.0)
@@ -1835,6 +1840,8 @@ PODS:
     - Yoga
   - RNIap (12.15.5):
     - React-Core
+  - RNLocalize (3.7.0):
+    - React-Core
   - rnmapbox-maps (10.1.31):
     - MapboxMaps (~> 10.18.2)
     - React
@@ -1891,6 +1898,7 @@ PODS:
     - Yoga
   - SocketRocket (0.7.0)
   - Turf (2.8.0)
+  - UMAppLoader (4.6.0)
   - VisionCamera (4.7.1):
     - VisionCamera/Core (= 4.7.1)
     - VisionCamera/React (= 4.7.1)
@@ -1905,6 +1913,7 @@ DEPENDENCIES:
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXImageLoader (from `../node_modules/expo-image-loader/ios`)
+  - EXLocation (from `../node_modules/expo-location/ios`)
   - Expo (from `../node_modules/expo`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
@@ -1912,6 +1921,7 @@ DEPENDENCIES:
   - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
+  - EXTaskManager (from `../node_modules/expo-task-manager/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
@@ -1990,9 +2000,11 @@ DEPENDENCIES:
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNIap (from `../node_modules/react-native-iap`)
+  - RNLocalize (from `../node_modules/react-native-localize`)
   - "rnmapbox-maps (from `../node_modules/@rnmapbox/maps`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
+  - UMAppLoader (from `../node_modules/unimodules-app-loader/ios`)
   - VisionCamera (from `../node_modules/react-native-vision-camera`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2031,6 +2043,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-constants/ios"
   EXImageLoader:
     :path: "../node_modules/expo-image-loader/ios"
+  EXLocation:
+    :path: "../node_modules/expo-location/ios"
   Expo:
     :path: "../node_modules/expo"
   ExpoAsset:
@@ -2045,6 +2059,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
+  EXTaskManager:
+    :path: "../node_modules/expo-task-manager/ios"
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
   fmt:
@@ -2196,12 +2212,16 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-gesture-handler"
   RNIap:
     :path: "../node_modules/react-native-iap"
+  RNLocalize:
+    :path: "../node_modules/react-native-localize"
   rnmapbox-maps:
     :path: "../node_modules/@rnmapbox/maps"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNVectorIcons:
     :path: "../node_modules/react-native-vector-icons"
+  UMAppLoader:
+    :path: "../node_modules/unimodules-app-loader/ios"
   VisionCamera:
     :path: "../node_modules/react-native-vision-camera"
   Yoga:
@@ -2213,6 +2233,7 @@ SPEC CHECKSUMS:
   DoubleConversion: 76ab83afb40bddeeee456813d9c04f67f78771b5
   EXConstants: 89d35611505a8ce02550e64e43cd05565da35f9a
   EXImageLoader: 1fe96c70cdc78bedc985ec4b1fab5dd8e67dc38b
+  EXLocation: c52e800875ce2a5974b3b796ff2f3a8b978e0b28
   Expo: ed0a748eb6be0efd2c3df7f6de3f3158a14464c9
   ExpoAsset: 286fee7ba711ce66bf20b315e68106b13b8629fc
   ExpoFileSystem: 2988caaf68b7cb706e36d382829d99811d9d76a5
@@ -2220,6 +2241,7 @@ SPEC CHECKSUMS:
   ExpoImagePicker: 7038c1740853c170002c491de63f9f9780c8139b
   ExpoKeepAwake: dd02e65d49f1cfd9194640028ae2857e536eb1c9
   ExpoModulesCore: 980f298148bfa1ae51ffabf9cc01e9dce348b9c5
+  EXTaskManager: b515b853fd97286a25cb643978ff7fa456f3139a
   FBLazyVector: 430e10366de01d1e3d57374500b1b150fe482e6d
   Firebase: d99ac19b909cd2c548339c2241ecd0d1599ab02e
   FirebaseCore: efb3893e5b94f32b86e331e3bd6dadf18b66568e
@@ -2314,11 +2336,13 @@ SPEC CHECKSUMS:
   RNFBMessaging: 37dd861b8600ec2ae9a06ba42ae4285cb707a731
   RNGestureHandler: f15c35ef64e8985a5e1e69fc16ccde3ffe8d8aa7
   RNIap: eb6a85872948010da81ad0ab8aca18a130566d2d
+  RNLocalize: 5b24342fb7288242c2215756412d8dcb8dadf31e
   rnmapbox-maps: f6efaeb1eddbff2aaafe27a1ff0ba01992e82398
   RNScreens: 929d5858d322a2ae0cb272511f992c0acec69208
   RNVectorIcons: d629dbc9c0c9ec0fcb6aea868d4d66c5a34e9312
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Turf: aa2ede4298009639d10db36aba1a7ebaad072a5e
+  UMAppLoader: f17a5ee8e85b536ace0fc254b447a37ed198d57e
   VisionCamera: 9a8f98ae344fe5d148f84bb45829f9e4caab9d2f
   Yoga: a9ef4f5c2cd79ad812110525ef61048be6a582a4
 

@@ -25,6 +25,7 @@ import SquadOutcomeScreen from './SquadOutcomeScreen';
 import useSquadSocket from '../../Hooks/useSquadSocket';
 import {useAnalytics} from '../../Hooks/useAnalytics';
 import {AnalyticsEventType} from '../../types/AnalyticsEnums';
+import useTranslation from '../../Hooks/useTranslation';
 import type {
   SquadMember,
   SquadRecommendation,
@@ -36,6 +37,7 @@ const {width} = Dimensions.get('window');
 const colors = GlobalColors.SquadMode;
 
 const SquadScreen: React.FC = () => {
+  const { t } = useTranslation();
   const currentUser = useSelector((state: any) => state.currentUser);
   const {coordinates} = useGetLocation();
   const {trackEvent} = useAnalytics({screenName: 'SquadScreen'});
@@ -125,7 +127,7 @@ const SquadScreen: React.FC = () => {
     },
     onVetoCast: ({member_name, reason}) => {
       // Show brief toast/feedback
-      Alert.alert('Veto', `${member_name} vetoed — finding a new spot...`);
+      Alert.alert(t('squad.veto'), t('squad.vetoMessage', { member_name, reason }));
     },
     onVetoResolved: ({new_recommendation}) => {
       setCurrentRecommendation(new_recommendation);
@@ -171,14 +173,14 @@ const SquadScreen: React.FC = () => {
     },
     onExpired: () => {
       setSquadStatus('expired');
-      Alert.alert('Squad Expired', 'This squad session has ended.');
+      Alert.alert(t('squad.expired'), t('squad.expiredDesc'));
       trackEvent(AnalyticsEventType.SQUAD_EXPIRED, {
         squadCode: activeSquadCode,
       }, 'squad');
     },
     onCancelled: () => {
       setSquadStatus('cancelled');
-      Alert.alert('Squad Cancelled', 'The squad creator cancelled this session.');
+      Alert.alert(t('squad.cancelled'), t('squad.cancelledDesc'));
       trackEvent(AnalyticsEventType.SQUAD_CANCELLED, {
         squadCode: activeSquadCode,
       }, 'squad');
@@ -192,8 +194,8 @@ const SquadScreen: React.FC = () => {
   const handleCreateSquad = useCallback(async () => {
     if (!coordinates || coordinates?.length == 0) {
       Alert.alert(
-        'Location Required',
-        `Enable location access to create a squad.${Array.isArray(coordinates)}`,
+        t('squad.locationRequired'),
+        t('squad.locationRequiredDesc'),
       );
       return;
     }
@@ -206,7 +208,6 @@ const SquadScreen: React.FC = () => {
           radius_km: 2.0,
         },
       }).unwrap();
-console.log({result});
 
       setActiveSquadCode(result.squad_code);
       setActiveSquadId(result.squad_id);
@@ -227,7 +228,7 @@ console.log({result});
         setActiveSquadCode(err.data.squad_code);
         setSquadStatus('forming');
       } else {
-        Alert.alert('Error', err?.data?.error || 'Failed to create squad');
+        Alert.alert(t('common.error'), err?.data?.error || t('squad.failedCreate'));
       }
     }
   }, [coordinates, createSquad]);
@@ -327,7 +328,7 @@ console.log({result});
   return (
     <View style={[styles.container, styles.centered]}>
       <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={styles.loadingText}>Loading squad...</Text>
+      <Text style={styles.loadingText}>{t('squad.loading')}</Text>
     </View>
   );
 };
@@ -347,6 +348,7 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
   wasExpired,
   wasCancelled,
 }) => {
+  const { t } = useTranslation();
   return (
     <ScrollView
       contentContainerStyle={styles.emptyContainer}
@@ -355,7 +357,7 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
       <View style={styles.emptyHeader}>
         <View style={styles.heroIconWrap}>
           <View style={styles.liveBadge}>
-            <Text style={styles.liveBadgeText}>Live</Text>
+            <Text style={styles.liveBadgeText}>{t('squad.liveBadge')}</Text>
           </View>
           <View style={styles.largerIconCircle}>
           <View style={styles.iconCircle}>
@@ -363,11 +365,10 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
           </View>
           </View>
         </View>
-        <Text style={styles.heroLabel}>Group Feature</Text>
-        <Text style={styles.emptyTitle}>Squad Mode</Text>
+        <Text style={styles.heroLabel}>{t('squad.groupFeature')}</Text>
+        <Text style={styles.emptyTitle}>{t('squad.squadMode')}</Text>
         <Text style={styles.emptySubtitle}>
-          Date night or group outing — one confident recommendation for
-          everyone
+          {t('squad.squadModeDesc')}
         </Text>
       </View>
 
@@ -375,7 +376,7 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
       {wasExpired && (
         <View style={[styles.statusBanner, {backgroundColor: colors.goldMuted}]}>
           <Text style={styles.statusBannerText}>
-            Your last squad has ended. Start a fresh one for tonight!
+            {t('squad.expiredBanner')}
           </Text>
         </View>
       )}
@@ -383,37 +384,37 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
         <View
           style={[styles.statusBanner, {backgroundColor: colors.accentMuted}]}>
           <Text style={styles.statusBannerText}>
-            Squad was cancelled. Ready for a new one?
+            {t('squad.cancelledBanner')}
           </Text>
         </View>
       )}
 
       {/* How it works */}
       <View style={styles.howItWorks}>
-        <Text style={styles.sectionTitle}>How it works</Text>
+        <Text style={styles.sectionTitle}>{t('squad.howItWorks')}</Text>
         <View style={styles.sectionDivider} />
         <StepItem
           number="1"
-          title="Create & invite"
-          description="Start a squad and share the link — no app required for friends"
+          title={t('squad.step1Title')}
+          description={t('squad.step1Desc')}
           isLast={false}
         />
         <StepItem
           number="2"
-          title="Everyone picks their vibe"
-          description="Each person selects venue types they're into tonight"
+          title={t('squad.step2Title')}
+          description={t('squad.step2Desc')}
           isLast={false}
         />
         <StepItem
           number="3"
-          title="Get your recommendation"
-          description="We find the one spot that works for everyone"
+          title={t('squad.step3Title')}
+          description={t('squad.step3Desc')}
           isLast={false}
         />
         <StepItem
           number="4"
-          title="Veto or confirm"
-          description="Not feeling it? One tap veto gets you a new suggestion"
+          title={t('squad.step4Title')}
+          description={t('squad.step4Desc')}
           isLast
         />
       </View>
@@ -427,13 +428,13 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
         {isCreating ? (
           <ActivityIndicator color={colors.ctaButtonText} />
         ) : (
-          <Text style={styles.createButtonText}>Start a squad  +</Text>
+          <Text style={styles.createButtonText}>{t('squad.startSquad')}</Text>
         )}
       </TouchableOpacity>
 
       {/* Zero friction tagline */}
       <Text style={styles.tagline}>
-        Free forever. No account needed for your friends.
+        {t('squad.tagline')}
       </Text>
     </ScrollView>
   );

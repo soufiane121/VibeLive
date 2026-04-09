@@ -18,6 +18,7 @@ import useGetLocation from '../CustomHooks/useGetLocation';
 import {useLazyGetNearbyVenuesQuery, NearbyVenue} from '../../features/LiveStream/LiveStream';
 import {IAPAdapter, TIER_TO_PRODUCT_ID} from '../Payment/adapters/IAPAdapter';
 import {AnalyticsEventType} from '../types/AnalyticsEnums';
+import useTranslation from '../Hooks/useTranslation';
 import {
   BarIcon,
   FoodIcon,
@@ -162,6 +163,7 @@ type FlowStep =
   | 'confirmation';
 
 const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [currentStep, setCurrentStep] = useState<FlowStep>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -560,13 +562,11 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     } catch (error: any) {
       console.error('Minutes purchase failed:', error);
       Alert.alert(
-        'Purchase Failed',
-        `Unable to complete your purchase: ${
-          error?.data?.error || error?.message || 'Unknown error'
-        }`,
+        t('event.purchaseFailed'),
+        t('event.purchaseFailedDesc', { error: error?.data?.error || error?.message || t('common.unknownError') }),
         [
-          {text: 'Try Again', onPress: () => setCurrentStep('boost_tiers')},
-          {text: 'Maybe Later', onPress: handleSkipBoost},
+          {text: t('event.tryAgain'), onPress: () => setCurrentStep('boost_tiers')},
+          {text: t('event.maybeLater'), onPress: handleSkipBoost},
         ],
       );
 
@@ -603,8 +603,8 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     return (
       <View style={styles.processingContainer}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={styles.processingText}>Processing your purchase…</Text>
-        <Text style={styles.processingSubtext}>This only takes a moment</Text>
+        <Text style={styles.processingText}>{t('event.processingPurchase')}</Text>
+        <Text style={styles.processingSubtext}>{t('event.processingSubtext')}</Text>
       </View>
     );
   }
@@ -620,27 +620,27 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         </View>
 
         <Text style={styles.confirmationTitle}>
-          {boostData.duration} minutes added
+          {t('event.minutesAdded', { minutes: boostData.duration })}
         </Text>
         <Text style={styles.confirmationSubtitle}>
-          Minutes never expire. Go live whenever you're ready.
+          {t('event.minutesNeverExpire')}
         </Text>
 
         <View style={styles.purchaseSummaryCard}>
           <View style={styles.purchaseSummaryRow}>
-            <Text style={styles.purchaseSummaryLabel}>Package</Text>
+            <Text style={styles.purchaseSummaryLabel}>{t('event.package')}</Text>
             <Text style={styles.purchaseSummaryValue}>
               {selectedPackage?.name}
             </Text>
           </View>
           <View style={styles.purchaseSummaryRow}>
-            <Text style={styles.purchaseSummaryLabel}>Minutes</Text>
+            <Text style={styles.purchaseSummaryLabel}>{t('event.minutes')}</Text>
             <Text style={styles.purchaseSummaryValue}>
-              {boostData.duration} min
+              {boostData.duration} {t('event.min')}
             </Text>
           </View>
           <View style={styles.purchaseSummaryRow}>
-            <Text style={styles.purchaseSummaryLabel}>Transaction</Text>
+            <Text style={styles.purchaseSummaryLabel}>{t('event.transaction')}</Text>
             <Text style={styles.purchaseSummaryValue}>
               {boostData.transactionId.slice(-8)}
             </Text>
@@ -650,7 +650,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         <TouchableOpacity
           style={styles.startStreamButton}
           onPress={handleBoostConfirmation}>
-          <Text style={styles.startStreamButtonText}>Start Streaming</Text>
+          <Text style={styles.startStreamButtonText}>{t('event.startStreaming')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -667,24 +667,24 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           contentContainerStyle={styles.packageScrollContent}>
           
           <View style={styles.headerContainer}>
-            <Text style={styles.headerSmallText}>STREAM MINUTES</Text>
-            <Text style={styles.headerTitle}>Choose your minutes</Text>
+            <Text style={styles.headerSmallText}>{t('event.streamMinutes')}</Text>
+            <Text style={styles.headerTitle}>{t('event.chooseMinutes')}</Text>
             <Text style={styles.headerSubtitle}>
-              Minutes never expire — use them across any night out
+              {t('event.minutesNeverExpireSubtitle')}
             </Text>
           </View>
 
           <View style={styles.topInfoBanner}>
             <CommonMaterialCommunityIcons name="clock-outline" size={18} color={colors.accent} style={{marginRight: 10}} />
             <Text style={styles.topInfoBannerText}>
-              You have 2 free streams per week — minutes extend beyond that
+              {t('event.freeStreamsReminder')}
             </Text>
           </View>
 
           {iapLoading ? (
             <View style={styles.loadingPlaceholder}>
               <ActivityIndicator size="small" color={colors.accent} />
-              <Text style={styles.loadingText}>Loading prices…</Text>
+              <Text style={styles.loadingText}>{t('event.loadingPrices')}</Text>
             </View>
           ) : (
             MINUTES_PACKAGES.map(pkg => {
@@ -751,7 +751,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                            color={isSelected ? colors.accent : colors.iconColor} 
                         />
                         <Text style={[styles.footerBadgeText, isSelected ? styles.footerBadgeTextSelected : null]}>
-                          {perMinute}
+                          {t('event.perMinuteRate', { rate: perMinute })}
                         </Text>
                       </View>
                     </View>
@@ -765,7 +765,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           <View style={styles.freeMinutesCard}>
             <CommonMaterialCommunityIcons name="heart-outline" size={20} color={colors.success} style={{marginTop: 2, marginRight: 12}} />
             <Text style={styles.freeMinutesText}>
-              Your <Text style={{color: colors.success, fontWeight: '700'}}>2 free streams per week</Text> continue regardless of purchase — minutes only activate after your free streams are used.
+              {t('event.freeMinutesCard')}
             </Text>
           </View>
         </ScrollView>
@@ -774,7 +774,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         <View style={styles.stickyBottomContainer}>
           {selectedPackage && (
              <Text style={styles.stickySummaryText}>
-               {selectedPackage.name} · {selectedPackage.minutes} min · <Text style={{fontWeight: '700'}}>{getDisplayPrice(selectedPackage)}</Text>
+               {selectedPackage.name} · {selectedPackage.minutes} {t('event.min')} · <Text style={{fontWeight: '700'}}>{getDisplayPrice(selectedPackage)}</Text>
              </Text>
           )}
           <TouchableOpacity
@@ -790,7 +790,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                 styles.continueToPaymentText,
                 !selectedPackage && styles.continueToPaymentTextDisabled,
               ]}>
-              Continue to payment
+              {t('event.continueToPayment')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -806,24 +806,24 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       <View style={styles.triggerContainer}>
         <View style={styles.triggerContent}>
           <Text style={styles.triggerHeadline}>
-            Want to stream longer tonight?
+            {t('event.wantToStreamLonger')}
           </Text>
           <Text style={styles.triggerSubheadline}>
-            Free minutes run out fast. Add more to keep your stream going without interruptions.
+            {t('event.freeMinutesRunOut')}
           </Text>
 
           {/* Primary CTA */}
           <TouchableOpacity
             style={styles.getMoreMinutesButton}
             onPress={() => setCurrentStep('boost_tiers')}>
-            <Text style={styles.getMoreMinutesText}>Get More Minutes</Text>
+            <Text style={styles.getMoreMinutesText}>{t('event.getMoreMinutes')}</Text>
           </TouchableOpacity>
 
           {/* Dismissal */}
           <TouchableOpacity
             style={styles.maybeLaterButton}
             onPress={handleSkipBoost}>
-            <Text style={styles.maybeLaterText}>Maybe Later</Text>
+            <Text style={styles.maybeLaterText}>{t('event.maybeLater')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -838,146 +838,174 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Ready to go live?</Text>
-        <Text style={styles.headerSubtitle}>
-          Choose your vibe and reach more people
-        </Text>
-      </View>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
+            {t('onboarding.event.readyToGoLive')}
+          </Text>
+          <Text style={styles.headerSubtitle}>{t('event.chooseYourVibe')}</Text>
+        </View>
 
-      <Text style={styles.categoryTitle}>What's your vibe?</Text>
+        <Text style={styles.categoryTitle}>{t('event.whatsYourVibe')}</Text>
 
-      <FlatList
-        data={eventsList}
-        scrollEnabled={false}
-        numColumns={3}
-        keyExtractor={item => item.key}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.categoriesContainer}
-        renderItem={({item}) => (
-          <TouchableOpacity
-            style={[
-              styles.categoryTag,
-              selectedCategory === item.key && styles.selectedCategoryTag,
-            ]}
-            onPress={() => {
-              console.log(
-                'Category pressed:',
-                item.key,
-                'Navigation available:',
-                !!navigation,
-              );
-              handleCategorySelection(item.key, false);
-            }}>
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: selectedCategory === item.key ? colors.primaryBorder : colors.border,
-                height: 60,
-                width: 60,
-                backgroundColor: selectedCategory === item.key ? colors.selectedIconBG : colors.iconsBG,
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderRadius: 8
+        <FlatList
+          data={eventsList}
+          scrollEnabled={false}
+          numColumns={3}
+          keyExtractor={item => item.key}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContainer}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              style={[
+                styles.categoryTag,
+                selectedCategory === item.key && styles.selectedCategoryTag,
+              ]}
+              onPress={() => {
+                console.log(
+                  'Category pressed:',
+                  item.key,
+                  'Navigation available:',
+                  !!navigation,
+                );
+                handleCategorySelection(item.key, false);
               }}>
-              {item.emoji(selectedCategory === item.key ? colors.selectedIconColor : colors.iconColor)}
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderColor:
+                    selectedCategory === item.key
+                      ? colors.primaryBorder
+                      : colors.border,
+                  height: 60,
+                  width: 60,
+                  backgroundColor:
+                    selectedCategory === item.key
+                      ? colors.selectedIconBG
+                      : colors.iconsBG,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: 8,
+                }}>
+                {item.emoji(
+                  selectedCategory === item.key
+                    ? colors.selectedIconColor
+                    : colors.iconColor,
+                )}
+              </View>
+              <Text style={styles.categoryLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          )}
+        />
+
+        {/* Venue Tagging Section */}
+        {venueLoadingState === 'loading' && (
+          <View style={venueStyles.section}>
+            <Text style={styles.categoryTitle}>{t('event.tagVenue')}</Text>
+            <View style={venueStyles.skeletonRow}>
+              {[0, 1, 2].map(i => (
+                <View key={i} style={venueStyles.skeletonCard} />
+              ))}
             </View>
-            <Text style={styles.categoryLabel}>{item.label}</Text>
-          </TouchableOpacity>
+          </View>
         )}
-      />
 
-      {/* Venue Tagging Section */}
-      {venueLoadingState === 'loading' && (
-        <View style={venueStyles.section}>
-          <Text style={styles.categoryTitle}>Tag a venue</Text>
-          <View style={venueStyles.skeletonRow}>
-            {[0, 1, 2].map(i => (
-              <View key={i} style={venueStyles.skeletonCard} />
-            ))}
-          </View>
-        </View>
-      )}
-
-      {venueLoadingState === 'loaded' && nearbyVenues.length > 0 && (
-        <View style={venueStyles.section}>
-          <Text style={styles.categoryTitle}>Tag a venue</Text>
-          <FlatList
-            horizontal
-            data={[{id: '__none__', name: 'None', primaryTag: null, distanceMetres: 0, googlePlaceId: null} as NearbyVenue, ...nearbyVenues]}
-            keyExtractor={item => item.id}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={venueStyles.listContent}
-            renderItem={({item}) => {
-              const isNone = item.id === '__none__';
-              const isSelected = isNone ? selectedVenueId === null : selectedVenueId === item.id;
-              return (
-                <TouchableOpacity
-                  style={[
-                    venueStyles.card,
-                    isSelected && venueStyles.cardSelected,
-                  ]}
-                  onPress={() => {
-                    if (isNone) {
-                      setSelectedVenueId(null);
-                    } else {
-                      setSelectedVenueId(prev => prev === item.id ? null : item.id);
-                    }
-                  }}
-                  activeOpacity={0.7}>
-                  {isSelected && (
-                    <View style={venueStyles.checkmark}>
-                      <Text style={venueStyles.checkmarkText}>✓</Text>
-                    </View>
-                  )}
-                  <Text
-                    style={[venueStyles.cardName, isSelected && venueStyles.cardNameSelected]}
-                    numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  {!isNone && item.primaryTag && (
-                    <Text style={venueStyles.cardTag} numberOfLines={1}>
-                      {item.primaryTag.replace(/_/g, ' ')}
+        {venueLoadingState === 'loaded' && nearbyVenues.length > 0 && (
+          <View style={venueStyles.section}>
+            <Text style={styles.categoryTitle}>{t('event.tagVenue')}</Text>
+            <FlatList
+              horizontal
+              data={[
+                {
+                  id: '__none__',
+                  name: 'None',
+                  primaryTag: null,
+                  distanceMetres: 0,
+                  googlePlaceId: null,
+                } as NearbyVenue,
+                ...nearbyVenues,
+              ]}
+              keyExtractor={item => item.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={venueStyles.listContent}
+              renderItem={({item}) => {
+                const isNone = item.id === '__none__';
+                const isSelected = isNone
+                  ? selectedVenueId === null
+                  : selectedVenueId === item.id;
+                return (
+                  <TouchableOpacity
+                    style={[
+                      venueStyles.card,
+                      isSelected && venueStyles.cardSelected,
+                    ]}
+                    onPress={() => {
+                      if (isNone) {
+                        setSelectedVenueId(null);
+                      } else {
+                        setSelectedVenueId(prev =>
+                          prev === item.id ? null : item.id,
+                        );
+                      }
+                    }}
+                    activeOpacity={0.7}>
+                    {isSelected && (
+                      <View style={venueStyles.checkmark}>
+                        <Text style={venueStyles.checkmarkText}>✓</Text>
+                      </View>
+                    )}
+                    <Text
+                      style={[
+                        venueStyles.cardName,
+                        isSelected && venueStyles.cardNameSelected,
+                      ]}
+                      numberOfLines={1}>
+                      {item.name}
                     </Text>
-                  )}
-                  {!isNone && (
-                    <Text style={venueStyles.cardDistance}>
-                      {formatDistance(item.distanceMetres)}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            }}
-          />
-        </View>
-      )}
-
-      {selectedCategory && (
-        <View style={styles.actionSection}>
-          <Text style={styles.actionTitle}>Ready to stream?</Text>
-
-          <TouchableOpacity
-            style={styles.primaryActionButton}
-            onPress={() => handleGoDirectToStream(selectedCategory)}>
-            <StreamIcon color={colors.text} size={20} />
-            <Text style={styles.primaryActionText}>Start Streaming</Text>
-          </TouchableOpacity>
-
-          <View style={styles.orDivider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.orText}>or</Text>
-            <View style={styles.dividerLine} />
+                    {!isNone && item.primaryTag && (
+                      <Text style={venueStyles.cardTag} numberOfLines={1}>
+                        {item.primaryTag.replace(/_/g, ' ')}
+                      </Text>
+                    )}
+                    {!isNone && (
+                      <Text style={venueStyles.cardDistance}>
+                        {formatDistance(item.distanceMetres)}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
           </View>
+        )}
 
-          <TouchableOpacity
-            style={styles.boostActionButton}
-            onPress={() => handleCategorySelection(selectedCategory, true)}>
-            <Text style={styles.boostActionText}>
-              Get More Minutes
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        {selectedCategory && (
+          <View style={styles.actionSection}>
+            <Text style={styles.actionTitle}>{t('event.readyToStream')}</Text>
+
+            <TouchableOpacity
+              style={styles.primaryActionButton}
+              onPress={() => handleGoDirectToStream(selectedCategory)}>
+              <StreamIcon color={colors.text} size={20} />
+              <Text style={styles.primaryActionText}>
+                {t('event.startStreaming')}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.orDivider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.orText}>{t('common.or')}</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.boostActionButton}
+              onPress={() => handleCategorySelection(selectedCategory, true)}>
+              <Text style={styles.boostActionText}>
+                {t('event.getMoreMinutes')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
