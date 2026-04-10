@@ -24,7 +24,7 @@ import {point} from '@turf/helpers';
 import Supercluster from 'supercluster';
 import {debounce, throttle} from 'lodash';
 import {PUB_MAPBOX_KEY} from '@env';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import {
   createRadarBeam,
   createStaticCircle,
@@ -240,7 +240,7 @@ interface EmojisState {
   [key: string]: [{emoji: string; id: string}];
 }
 const MapContainer = () => {
-  const {coordinates} = useGetLocation();
+  const coordinates = useCoordinates();
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
   const [featuresPointsData, setFeaturesPointsData] = useState<any[]>([]);
@@ -267,14 +267,11 @@ const MapContainer = () => {
   );
 
   useEffect(() => {
-    console.log('[Heatmap Debug] coordinates:', coordinates);
-    console.log('[Heatmap Debug] query params:', {latitude: coordinates[1], longitude: coordinates[0], radius: 20});
-    console.log('[Heatmap Debug] skip:', coordinates.length < 2);
-    console.log('[Heatmap Debug] loading:', heatmapLoading);
-    console.log('[Heatmap Debug] error:', heatmapError);
-    console.log('[Heatmap Debug] data:', heatmapData ? `${heatmapData.heatmap?.length || 0} venues` : 'null');
-
-  }, [coordinates, heatmapData, heatmapError, heatmapLoading]);
+    if (__DEV__) {
+      console.log('[Heatmap Debug] data:', heatmapData ? `${heatmapData.heatmap?.length || 0} venues` : 'null');
+      if (heatmapError) console.log('[Heatmap Debug] error:', heatmapError);
+    }
+  }, [heatmapData, heatmapError]);
 
   useEffect(() => {
     // only to mimic user walk - ONLY in development mode
@@ -310,7 +307,7 @@ const MapContainer = () => {
     };
   }, [heatmapData]);
 
-  const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
+  const center = coordinates; // Stable reference from LocationStore — no spread needed
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
   const angleRef = useRef(0); // Ref to track current angle

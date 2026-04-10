@@ -14,7 +14,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useGetUpcomingEventsQuery} from '../../../features/Events/EventsApi';
 import {Event} from '../../../features/Events/EventsApi';
 import {format, isToday, isTomorrow, isThisWeek} from 'date-fns';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import {
   CommonMaterialCommunityIcons,
   CommonMaterialIcons,
@@ -164,7 +164,7 @@ const EventsListScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
-  const {coordinates} = useGetLocation();
+  const coordinates = useCoordinates();
 
   const {
     data: eventsResponse,

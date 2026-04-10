@@ -8,7 +8,7 @@ import {
 } from '../../../features/registrations/LoginSliceApi';
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
 import {useDispatch} from 'react-redux';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {locationStore} from '../../CustomHooks/useGetLocation';
 import StreamPlayer from '../../WatchStream/StreamPlayer';
 import CarrouselContainer from '../../Carrousel/CarrouselContainer';
 import SignUpContainer from '../../FeatureComponents/Auth/SignUp/SignUpContainer';
@@ -47,7 +47,6 @@ const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
   const dispatch = useDispatch();
-  const {coordinates} = useGetLocation();
   const [autoLoginFetch, {data, isSuccess}] = useAutoLoginMutation();
   const [fetchSignOut] = useSingOutMutation();
   // const [singOutFetch] = useSingOutMutation();
@@ -67,7 +66,8 @@ const StackNavigation = () => {
 
   const fetchAutoLogin = async () => {
     try {
-      const res = await autoLoginFetch({coordinates}).unwrap();
+      const coords = locationStore.getCoordinates();
+      const res = await autoLoginFetch({coordinates: coords}).unwrap();
       if (res?.data?._id) {
         dispatch(setCurrentUser(res?.data));
       }

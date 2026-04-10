@@ -11,7 +11,7 @@ import {
 import {GlobalColors} from '../../../styles/GlobalColors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 // import Button from '../../UIComponents/Button';
-import useGetLocation from '../../../CustomHooks/useGetLocation';
+import {useCoordinates, useLocationPermission} from '../../../CustomHooks/useGetLocation';
 import useTranslation from '../../../Hooks/useTranslation';
 
 interface OnboardingLocationAccessProps {
@@ -24,7 +24,8 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
   route,
 }) => {
   const { t } = useTranslation();
-  const {coordinates, hasPermission, requestLocationPermission} = useGetLocation();
+  const coordinates = useCoordinates();
+  const {hasPermission, requestLocationPermission} = useLocationPermission();
   const [isLoading, setIsLoading] = useState(false);
   const [isLocationSkipped, setIsLocationSkipped] = useState(false);
 

@@ -457,8 +457,23 @@ class BackgroundLocationService {
   /**
    * Called by background task to update location state safely
    * This avoids the need for (service as any) casts in the task
+   * Applies a distance filter to suppress trivial GPS jitter in background,
+   * reducing CPU wake-ups while preserving geofence accuracy (it has its own 15m filter).
    */
   public handleBackgroundLocationUpdate(coordinates: LocationCoordinates): void {
+    // Distance filter — skip if movement is less than MINIMUM_DISTANCE from last known
+    if (this.lastKnownLocation) {
+      const dlat = coordinates.latitude - this.lastKnownLocation.latitude;
+      const dlng = coordinates.longitude - this.lastKnownLocation.longitude;
+      // Quick Euclidean approximation in meters (accurate enough at city scale)
+      const latM = dlat * 111_320;
+      const lngM = dlng * 111_320 * Math.cos(this.lastKnownLocation.latitude * Math.PI / 180);
+      const distM = Math.sqrt(latM * latM + lngM * lngM);
+      if (distM < this.config.minimumDistance) {
+        return; // GPS jitter — suppress callback to save CPU
+      }
+    }
+
     this.lastKnownLocation = coordinates;
 
     // Notify all registered callbacks

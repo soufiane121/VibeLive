@@ -21,7 +21,7 @@ import StepIndicator from './components/StepIndicator';
 import { useCreateEventMutation } from '../../../features/Events/EventsApi';
 import { useAnalytics } from '../../Hooks/useAnalytics';
 import { GlobalColors } from '../../styles/GlobalColors';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import { KeyboardAvoidingView } from 'react-native';
 import { Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -31,7 +31,7 @@ const colors = GlobalColors.EventCreationFlow;
 const EventCreationFlow: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [createEvent, { isLoading }] = useCreateEventMutation();
-  const {coordinates} = useGetLocation();
+  const coordinates = useCoordinates();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);

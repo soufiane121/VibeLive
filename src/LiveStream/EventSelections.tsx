@@ -14,7 +14,7 @@ import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {GlobalColors} from '../styles/GlobalColors';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
-import useGetLocation from '../CustomHooks/useGetLocation';
+import {useCoordinates, useLocationPermission} from '../CustomHooks/useGetLocation';
 import {useLazyGetNearbyVenuesQuery, NearbyVenue} from '../../features/LiveStream/LiveStream';
 import {IAPAdapter, TIER_TO_PRODUCT_ID} from '../Payment/adapters/IAPAdapter';
 import {AnalyticsEventType} from '../types/AnalyticsEnums';
@@ -178,7 +178,8 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const [boostStream, {isLoading: isBoostLoading}] = useBoostStreamMutation();
 
   // Venue tagging state
-  const {coordinates, hasPermission} = useGetLocation();
+  const coordinates = useCoordinates();
+  const {hasPermission} = useLocationPermission();
   const [fetchNearbyVenues] = useLazyGetNearbyVenuesQuery();
   const [nearbyVenues, setNearbyVenues] = useState<NearbyVenue[]>([]);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);

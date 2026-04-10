@@ -38,7 +38,7 @@ import {useStartStreamingMutation} from '../../features/LiveStream/LiveStream';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
 import {NodeMediaClient, NodePublisher} from 'react-native-nodemediaclient';
 import {useSelector} from 'react-redux';
-import useGetLocation from '../CustomHooks/useGetLocation';
+import {useCoordinates} from '../CustomHooks/useGetLocation';
 import RTMPStreamingHelper from './RTMPStreamingHelper';
 import {useNavigation, CommonActions} from '@react-navigation/native';
 import ChatList from '../WatchStream/ChatList';
@@ -84,7 +84,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const navigation = useNavigation();
   const {socket} = useSocketInstance();
 
-  const {coordinates} = useGetLocation();
+  const coordinates = useCoordinates();
   const [fetchStartStream, {data, isLoading, isSuccess}] =
     useStartStreamingMutation();
   const [isStreaming, setIsStreaming] = useState(false);

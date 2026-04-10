@@ -13,7 +13,7 @@ import {useSelector} from 'react-redux';
 import {useRoute} from '@react-navigation/native';
 import {GlobalColors} from '../../styles/GlobalColors';
 import {SquadIcon, ShareIcon} from '../../UIComponents/Icons';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import {
   useCreateSquadMutation,
   useGetSquadQuery,
@@ -39,7 +39,7 @@ const colors = GlobalColors.SquadMode;
 const SquadScreen: React.FC = () => {
   const { t } = useTranslation();
   const currentUser = useSelector((state: any) => state.currentUser);
-  const {coordinates} = useGetLocation();
+  const coordinates = useCoordinates();
   const {trackEvent} = useAnalytics({screenName: 'SquadScreen'});
   const route = useRoute();
   const routeParams = (route.params as any) || {};
