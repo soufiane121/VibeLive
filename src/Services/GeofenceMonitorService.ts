@@ -780,26 +780,26 @@ class GeofenceMonitorService {
    * - Testing server-side legacy mode (TOGGLE_OLD_DWELL=true, 3-min threshold)
    * - Verifying GPS pipeline and network calls work
    */
-  // playTestDwell() {
-  //   geofenceMonitor.playGpxTrack([
-  //     // Walk to venue B (5s intervals)
-  //     {lat: 35.225845, lng: -80.853607, delayMs: 0},
-  //     {lat: 35.215, lng: -80.83, delayMs: 5000},
-  //     {lat: 35.2, lng: -80.8, delayMs: 10000},
-  //     {lat: 35.185, lng: -80.77, delayMs: 15000},
-  //     {lat: 35.17, lng: -80.74, delayMs: 20000},
-  //     {lat: 35.15398, lng: -80.71379, delayMs: 25000}, // arrive
+  playTestDwell() {
+    geofenceMonitor.playGpxTrack([
+      // Walk to venue B (5s intervals)
+      {lat: 35.225845, lng: -80.853607, delayMs: 0},
+      {lat: 35.215, lng: -80.83, delayMs: 5000},
+      {lat: 35.2, lng: -80.8, delayMs: 10000},
+      {lat: 35.185, lng: -80.77, delayMs: 15000},
+      {lat: 35.17, lng: -80.74, delayMs: 20000},
+      {lat: 35.15398, lng: -80.71379, delayMs: 25000}, // arrive
 
-  //     // DWELL at B: 30s intervals × 7 points = 3.5 minutes
-  //     {lat: 35.15398, lng: -80.71379, delayMs: 55000},
-  //     {lat: 35.153982, lng: -80.713788, delayMs: 85000},
-  //     {lat: 35.153978, lng: -80.713792, delayMs: 115000},
-  //     {lat: 35.153981, lng: -80.713789, delayMs: 145000},
-  //     {lat: 35.153979, lng: -80.713791, delayMs: 175000},
-  //     {lat: 35.15398, lng: -80.71379, delayMs: 205000},
-  //     {lat: 35.153982, lng: -80.713788, delayMs: 235000},
-  //   ]);
-  // }
+      // DWELL at B: 30s intervals × 7 points = 3.5 minutes
+      {lat: 35.15398, lng: -80.71379, delayMs: 55000},
+      {lat: 35.153982, lng: -80.713788, delayMs: 85000},
+      {lat: 35.153978, lng: -80.713792, delayMs: 115000},
+      {lat: 35.153981, lng: -80.713789, delayMs: 145000},
+      {lat: 35.153979, lng: -80.713791, delayMs: 175000},
+      {lat: 35.15398, lng: -80.71379, delayMs: 205000},
+      {lat: 35.153982, lng: -80.713788, delayMs: 235000},
+    ]);
+  }
 
   /**
    * Realistic test: 15+ minutes dwell (matches production threshold).
