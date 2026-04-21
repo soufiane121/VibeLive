@@ -20,7 +20,7 @@ const MIN_MOVE_METERS = 15; // Movement threshold for gate 1
 const MAX_GPS_ACCURACY_M = 50; // Reject readings with accuracy worse than this
 const KNOWN_PLACE_RADIUS_M = 80; // Radius for known place matching
 const MAX_REALISTIC_SPEED_MPS = 50; // Filter out impossible GPS jumps
-const KNOWN_PLACE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days TTL for known places
+const KNOWN_PLACE_TTL_MS = 1 * 24 * 60 * 60 * 1000; // 1 day TTL for known places we need one day not 30
 
 // Precompute squared threshold for fast distance check
 const FAST_THRESHOLD_DEG = MIN_MOVE_METERS / METERS_PER_DEGREE;
