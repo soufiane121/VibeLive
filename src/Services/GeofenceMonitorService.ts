@@ -7,7 +7,6 @@ import {getLocalData, setLocalData} from '../Utils/LocalStorageHelper';
 // Configuration Constants
 // ═══════════════════════════════════════════════════════════════════════════
 const FOREGROUND_INTERVAL_MS = 15000; // 15 seconds
-const BACKGROUND_INTERVAL_MS = 60000; // 60 seconds in background
 const EARTH_RADIUS_METERS = 6371000;
 const METERS_PER_DEGREE = 111_320;
 
@@ -28,7 +27,6 @@ const FAST_THRESHOLD_DEG_SQ = FAST_THRESHOLD_DEG * FAST_THRESHOLD_DEG;
 
 // Expo location accuracy mapping
 const FOREGROUND_ACCURACY = Location.Accuracy.Balanced;
-const BACKGROUND_ACCURACY = Location.Accuracy.Low;
 
 // AsyncStorage key for KnownPlaceCache
 const KNOWN_PLACES_STORAGE_KEY = 'known_places_v1';
@@ -200,7 +198,18 @@ class DwellAccumulator {
     );
 
     if (dist > KNOWN_PLACE_RADIUS_M) {
-      // Moved away, reset anchor to new position
+      // Moved away, reset anchor to new position.
+      // This is logged loudly because competing location streams (simulator +
+      // real GPS + background task) can cause the anchor to thrash and
+      // silently prevent dwell accumulation.
+      if (__DEV__) {
+      const heldForSec = this.anchorTimestamp
+        ? Math.round((timestamp - this.anchorTimestamp) / 1000)
+        : 0;
+      console.log(
+        `[GeofenceMonitor] DwellAccumulator anchor RESET (moved ${Math.round(dist)}m from anchor held ${heldForSec}s). Old: ${this.anchorLat.toFixed(5)},${this.anchorLon.toFixed(5)} → New: ${lat.toFixed(5)},${lon.toFixed(5)}`,
+      );
+      }
       this.anchorLat = lat;
       this.anchorLon = lon;
       this.anchorTimestamp = timestamp;
@@ -400,19 +409,20 @@ class GeofenceMonitorService {
   };
 
   private _switchToBackgroundMode(): void {
-    // Stop current subscription and timer
+    // Stop foreground subscription and any running JS timer. In true background
+    // JS timers and watchPositionAsync are suspended by the OS, so we do NOT
+    // start a replacement here. Background location updates are delivered
+    // natively by BackgroundLocationService's TaskManager task, which fans out
+    // through LocationStore._onLocationUpdate → geofenceMonitor.sendManualPosition,
+    // feeding the 4-gate pipeline (including the 15-min DwellAccumulator).
     if (this.locationSubscription) {
       this.locationSubscription.remove();
       this.locationSubscription = null;
     }
     if (this.updateTimer) {
       clearInterval(this.updateTimer);
+      this.updateTimer = null;
     }
-
-    // Use longer interval in background
-    this.updateTimer = setInterval(() => {
-      this._getCurrentPosition(BACKGROUND_ACCURACY);
-    }, BACKGROUND_INTERVAL_MS);
   }
 
   private async _switchToForegroundMode(): Promise<void> {
@@ -520,11 +530,14 @@ class GeofenceMonitorService {
     );
 
     if (!dwellResult) {
-      // Still accumulating, not yet 15 minutes
+      // Still accumulating, threshold not yet reached
       const anchor = this.dwellAccumulator.getAnchor();
       if (anchor) {
-        const elapsed = Math.round((timestamp - anchor.timestamp) / 1000 / 60);
-        console.log(`[GeofenceMonitor] Gate 3: Accumulating (${elapsed}min / 15min)`);
+        const elapsedSec = Math.round((timestamp - anchor.timestamp) / 1000);
+        const thresholdSec = Math.round(DWELL_THRESHOLD_MS / 1000);
+        console.log(
+          `[GeofenceMonitor] Gate 3: Accumulating (${elapsedSec}s / ${thresholdSec}s)`,
+        );
       }
       return;
     }

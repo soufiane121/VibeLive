@@ -62,7 +62,12 @@ export default function LocationSimulatorTest() {
       setProgress(prog);
     }, 500);
 
-    return () => clearInterval(checkInterval);
+    return () => {
+      clearInterval(checkInterval);
+      // Ensure any in-flight simulation is stopped on unmount so simulation
+      // mode is disabled and real GPS tracking resumes automatically.
+      LocationSimulator.stopSimulation();
+    };
   }, []);
 
   return (

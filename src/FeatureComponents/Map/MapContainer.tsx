@@ -34,7 +34,7 @@ import ResetLocationButton from './ResetLocationButton';
 import {useGetAllMapPointsMutation} from '../../../features/LiveStream/LiveStream';
 import {useDispatch, useSelector} from 'react-redux';
 import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
-import {PartialState, useNavigation} from '@react-navigation/native';
+import {PartialState, useNavigation, useIsFocused} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
 import {
@@ -52,7 +52,7 @@ import {
   VenueData,
 } from '../../../features/voting/VotingApi';
 import HeatMapComponentStyles from './helperMap';
-import geofenceMonitor from '../../Services/GeofenceMonitorService';
+import { useAppState } from '../../Hooks/useAppState';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -253,6 +253,9 @@ const MapContainer = () => {
 
   const [mapEvents, setMapEvents] = useState<Event[]>([]);
 
+  const { isActive } = useAppState();
+  const isFocused = useIsFocused();
+
   // Voting heatmap data
   const {data: heatmapData, error: heatmapError, isLoading: heatmapLoading} = useGetHeatmapQuery(
     {
@@ -262,7 +265,7 @@ const MapContainer = () => {
     },
     {
       skip: coordinates.length < 2,
-      pollingInterval: 45000,
+      pollingInterval: (isActive && isFocused) ? 45000 : 0, // Only poll if app is active AND map is visible
     },
   );
 
@@ -272,13 +275,6 @@ const MapContainer = () => {
       if (heatmapError) console.log('[Heatmap Debug] error:', heatmapError);
     }
   }, [heatmapData, heatmapError]);
-
-  useEffect(() => {
-    // only to mimic user walk - ONLY in development mode
-    if (__DEV__) {
-      geofenceMonitor.playTestDwell();
-    }
-  }, [])
   
 
   const heatmapGeoJSON = useMemo(() => {

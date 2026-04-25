@@ -189,16 +189,39 @@ class BackgroundLocationService {
         }
       }
 
-      // Check if task is already defined
+      // Always (re)register the task so the latest options are applied.
+      // A stale registration from a previous launch would otherwise keep old
+      // options and silently ignore the new ones.
       const isTaskDefined = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
-      
-      if (!isTaskDefined) {
+      if (isTaskDefined) {
+        console.log('[BackgroundLocationService] Background task already registered, restarting to apply latest options...');
+        try {
+          await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+        } catch (stopError) {
+          console.warn('[BackgroundLocationService] Error stopping previous task (continuing):', (stopError as Error).message);
+        }
+      } else {
         console.log('[BackgroundLocationService] Background task not registered, registering...');
-        await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-          accuracy: this.config.accuracy,
-          distanceInterval: this.config.minimumDistance,
-        });
       }
+
+      // Options tuned to deliver stationary samples to the geofence pipeline.
+      // Dwell detection in GeofenceMonitorService requires repeated pings while
+      // the user sits at a venue — iOS must NOT auto-pause updates and must NOT
+      // filter out stationary reports (distanceInterval: 0).
+      await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+        accuracy: this.config.accuracy,
+        distanceInterval: 0, // deliver every update; 4-gate pipeline does the filtering
+        // ── iOS-only tuning ─────────────────────────────────────────────
+        // pausesUpdatesAutomatically=false is THE fix for stationary users.
+        // When true (CLLocationManager's native default), iOS auto-suspends
+        // delivery as soon as it thinks the user has stopped moving — which
+        // is exactly when we need the pings to accumulate dwell time.
+        pausesUpdatesAutomatically: false,
+        activityType: Location.ActivityType.OtherNavigation,
+        showsBackgroundLocationIndicator: true, // transparency: blue bar while tracking TODO:: SHOW BLUE MARKER on phone screen
+        deferredUpdatesInterval: 60_000, // batch delivery every ~60s to save battery
+        deferredUpdatesDistance: 5,      // ...or every 5m, whichever comes first
+      });
 
       this.isRunning = true;
       await AsyncStorage.setItem(BACKGROUND_MODE_ENABLED_KEY, 'true');
@@ -455,24 +478,28 @@ class BackgroundLocationService {
   }
 
   /**
-   * Called by background task to update location state safely
-   * This avoids the need for (service as any) casts in the task
-   * Applies a distance filter to suppress trivial GPS jitter in background,
-   * reducing CPU wake-ups while preserving geofence accuracy (it has its own 15m filter).
+   * Called by background task to update location state safely.
+   * This avoids the need for (service as any) casts in the task.
+   *
+   * IMPORTANT: Do NOT filter by distance here. Dwell detection in
+   * GeofenceMonitorService requires repeated near-identical (stationary)
+   * samples to accumulate the 15-minute dwell threshold. Any distance-based
+   * suppression here silently breaks background dwell detection. The
+   * GeofenceMonitorService 4-gate pipeline is the authoritative filter.
    */
   public handleBackgroundLocationUpdate(coordinates: LocationCoordinates): void {
-    // Distance filter — skip if movement is less than MINIMUM_DISTANCE from last known
-    if (this.lastKnownLocation) {
-      const dlat = coordinates.latitude - this.lastKnownLocation.latitude;
-      const dlng = coordinates.longitude - this.lastKnownLocation.longitude;
-      // Quick Euclidean approximation in meters (accurate enough at city scale)
-      const latM = dlat * 111_320;
-      const lngM = dlng * 111_320 * Math.cos(this.lastKnownLocation.latitude * Math.PI / 180);
-      const distM = Math.sqrt(latM * latM + lngM * lngM);
-      if (distM < this.config.minimumDistance) {
-        return; // GPS jitter — suppress callback to save CPU
-      }
-    }
+    // // Distance filter — skip if movement is less than MINIMUM_DISTANCE from last known
+    // if (this.lastKnownLocation) {
+    //   const dlat = coordinates.latitude - this.lastKnownLocation.latitude;
+    //   const dlng = coordinates.longitude - this.lastKnownLocation.longitude;
+    //   // Quick Euclidean approximation in meters (accurate enough at city scale)
+    //   const latM = dlat * 111_320;
+    //   const lngM = dlng * 111_320 * Math.cos(this.lastKnownLocation.latitude * Math.PI / 180);
+    //   const distM = Math.sqrt(latM * latM + lngM * lngM);
+    //   if (distM < this.config.minimumDistance) {
+    //     return; // GPS jitter — suppress callback to save CPU
+    //   }
+    // }
 
     this.lastKnownLocation = coordinates;
 

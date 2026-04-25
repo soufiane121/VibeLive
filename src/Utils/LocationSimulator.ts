@@ -60,6 +60,20 @@ class LocationSimulator {
     console.log(`[LocationSimulator] Starting simulation with ${coordinates.length} points`);
     console.log(`[LocationSimulator] Interval: ${interval}ms, Repeat: ${repeat}`);
 
+    // Pause real-device GPS in the geofence pipeline so the simulated samples
+    // drive the DwellAccumulator deterministically (otherwise the real phone's
+    // GPS keeps resetting the anchor because it is rarely at the simulated venue).
+    if (__DEV__) {
+      try {
+        await geofenceMonitor.setSimulationMode(true);
+      } catch (err) {
+        console.warn(
+          '[LocationSimulator] Failed to enable simulation mode:',
+          (err as Error).message,
+        );
+      }
+    }
+
     this.isSimulating = true;
     this.currentIndex = 0;
 
@@ -153,6 +167,20 @@ class LocationSimulator {
 
     this.isSimulating = false;
     this.currentIndex = 0;
+
+    // Re-enable real-device GPS in the geofence pipeline.
+    // Intentionally fire-and-forget because stopSimulation is synchronous and
+    // the caller does not need to await GPS resumption.
+    if (__DEV__) {
+      try {
+        geofenceMonitor.setSimulationMode(false);
+      } catch (err) {
+        console.warn(
+          '[LocationSimulator] Failed to disable simulation mode:',
+          (err as Error).message,
+        );
+      }
+    }
   }
 
   /**
