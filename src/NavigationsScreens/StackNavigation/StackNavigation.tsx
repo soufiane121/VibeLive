@@ -43,6 +43,15 @@ import VenueClaimWebRedirect from '../../FeatureComponents/VenueClaim/VenueClaim
 import VenueClaimStatusScreen from '../../FeatureComponents/VenueClaim/VenueClaimStatusScreen';
 import VenueTaggingScreen from '../../FeatureComponents/VenueClaim/VenueTaggingScreen';
 import LocationSimulatorTest from '../../FeatureComponents/Testing/LocationSimulatorTest';
+// Account Screens
+import EditProfile from '../../Account/EditProfile';
+import MyInterests from '../../Account/MyInterests';
+import BuyMinutes from '../../Account/BuyMinutes';
+import TransactionHistory from '../../Account/TransactionHistory';
+// Settings Screens
+import NotificationSettingsNew from '../../Settings/NotificationSettingsNew';
+import PrivacySettingsNew from '../../Settings/PrivacySettingsNew';
+
 const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
@@ -130,6 +139,13 @@ const StackNavigation = () => {
         <Stack.Screen name="SquadJoin" component={SquadJoinScreen} />
         {/* Settings main screen (accessible from Profile) */}
         <Stack.Screen name="Settings" component={Settings} />
+        {/* Account Screens */}
+        <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen name="MyInterests" component={MyInterests} />
+        <Stack.Screen name="BuyMinutes" component={BuyMinutes} />
+        <Stack.Screen name="TransactionHistory" component={TransactionHistory} />
+        <Stack.Screen name="NotificationSettingsNew" component={NotificationSettingsNew} />
+        <Stack.Screen name="PrivacySettingsNew" component={PrivacySettingsNew} />
         {/* Venue Claim Screens — claim flow redirects to web */}
         <Stack.Screen name="VenueSearch" component={VenueClaimWebRedirect} />
         <Stack.Screen

@@ -74,7 +74,7 @@ const baseColors = {
 baseColors.deepBlack = baseColors.newBackGroundColor;
 
 
-if (!isDarkMode) {
+if (isDarkMode) {
   premiumDark = premiumColors.light;
 } else {
   premiumDark = premiumColors.dark;
@@ -783,6 +783,75 @@ export const GlobalColors = {
     // Dividers
     divider: baseColors.whiteOverlay,
     dividerThick: baseColors.mediumGray,
+  },
+
+  // Account Screen (Hub, Edit Profile, My Interests, Buy Minutes, Transactions)
+  Account: {
+    background: premiumDark.primaryBackground,
+    secondaryBackground: premiumDark.secondaryBackground,
+    surface: premiumDark.primarySurface,
+    secondarySurface: premiumDark.secondarySurface,
+    tertiarySurface: premiumDark.tertiarySurface,
+
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.tertiaryText,
+
+    accent: premiumDark.accentPrimary,
+    accentSurface: premiumDark.accentSurface,
+    accentBorder: premiumDark.accentBorder,
+    accentSubtle: premiumDark.accentSubtle,
+
+    border: premiumDark.primaryBorder,
+    borderLight: premiumDark.secondaryBorder,
+    separator: premiumDark.separator,
+
+    success: premiumDark.successPrimary,
+    successSurface: premiumDark.successSurface,
+    successBorder: premiumDark.successBorder,
+
+    hot: premiumDark.hotPrimary,
+    hotSurface: premiumDark.hotSurface,
+    hotBorder: premiumDark.hotBorder,
+
+    // Gauge (minutes circle)
+    gaugeTrack: premiumDark.secondarySurface,
+    gaugeActive: '#D4952B', // amber/orange for gauge arc
+    gaugeText: premiumDark.primaryText,
+
+    // Badge colors
+    badgeBackground: premiumDark.hotSurface,
+    badgeBorder: premiumDark.hotBorder,
+    badgeText: premiumDark.hotPrimary,
+
+    // Input fields
+    inputBackground: premiumDark.secondaryBackground,
+    inputBorder: premiumDark.primaryBorder,
+    inputFocusBorder: premiumDark.accentBorder,
+    inputText: premiumDark.primaryText,
+    inputLabel: premiumDark.tertiaryText,
+
+    // Buttons
+    primaryButton: premiumDark.accentPrimary,
+    primaryButtonText: premiumDark.primaryText,
+    secondaryButton: premiumDark.secondaryBackground,
+    secondaryButtonBorder: premiumDark.primaryBorder,
+    secondaryButtonText: premiumDark.primaryText,
+    destructiveText: premiumDark.hotPrimary,
+
+    // Interest chips
+    chipSelected: premiumDark.accentSurface,
+    chipSelectedBorder: premiumDark.accentBorder,
+    chipSelectedText: premiumDark.accentPrimary,
+    chipUnselected: premiumDark.secondaryBackground,
+    chipUnselectedBorder: premiumDark.primaryBorder,
+    chipUnselectedText: premiumDark.secondaryText,
+
+    // Section labels
+    sectionLabel: premiumDark.accentPrimary,
+
+    // Online indicator
+    onlineGreen: premiumDark.successPrimary,
   },
 };
 
