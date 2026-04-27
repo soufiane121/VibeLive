@@ -74,7 +74,7 @@ const baseColors = {
 baseColors.deepBlack = baseColors.newBackGroundColor;
 
 
-if (!isDarkMode) {
+if (isDarkMode) {
   premiumDark = premiumColors.light;
 } else {
   premiumDark = premiumColors.dark;
@@ -542,6 +542,17 @@ export const GlobalColors = {
     backButtonBorder: premiumDark.primaryBorder,
     backButtonCenterBg: premiumDark.accentPrimary,
     accentPrimary: premiumDark.accentPrimary,
+    openPillBackground: premiumDark.successSurface,
+    openPillBorder: premiumDark.successBorder,
+    openPillDot: premiumDark.successPrimary,
+    openPillText: premiumDark.successPrimary,
+    starRating: '#FFB800',
+    pillBackground: premiumDark.primarySurface,
+    pillBorder: premiumDark.primaryBorder,
+    pillText: premiumDark.accentPrimary,
+    actionButtonBg: premiumDark.accentPrimary,
+    actionButtonText: premiumDark.primaryText,
+    linkText: premiumDark.accentPrimary,
   },
 
   // Stream Player

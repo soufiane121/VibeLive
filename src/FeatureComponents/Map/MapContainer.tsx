@@ -46,12 +46,9 @@ import {
 import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
 import {useAnalytics} from '../../Hooks/useAnalytics';
-import {GlobalColors} from '../../styles/GlobalColors';
 import {
-  useGetHeatmapQuery,
   VenueData,
 } from '../../../features/voting/VotingApi';
-import HeatMapComponentStyles from './helperMap';
 import { useAppState } from '../../Hooks/useAppState';
 import MapHeatmapLayer from './MapHeatmapLayer';
 import PremiumVenueCard from '../Voting/PremiumVenueCard';
@@ -290,8 +287,8 @@ const MapContainer = () => {
 
   const handleViewVenue = useCallback((venueId: string) => {
     // Navigate to VenueDetails screen (new screen)
-    navigate('VenueDetails', { venueId });
-  }, [navigate]);
+    navigate('VenueDetails', { venueId, venue: selectedHeatmapVenue });
+  }, [navigate, selectedHeatmapVenue]);
 
   const handleDirections = useCallback(async (venueId: string) => {
     if (!selectedHeatmapVenue) return;
