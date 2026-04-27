@@ -32,6 +32,7 @@ import SubcategorySelection from '../../LiveStream/SubcategorySelection';
 // Voting Screens
 import VenueSelectionScreen from '../../FeatureComponents/Voting/VenueSelectionScreen';
 import VenueOwnerDashboard from '../../FeatureComponents/Voting/VenueOwnerDashboard';
+import VenueDetailsScreen from '../../FeatureComponents/Voting/VenueDetailsScreen';
 import VotingPreferences from '../../FeatureComponents/Voting/VotingPreferences';
 import VotingInitializer from '../../FeatureComponents/Voting/VotingInitializer';
 // Squad Screens
@@ -134,6 +135,7 @@ const StackNavigation = () => {
           name="VenueOwnerDashboard"
           component={VenueOwnerDashboard}
         />
+        <Stack.Screen name="VenueDetails" component={VenueDetailsScreen} />
         <Stack.Screen name="VotingPreferences" component={VotingPreferences} />
         {/* Squad Screens */}
         <Stack.Screen name="SquadJoin" component={SquadJoinScreen} />

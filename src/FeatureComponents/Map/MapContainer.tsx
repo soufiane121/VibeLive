@@ -19,7 +19,7 @@ import {
   LocationPuck,
   MarkerView,
 } from '@rnmapbox/maps';
-import {View, StyleSheet, Animated, Easing, Text} from 'react-native';
+import {View, StyleSheet, Animated, Easing, Text, Linking, Platform} from 'react-native';
 import {point} from '@turf/helpers';
 import Supercluster from 'supercluster';
 import {debounce, throttle} from 'lodash';
@@ -53,6 +53,8 @@ import {
 } from '../../../features/voting/VotingApi';
 import HeatMapComponentStyles from './helperMap';
 import { useAppState } from '../../Hooks/useAppState';
+import MapHeatmapLayer from './MapHeatmapLayer';
+import PremiumVenueCard from '../Voting/PremiumVenueCard';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -240,6 +242,7 @@ interface EmojisState {
   [key: string]: [{emoji: string; id: string}];
 }
 const MapContainer = () => {
+  const {navigate} = useNavigation<any>();
   const coordinates = useCoordinates();
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
@@ -256,52 +259,69 @@ const MapContainer = () => {
   const { isActive } = useAppState();
   const isFocused = useIsFocused();
 
-  // Voting heatmap data
-  const {data: heatmapData, error: heatmapError, isLoading: heatmapLoading} = useGetHeatmapQuery(
-    {
-      latitude: coordinates[1],
-      longitude: coordinates[0],
-      radius: 20,
-    },
-    {
-      skip: coordinates.length < 2,
-      pollingInterval: (isActive && isFocused) ? 45000 : 0, // Only poll if app is active AND map is visible
-    },
-  );
+  const [selectedHeatmapVenue, setSelectedHeatmapVenue] = useState<VenueData | null>(null);
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (__DEV__) {
-      console.log('[Heatmap Debug] data:', heatmapData ? `${heatmapData.heatmap?.length || 0} venues` : 'null');
-      if (heatmapError) console.log('[Heatmap Debug] error:', heatmapError);
+    if (selectedHeatmapVenue) {
+      Animated.spring(slideAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 80,
+        friction: 12,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
     }
-  }, [heatmapData, heatmapError]);
-  
+  }, [selectedHeatmapVenue, slideAnim]);
 
-  const heatmapGeoJSON = useMemo(() => {
-    const venues = heatmapData?.heatmap || [];
-    if (venues.length === 0) return null;
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [300, 0],
+  });
 
-    return {
-      type: 'FeatureCollection' as const,
-      features: venues.map((v: VenueData) => ({
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: v.coordinates,
-        },
-        properties: {
-          id: v.id,
-          name: v.name,
-          vibeScore: v.vibeScore,
-          hotVotes: v.hotVotes,
-          deadVotes: v.deadVotes,
-          totalVotes: v.totalVotes,
-          isBoosted: v.isBoosted ? 1 : 0,
-          intensity: Math.min(Math.abs(v.vibeScore) / 100, 1),
-        },
-      })),
-    };
-  }, [heatmapData]);
+  const handleHeatmapVenuePress = useCallback((venue: VenueData) => {
+    setSelectedHeatmapVenue(venue);
+  }, []);
+
+  const handleViewVenue = useCallback((venueId: string) => {
+    // Navigate to VenueDetails screen (new screen)
+    navigate('VenueDetails', { venueId });
+  }, [navigate]);
+
+  const handleDirections = useCallback(async (venueId: string) => {
+    if (!selectedHeatmapVenue) return;
+
+    const [longitude, latitude] = selectedHeatmapVenue.coordinates;
+    const label = encodeURIComponent(selectedHeatmapVenue.name);
+    
+    // Construct the URL based on the platform
+    const url = Platform.select({
+      ios: `maps://app?daddr=${latitude},${longitude}&q=${label}`,
+      android: `geo:${latitude},${longitude}?q=${latitude},${longitude}(${label})`,
+    });
+
+    if (url) {
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          // Fallback to Google Maps in browser if native app fails
+          const browserUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+          await Linking.openURL(browserUrl);
+        }
+      } catch (error) {
+        console.log('Error opening map:', error);
+      }
+    }
+  }, [selectedHeatmapVenue]);
+
+
 
   const center = coordinates; // Stable reference from LocationStore — no spread needed
   const radius = 0.005; // Radar radius (in degrees)
@@ -627,9 +647,12 @@ const MapContainer = () => {
             />
 
             {/* Voting heatmap layer */}
-            {heatmapGeoJSON && heatmapGeoJSON.features.length > 0 && (
-              <HeatMapComponentStyles heatmapGeoJSON={heatmapGeoJSON} />
-            )}
+            <MapHeatmapLayer
+              coordinates={coordinates}
+              isActive={isActive}
+              isFocused={isFocused}
+              onVenuePress={handleHeatmapVenuePress}
+            />
 
             {/* Render event markers */}
             {shouldRenderMarkers &&
@@ -748,6 +771,16 @@ const MapContainer = () => {
               width: 40,
             }}
           />
+          {/* Selected Venue Card Overlay */}
+          {selectedHeatmapVenue && (
+            <PremiumVenueCard
+              venue={selectedHeatmapVenue}
+              onClose={() => setSelectedHeatmapVenue(null)}
+              onViewVenue={handleViewVenue}
+              onDirections={handleDirections}
+              translateY={translateY}
+            />
+          )}
         </>
       )}
     </View>

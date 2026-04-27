@@ -74,7 +74,7 @@ const baseColors = {
 baseColors.deepBlack = baseColors.newBackGroundColor;
 
 
-if (isDarkMode) {
+if (!isDarkMode) {
   premiumDark = premiumColors.light;
 } else {
   premiumDark = premiumColors.dark;
@@ -497,6 +497,51 @@ export const GlobalColors = {
     headerIconText: baseColors.white,
     accentPrimary: premiumDark.accentPrimary,
     
+  },
+
+  // Premium Venue Card (Map Callout)
+  PremiumVenueCard: {
+    background: premiumDark.secondarySurface,
+    border: premiumDark.secondaryBorder,
+    primaryText: premiumDark.primaryText,
+    secondaryText: premiumDark.secondaryText,
+    tertiaryText: premiumDark.tertiaryText,
+    pillBackground: premiumDark.primarySurface,
+    pillBorder: premiumDark.primaryBorder,
+    pillText: premiumDark.accentPrimary,
+    openPillBackground: premiumDark.successSurface || premiumDark.lightGreenBG || 'rgba(76, 175, 80, 0.12)',
+    openPillBorder: premiumDark.successBorder || 'rgba(76, 175, 80, 0.18)',
+    openPillDot: premiumDark.successPrimary || '#4CAF50',
+    openPillText: premiumDark.successPrimary || '#4CAF50',
+    iconContainerBg: premiumDark.primarySurface,
+    iconContainerBorder: premiumDark.primaryBorder,
+    closeButtonBg: premiumDark.primarySurface,
+    closeButtonBorder: premiumDark.primaryBorder,
+    closeIcon: premiumDark.secondaryText,
+    directionsButtonBg: premiumDark.primarySurface,
+    directionsButtonBorder: premiumDark.primaryBorder,
+    directionsText: premiumDark.accentPrimary,
+    viewVenueButtonBg: premiumDark.accentPrimary,
+    viewVenueText: '#FFF',
+    pointerBorderTop: premiumDark.secondarySurface,
+  },
+
+  // Venue Details Screen
+  VenueDetailsScreen: {
+    background: premiumDark.primaryBackground,
+    headerBackground: premiumDark.secondarySurface,
+    headerBorder: premiumDark.secondaryBorder,
+    primaryText: premiumDark.primaryText,
+    secondaryText: premiumDark.secondaryText,
+    cardBackground: premiumDark.secondarySurface,
+    cardBorder: premiumDark.secondaryBorder,
+    iconContainerBg: premiumDark.primarySurface,
+    iconContainerBorder: premiumDark.primaryBorder,
+    statsBorder: premiumDark.primaryBorder,
+    backButtonBg: premiumDark.primarySurface,
+    backButtonBorder: premiumDark.primaryBorder,
+    backButtonCenterBg: premiumDark.accentPrimary,
+    accentPrimary: premiumDark.accentPrimary,
   },
 
   // Stream Player
