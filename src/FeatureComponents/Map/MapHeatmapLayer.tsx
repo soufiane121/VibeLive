@@ -1,34 +1,20 @@
 import React, {useMemo} from 'react';
 import {CircleLayer, ShapeSource} from '@rnmapbox/maps';
-import {useGetHeatmapQuery, VenueData} from '../../../features/voting/VotingApi';
+import {VenueData} from '../../../features/voting/VotingApi';
 
 interface MapHeatmapLayerProps {
-  coordinates: number[];
-  isActive: boolean;
-  isFocused: boolean;
   onVenuePress: (venue: VenueData) => void;
+  heatmapData: any;
 }
 
 const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
-  coordinates,
-  isActive,
-  isFocused,
   onVenuePress,
+  heatmapData,
 }) => {
-  const {data: heatmapData} = useGetHeatmapQuery(
-    {
-      latitude: coordinates[1],
-      longitude: coordinates[0],
-      radius: 20,
-    },
-    {
-      skip: coordinates.length < 2,
-      pollingInterval: isActive && isFocused ? 45000 : 0,
-    },
-  );
 
   const heatmapGeoJSON = useMemo(() => {
     const venues = heatmapData?.heatmap || [];
+    // console.log("heatmapData", {heatmapData, venues})
     if (venues.length === 0) return null;
 
     return {

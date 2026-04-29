@@ -47,11 +47,13 @@ import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
 import {useAnalytics} from '../../Hooks/useAnalytics';
 import {
+  useGetHeatmapQuery,
   VenueData,
 } from '../../../features/voting/VotingApi';
 import { useAppState } from '../../Hooks/useAppState';
 import MapHeatmapLayer from './MapHeatmapLayer';
 import PremiumVenueCard from '../Voting/PremiumVenueCard';
+import EmptyMapState from './EmptyMapState';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -240,6 +242,8 @@ interface EmojisState {
 }
 const MapContainer = () => {
   const {navigate} = useNavigation<any>();
+  const { isActive } = useAppState();
+  const isFocused = useIsFocused();
   const coordinates = useCoordinates();
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
@@ -251,10 +255,20 @@ const MapContainer = () => {
     useDB: true, // Use database for testing
   });
 
-  const [mapEvents, setMapEvents] = useState<Event[]>([]);
+  const {data: heatmapData} = useGetHeatmapQuery<any>(
+      {
+        latitude: coordinates[1],
+        longitude: coordinates[0],
+        radius: 20,
+      },
+      {
+        skip: coordinates.length < 2,
+        pollingInterval: isActive && isFocused ? 45000 : 0,
+      },
+    );
 
-  const { isActive } = useAppState();
-  const isFocused = useIsFocused();
+  const mapEvents: Event[] = eventsData?.success && eventsData.data ? eventsData.data : [];
+
 
   const [selectedHeatmapVenue, setSelectedHeatmapVenue] = useState<VenueData | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -274,6 +288,9 @@ const MapContainer = () => {
         useNativeDriver: true,
       }).start();
     }
+    return(()=>(
+      slideAnim.stopAnimation()
+    ))
   }, [selectedHeatmapVenue, slideAnim]);
 
   const translateY = slideAnim.interpolate({
@@ -417,12 +434,6 @@ const MapContainer = () => {
     }
   }, [coordinates.length, calculateDynamicBounds]);
 
-  // Update map events when data changes
-  useEffect(() => {
-    if (eventsData?.success && eventsData.data) {
-      setMapEvents(eventsData.data);
-    }
-  }, [eventsData]);
 
   // Register dynamic images using URLs
   const images = useMemo(() => {
@@ -481,6 +492,17 @@ const MapContainer = () => {
       debouncedFetchClusters.cancel();
     };
   }, [bounds, zoomLevel, supercluster, featuresPointsData.length]);
+
+  // check if map is empty, no live no heatmap, show empty screen
+  const isMapEmpty = React.useMemo(() => {
+    const hasLiveFeatures = featuresPointsData.length > 0;
+    const hasHeatmap = (heatmapData?.heatmap?.length ?? 0) > 0;
+    const hasEvents = mapEvents.length > 0;
+    
+    return !(hasLiveFeatures || hasHeatmap || hasEvents);
+  }, [featuresPointsData, heatmapData, mapEvents]);
+
+  
 
   // Pulse animation for live markers without using listeners
   useEffect(() => {
@@ -644,12 +666,12 @@ const MapContainer = () => {
             />
 
             {/* Voting heatmap layer */}
-            <MapHeatmapLayer
-              coordinates={coordinates}
-              isActive={isActive}
-              isFocused={isFocused}
-              onVenuePress={handleHeatmapVenuePress}
-            />
+            {heatmapData?.heatmap?.length > 0 && (
+              <MapHeatmapLayer
+                heatmapData={heatmapData}
+                onVenuePress={handleHeatmapVenuePress}
+              />
+            )}
 
             {/* Render event markers */}
             {shouldRenderMarkers &&
@@ -662,7 +684,7 @@ const MapContainer = () => {
               ))}
             {/* Render live stream markers */}
             {shouldRenderMarkers &&
-              clusters.map(cluster => {
+              clusters.map((cluster: any) => {
                 const isCluster = cluster.properties.cluster;
                 const imageUrl = cluster?.properties?.imageUrl || 'in';
                 const coordinates = cluster.geometry.coordinates;
@@ -778,6 +800,8 @@ const MapContainer = () => {
               translateY={translateY}
             />
           )}
+
+          <EmptyMapState isVisible={isMapEmpty} />
         </>
       )}
     </View>

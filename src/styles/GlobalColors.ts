@@ -457,8 +457,8 @@ export const GlobalColors = {
     stepIndicatorActive: premiumDark.accentSurface,
     stepIndicatorInactive: premiumDark.secondarySurface,
     stepIndicatorInactiveBox: premiumDark.secondaryBackground,
-    nextButtonText: premiumDark.primaryText, 
-    nextButton: premiumDark.secondaryBackground, 
+    nextButtonText: premiumDark.primaryText,
+    nextButton: premiumDark.secondaryBackground,
     backButton: premiumDark.secondarySurface,
     createButton: premiumDark.secondaryBackground,
     error: premiumDark.hotPrimary,
@@ -496,7 +496,6 @@ export const GlobalColors = {
     headerIconBackground: 'rgba(0,0,0,0.3)',
     headerIconText: baseColors.white,
     accentPrimary: premiumDark.accentPrimary,
-    
   },
 
   // Premium Venue Card (Map Callout)
@@ -509,7 +508,10 @@ export const GlobalColors = {
     pillBackground: premiumDark.primarySurface,
     pillBorder: premiumDark.primaryBorder,
     pillText: premiumDark.accentPrimary,
-    openPillBackground: premiumDark.successSurface || premiumDark.lightGreenBG || 'rgba(76, 175, 80, 0.12)',
+    openPillBackground:
+      premiumDark.successSurface ||
+      premiumDark.lightGreenBG ||
+      'rgba(76, 175, 80, 0.12)',
     openPillBorder: premiumDark.successBorder || 'rgba(76, 175, 80, 0.18)',
     openPillDot: premiumDark.successPrimary || '#4CAF50',
     openPillText: premiumDark.successPrimary || '#4CAF50',
@@ -617,6 +619,20 @@ export const GlobalColors = {
     chartLine: baseColors.cyan,
     chartBar: baseColors.deepPink,
     chartArea: baseColors.cyanOverlay,
+  },
+
+  // Empty Map State
+  EmptyMapState: {
+    background: premiumDark.secondarySurface,
+    textPrimary: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textTertiary: premiumDark.tertiaryText,
+    accentOrange: premiumDark.hotPrimary,
+    accentBlue: premiumDark.accentPrimary,
+    circleBorder: premiumDark.accentPrimary,
+    pulseBackground: premiumDark.accentSurface,
+    blinkDot: premiumDark.hotPrimary,
+    border: premiumDark.primaryBorder
   },
 
   // Squad Mode

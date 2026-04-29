@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { analyticsApi } from './AnalyticsApi';
+import { store } from '../../redux/store';
 import { ANALYTICS_CONFIG } from '../Config/AnalyticsConfig';
 import { 
   AnalyticsEventType, 
@@ -36,11 +37,8 @@ class RTKAnalyticsService {
   private recentEvents: Set<string> = new Set(); // Track recent events to prevent duplicates
   private eventDedupeWindow: number = 5000; // 5 seconds window for duplicate prevention
 
-  // RTK Query mutation hooks (will be injected)
-  private trackSessionStartMutation: any = null;
-  private trackSessionEndMutation: any = null;
-  private trackEventMutation: any = null;
-  private trackEventsBatchMutation: any = null;
+  // Flag indicating the service is ready (store is available)
+  private _ready: boolean = false;
 
   private constructor() {
     this.initializeService();
@@ -86,21 +84,18 @@ class RTKAnalyticsService {
     }
   }
 
-  // Configure RTK Query mutations (called from React component)
-  public configureMutations(mutations: {
+  /**
+   * Configure RTK Query mutations.
+   * Kept for backward-compatibility but now a no-op — the service
+   * dispatches directly to the Redux store via store.dispatch().
+   */
+  public configureMutations(_mutations: {
     trackSessionStart: any;
     trackSessionEnd: any;
     trackEvent: any;
     trackEventsBatch: any;
   }): void {
-    this.trackSessionStartMutation = mutations.trackSessionStart;
-    this.trackSessionEndMutation = mutations.trackSessionEnd;
-    this.trackEventMutation = mutations.trackEvent;
-    this.trackEventsBatchMutation = mutations.trackEventsBatch;
-
-    // if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-    //   console.log('📊 RTK Analytics Service configured with mutations');
-    // }
+    this._ready = true;
   }
 
   // Update user context
@@ -217,13 +212,15 @@ class RTKAnalyticsService {
         deviceInfo: this.deviceInfo
       }, AnalyticsEventCategory.USER_ENGAGEMENT);
 
-      // Send session start to backend using RTK Query
-      if (this.trackSessionStartMutation && this.deviceInfo) {
+      // Send session start to backend via store.dispatch (no component coupling)
+      if (this.deviceInfo) {
         try {
-          await this.trackSessionStartMutation({
-            sessionId: this.sessionId,
-            deviceInfo: this.deviceInfo
-          }).unwrap();
+          await store.dispatch(
+            analyticsApi.endpoints.trackSessionStart.initiate({
+              sessionId: this.sessionId,
+              deviceInfo: this.deviceInfo,
+            }),
+          ).unwrap();
 
           if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
             console.log('📊 Session start sent to backend successfully');
@@ -263,23 +260,23 @@ class RTKAnalyticsService {
       // Flush all remaining events
       await this.flushEvents();
 
-      // Send session end to backend using RTK Query
-      if (this.trackSessionEndMutation) {
-        try {
-          await this.trackSessionEndMutation({
+      // Send session end to backend via store.dispatch (no component coupling)
+      try {
+        await store.dispatch(
+          analyticsApi.endpoints.trackSessionEnd.initiate({
             sessionId: this.sessionId,
             sessionDuration: Math.floor(sessionDuration / 1000),
             totalWatchTime: this.userContext.totalWatchTime || 0,
-            streamsWatched: this.userContext.totalStreams || 0
-          }).unwrap();
+            streamsWatched: this.userContext.totalStreams || 0,
+          }),
+        ).unwrap();
 
-          if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-            // console.log('📊 Session end sent to backend successfully');
-          }
-        } catch (error) {
-          if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
-            // console.warn('⚠️ Failed to send session end to backend:', error);
-          }
+        if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
+          // console.log('📊 Session end sent to backend successfully');
+        }
+      } catch (error) {
+        if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
+          // console.warn('⚠️ Failed to send session end to backend:', error);
         }
       }
 
@@ -373,9 +370,9 @@ class RTKAnalyticsService {
     }, AnalyticsEventCategory.USER_ENGAGEMENT);
   }
 
-  // Flush events to backend using RTK Query
+  // Flush events to backend via store.dispatch (no component coupling)
   public async flushEvents(): Promise<void> {
-    if (this.eventQueue.length === 0 || !this.trackEventsBatchMutation) {
+    if (this.eventQueue.length === 0) {
       return;
     }
 
@@ -383,16 +380,18 @@ class RTKAnalyticsService {
       const eventsToSend = [...this.eventQueue];
       this.eventQueue = [];
 
-      await this.trackEventsBatchMutation({
-        events: eventsToSend.map(event => ({
-          eventType: event.eventType,
-          eventCategory: event.eventCategory,
-          eventData: event.eventData,
-          timestamp: event.timestamp?.toISOString()
-        })),
-        sessionId: this.sessionId,
-        deviceInfo: this.deviceInfo
-      }).unwrap();
+      await store.dispatch(
+        analyticsApi.endpoints.trackEventsBatch.initiate({
+          events: eventsToSend.map(event => ({
+            eventType: event.eventType,
+            eventCategory: event.eventCategory,
+            eventData: event.eventData,
+            timestamp: event.timestamp?.toISOString()
+          })),
+          sessionId: this.sessionId,
+          deviceInfo: this.deviceInfo
+        }),
+      ).unwrap();
 
       if (ANALYTICS_CONFIG.full.enableConsoleLogging) {
         // console.log(`📊 Successfully sent ${eventsToSend.length} analytics events to backend`);

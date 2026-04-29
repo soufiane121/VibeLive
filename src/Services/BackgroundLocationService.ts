@@ -11,7 +11,7 @@ const LOCATION_PERMISSION_GRANTED_KEY = '@vibelive:location_permission_granted';
 const BACKGROUND_MODE_ENABLED_KEY = '@vibelive:background_location_enabled';
 
 // Location update interval in milliseconds (30 seconds for background)
-const BACKGROUND_UPDATE_INTERVAL = 30000;
+const BACKGROUND_UPDATE_INTERVAL = 60000;
 // Minimum distance between updates in meters (10 meters)
 const MINIMUM_DISTANCE = 10;
 
@@ -48,6 +48,7 @@ class BackgroundLocationService {
   private errorCallbacks: Set<(error: Error) => void> = new Set();
   private appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
   private backgroundTrackingMutex: boolean = false;
+  private _lastBgUpdateAt: number = 0;
 
   private constructor(config: LocationServiceConfig = {}) {
     this.config = {
@@ -132,10 +133,21 @@ class BackgroundLocationService {
         return false;
       }
 
-      // Stop any existing subscription
+      // Stop any existing foreground subscription
       if (this.locationSubscription) {
         await this.locationSubscription.remove();
         this.locationSubscription = null;
+      }
+
+      // Stop background task to prevent dual-tracking
+      try {
+        const isTaskDefined = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+        if (isTaskDefined) {
+          await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+          console.log('[BackgroundLocationService] Stopped background task (switching to foreground)');
+        }
+      } catch (e) {
+        console.warn('[BackgroundLocationService] Could not stop background task:', (e as Error).message);
       }
 
       // Start watching position
@@ -187,6 +199,13 @@ class BackgroundLocationService {
           console.error('[BackgroundLocationService] Background permission not granted');
           return false;
         }
+      }
+
+      // Stop foreground subscription to prevent dual-tracking
+      if (this.locationSubscription) {
+        await this.locationSubscription.remove();
+        this.locationSubscription = null;
+        console.log('[BackgroundLocationService] Stopped foreground subscription (switching to background)');
       }
 
       // Always (re)register the task so the latest options are applied.
@@ -488,20 +507,25 @@ class BackgroundLocationService {
    * GeofenceMonitorService 4-gate pipeline is the authoritative filter.
    */
   public handleBackgroundLocationUpdate(coordinates: LocationCoordinates): void {
-    // // Distance filter — skip if movement is less than MINIMUM_DISTANCE from last known
-    // if (this.lastKnownLocation) {
-    //   const dlat = coordinates.latitude - this.lastKnownLocation.latitude;
-    //   const dlng = coordinates.longitude - this.lastKnownLocation.longitude;
-    //   // Quick Euclidean approximation in meters (accurate enough at city scale)
-    //   const latM = dlat * 111_320;
-    //   const lngM = dlng * 111_320 * Math.cos(this.lastKnownLocation.latitude * Math.PI / 180);
-    //   const distM = Math.sqrt(latM * latM + lngM * lngM);
-    //   if (distM < this.config.minimumDistance) {
-    //     return; // GPS jitter — suppress callback to save CPU
-    //   }
-    // }
+    // ── Time-based throttle ────────────────────────────────────────────
+    // iOS delivers background updates as fast as the hardware allows (~1/s)
+    // when distanceInterval=0 + pausesUpdatesAutomatically=false. We need
+    // distanceInterval=0 for stationary dwell detection, but processing
+    // every 1-second ping wastes CPU/battery. Throttle to at most one
+    // processed update per updateInterval (60 s). The DwellAccumulator
+    // only needs periodic pings (15 min / 60 s = 15 samples is sufficient).
+    const now = Date.now();
+    if (this._lastBgUpdateAt > 0 && now - this._lastBgUpdateAt < this.config.updateInterval) {
+      return; // too soon — suppress
+    }
+    this._lastBgUpdateAt = now;
 
     this.lastKnownLocation = coordinates;
+
+    console.log('[BackgroundLocationService] Background update processed:', {
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+    });
 
     // Notify all registered callbacks
     this.locationCallbacks.forEach(callback => {
@@ -539,12 +563,8 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           timestamp: location.timestamp || Date.now(),
         };
 
-        console.log('[BackgroundLocationTask] Background location update:', {
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-        });
-
-        // Use the public method instead of accessing private members
+        // handleBackgroundLocationUpdate applies a time-based throttle;
+        // only processed updates are logged from within that method.
         service.handleBackgroundLocationUpdate(coordinates);
       }
     }

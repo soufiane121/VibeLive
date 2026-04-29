@@ -1,7 +1,7 @@
 import {AppState, AppStateStatus} from 'react-native';
 import * as Location from 'expo-location';
 import {baseUrl} from '../../baseUrl';
-import {getLocalData, setLocalData} from '../Utils/LocalStorageHelper';
+import {getLocalData, setLocalData, removeLocalData} from '../Utils/LocalStorageHelper';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Configuration Constants
@@ -64,6 +64,8 @@ type ErrorCallback = (error: string) => void;
 // ═══════════════════════════════════════════════════════════════════════════
 class KnownPlaceCache {
   private places: ResolvedPlace[] = [];
+  private _lastPruneAt: number = 0;
+  private static readonly PRUNE_THROTTLE_MS = 60 * 60 * 1000; // prune at most once per hour
 
   async load(): Promise<void> {
     try {
@@ -121,10 +123,35 @@ class KnownPlaceCache {
       }
       const dist = this._haversineDistance(lat, lon, place.lat, place.lon);
       if (dist <= place.radiusMeters) {
+        // Lazily prune expired entries (throttled)
+        this._pruneExpired(now);
         return place;
       }
     }
+    // Lazily prune expired entries (throttled)
+    this._pruneExpired(now);
     return null;
+  }
+
+  /**
+   * Physically remove expired entries from memory and persist.
+   * Throttled to at most once per hour to avoid excessive AsyncStorage writes.
+   */
+  private _pruneExpired(now: number): void {
+    if (now - this._lastPruneAt < KnownPlaceCache.PRUNE_THROTTLE_MS) {
+      return;
+    }
+    this._lastPruneAt = now;
+
+    const before = this.places.length;
+    this.places = this.places.filter(
+      p => !p.cachedAt || now - p.cachedAt < KNOWN_PLACE_TTL_MS,
+    );
+    const removed = before - this.places.length;
+    if (removed > 0) {
+      console.log(`[KnownPlaceCache] Pruned ${removed} expired entries`);
+      this._persist();
+    }
   }
 
   private async _persist(): Promise<void> {
@@ -160,8 +187,11 @@ class KnownPlaceCache {
     return this.places.length;
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     this.places = [];
+    this._lastPruneAt = 0;
+    await removeLocalData({key: KNOWN_PLACES_STORAGE_KEY});
+    console.log('[KnownPlaceCache] Cache cleared from memory and storage');
   }
 }
 
@@ -708,8 +738,13 @@ class GeofenceMonitorService {
   private gpxPoints: Array<{lat: number; lng: number; delayMs: number}> = [];
 
   /**
-   * Send a manual position through the 4-gate pipeline.
+   * Wipe the KnownPlaceCache from memory AND AsyncStorage.
+   * Use during development/testing to reset Gate 2 suppression.
    */
+  async clearKnownPlacesCache(): Promise<void> {
+    await this.knownPlaces.clear();
+  }
+
   sendManualPosition(lat: number, lng: number) {
     const update: LocationUpdate = {
       latitude: lat,
