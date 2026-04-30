@@ -12,9 +12,20 @@ const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
   heatmapData,
 }) => {
 
+  // Build a lookup map so we can retrieve full venue objects (with nested
+  // fields like address, businessHours) on press — GeoJSON properties are
+  // flattened to primitives by Mapbox so we only put styling scalars there.
+  const venueLookup = useMemo(() => {
+    const venues: VenueData[] = heatmapData?.heatmap || [];
+    const map = new Map<string, VenueData>();
+    for (const v of venues) {
+      map.set(String(v.id), v);
+    }
+    return map;
+  }, [heatmapData]);
+
   const heatmapGeoJSON = useMemo(() => {
-    const venues = heatmapData?.heatmap || [];
-    // console.log("heatmapData", {heatmapData, venues})
+    const venues: VenueData[] = heatmapData?.heatmap || [];
     if (venues.length === 0) return null;
 
     return {
@@ -26,8 +37,9 @@ const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
           coordinates: v.coordinates,
         },
         properties: {
-          ...v, // pass all data for onPress
-          isBoostedValue: v.isBoosted ? 1 : 0, // renamed to avoid conflict
+          id: String(v.id),
+          vibeScore: v.vibeScore,
+          isBoostedValue: v.isBoosted ? 1 : 0,
           intensity: Math.min(Math.abs(v.vibeScore) / 100, 1),
         },
       })),
@@ -38,8 +50,12 @@ const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
 
   const handlePress = (e: any) => {
     const feature = e.features?.[0];
-    if (feature?.properties) {
-      onVenuePress(feature.properties as VenueData);
+    const venueId = feature?.properties?.id;
+    if (venueId) {
+      const venue = venueLookup.get(venueId);
+      if (venue) {
+        onVenuePress(venue);
+      }
     }
   };
 

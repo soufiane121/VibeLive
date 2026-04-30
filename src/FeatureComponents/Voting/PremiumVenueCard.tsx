@@ -22,11 +22,17 @@ const PremiumVenueCard: React.FC<PremiumVenueCardProps> = ({
 }) => {
   const colors = GlobalColors.PremiumVenueCard;
 
-  // Hardcoded placeholders as per requirements
-  const rating = '4.9';
-  const reviewsCount = '(312)';
-  const distance = venue.distance ? `${venue.distance.toFixed(1)} mi` : '0.3 mi';
-  const price = '$$$';
+  const rating = venue.googleRating != null ? venue.googleRating.toFixed(1) : null;
+  const reviewsCount = venue.googleReviewCount != null ? `(${venue.googleReviewCount})` : null;
+  const distance = venue.distance ? `${venue.distance.toFixed(1)} mi` : null;
+  const priceSymbol = venue.priceLevel ? '$'.repeat(venue.priceLevel) : null;
+
+  const addressText = venue.address
+    ? [venue.address.street, venue.address.city].filter(Boolean).join(', ')
+    : null;
+
+  const starCount = venue.googleRating != null ? Math.round(venue.googleRating) : 0;
+  const stars = starCount > 0 ? '★'.repeat(starCount) + '☆'.repeat(5 - starCount) : null;
 
   return (
     <Animated.View style={[styles.container, {transform: [{translateY}]}]}>
@@ -34,7 +40,7 @@ const PremiumVenueCard: React.FC<PremiumVenueCardProps> = ({
         {/* Top Header Section */}
         <View style={styles.header}>
           <View style={styles.headerPill}>
-            <Text style={styles.headerPillText}>EVENT VENUE</Text>
+            <Text style={styles.headerPillText}>{venue.category?.replace(/_/g, ' ').toUpperCase() || 'VENUE'}</Text>
           </View>
           <View style={styles.iconContainer}>
             <Text style={styles.centerIcon}>🏛️</Text>
@@ -54,20 +60,27 @@ const PremiumVenueCard: React.FC<PremiumVenueCardProps> = ({
           
           <View style={styles.locationRow}>
             <Text style={styles.pinIcon}>📍</Text>
-            {/* We don't have address in VenueData currently, using category or a placeholder */}
             <Text style={styles.addressText} numberOfLines={1}>
-              {venue.category?.replace(/_/g, ' ') || '142 West 36th St, New York'}
+              {addressText || venue.category?.replace(/_/g, ' ') || 'No address available'}
             </Text>
           </View>
 
           <View style={styles.statsRow}>
-            <Text style={styles.stars}>★★★★☆</Text>
-            <Text style={styles.ratingText}>{rating}</Text>
-            <Text style={styles.reviewsText}>{reviewsCount}</Text>
-            <View style={styles.dotDivider} />
-            <Text style={styles.statsText}>{distance}</Text>
-            <View style={styles.dotDivider} />
-            <Text style={styles.statsText}>{price}</Text>
+            {stars && <Text style={styles.stars}>{stars}</Text>}
+            {rating && <Text style={styles.ratingText}>{rating}</Text>}
+            {reviewsCount && <Text style={styles.reviewsText}>{reviewsCount}</Text>}
+            {distance && (
+              <>
+                {rating && <View style={styles.dotDivider} />}
+                <Text style={styles.statsText}>{distance}</Text>
+              </>
+            )}
+            {priceSymbol && (
+              <>
+                <View style={styles.dotDivider} />
+                <Text style={styles.statsText}>{priceSymbol}</Text>
+              </>
+            )}
           </View>
         </View>
 

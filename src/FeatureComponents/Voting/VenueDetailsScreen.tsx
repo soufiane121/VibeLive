@@ -60,11 +60,16 @@ const VenueDetailsScreen = () => {
   };
 
   const handlePhone = () => {
-    Linking.openURL('tel:+12125550134');
+    if (venue?.phone) {
+      Linking.openURL(`tel:${venue.phone}`);
+    }
   };
 
   const handleWebsite = () => {
-    Linking.openURL('https://thegrandballroom.com');
+    if (venue?.website) {
+      const url = venue.website.startsWith('http') ? venue.website : `https://${venue.website}`;
+      Linking.openURL(url);
+    }
   };
 
   if (!venue) {
@@ -78,11 +83,20 @@ const VenueDetailsScreen = () => {
     );
   }
 
-  // Placeholder data for design
-  const rating = '4.9';
-  const reviewCount = '312';
-  const distance = venue.distance ? `${venue.distance.toFixed(1)} mi` : '0.3 mi';
-  const price = '$$$';
+  const rating = venue.googleRating != null ? venue.googleRating.toFixed(1) : null;
+  const reviewCount = venue.googleReviewCount != null ? String(venue.googleReviewCount) : null;
+  const distance = venue.distance ? `${venue.distance.toFixed(1)} mi` : null;
+  const price = venue.priceLevel ? '$'.repeat(venue.priceLevel) : null;
+
+  const fullAddress = venue.address
+    ? [venue.address.street, venue.address.city, venue.address.state, venue.address.zip]
+        .filter(Boolean)
+        .join(', ')
+    : null;
+
+  const websiteDisplay = venue.website
+    ? venue.website.replace(/^https?:\/\//, '').replace(/\/$/, '')
+    : null;
 
   return (
     <View style={styles.container}>
@@ -139,25 +153,30 @@ const VenueDetailsScreen = () => {
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.starIcon}>★</Text>
-            <Text style={styles.ratingText}>{rating}</Text>
-            <Text style={styles.reviewCountText}>({reviewCount})</Text>
-          </View>
-          <View style={styles.dotDivider} />
-          <View style={styles.statItem}>
-            <Ionicons name="location-outline" size={14} color={colors.secondaryText} style={styles.statIcon} />
-            <Text style={styles.statText}>{distance}</Text>
-          </View>
-          <View style={styles.dotDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statText}>{price}</Text>
-          </View>
-          <View style={styles.dotDivider} />
-          <View style={styles.statItem}>
-            <Ionicons name="people-outline" size={14} color={colors.secondaryText} style={styles.statIcon} />
-            <Text style={styles.statText}>Up to 500</Text>
-          </View>
+          {rating && (
+            <View style={styles.statItem}>
+              <Text style={styles.starIcon}>★</Text>
+              <Text style={styles.ratingText}>{rating}</Text>
+              {reviewCount && <Text style={styles.reviewCountText}>({reviewCount})</Text>}
+            </View>
+          )}
+          {distance && (
+            <>
+              {rating && <View style={styles.dotDivider} />}
+              <View style={styles.statItem}>
+                <Ionicons name="location-outline" size={14} color={colors.secondaryText} style={styles.statIcon} />
+                <Text style={styles.statText}>{distance}</Text>
+              </View>
+            </>
+          )}
+          {price && (
+            <>
+              <View style={styles.dotDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statText}>{price}</Text>
+              </View>
+            </>
+          )}
         </View>
 
         {/* Pricing Card */}
@@ -173,53 +192,61 @@ const VenueDetailsScreen = () => {
         </View> */}
 
         {/* About Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About this venue</Text>
-          <Text style={styles.aboutText}>
-            An iconic Manhattan venue spanning three floors and 12,000 sq ft of beautifully restored event space. Originally built in 1923, The Grand Ballroom blends gilded-age grandeur with modern production capabilities — including a world-class sound system, theatrical lighting rigs, and full catering infrastructure. Ideal for galas, corporate launches, weddings, and large-scale private events.
-          </Text>
-        </View>
+        {venue.venueDescription ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>About this venue</Text>
+            <Text style={styles.aboutText}>
+              {venue.venueDescription}
+            </Text>
+          </View>
+        ) : null}
 
         {/* Contact & Location Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contact & Location</Text>
           <View style={styles.contactCard}>
             {/* Address */}
-            <View style={styles.contactRow}>
-              <View style={styles.contactIconContainer}>
-                <Ionicons name="location-outline" size={20} color={colors.secondaryText} />
+            {fullAddress && (
+              <View style={styles.contactRow}>
+                <View style={styles.contactIconContainer}>
+                  <Ionicons name="location-outline" size={20} color={colors.secondaryText} />
+                </View>
+                <View style={styles.contactInfo}>
+                  <Text style={styles.contactLabel}>Address</Text>
+                  <Text style={styles.contactValue}>{fullAddress}</Text>
+                </View>
               </View>
-              <View style={styles.contactInfo}>
-                <Text style={styles.contactLabel}>Address</Text>
-                <Text style={styles.contactValue}>142 West 36th St, New York, NY 10018</Text>
-              </View>
-            </View>
-            
-            <View style={styles.contactDivider} />
+            )}
+
+            {fullAddress && (venue.phone || venue.website) && <View style={styles.contactDivider} />}
 
             {/* Phone */}
-            <TouchableOpacity style={styles.contactRow} onPress={handlePhone}>
-              <View style={styles.contactIconContainer}>
-                <Ionicons name="call-outline" size={20} color={colors.secondaryText} />
-              </View>
-              <View style={styles.contactInfo}>
-                <Text style={styles.contactLabel}>Phone</Text>
-                <Text style={styles.contactLink}>+1 (212) 555-0134</Text>
-              </View>
-            </TouchableOpacity>
+            {venue.phone && (
+              <TouchableOpacity style={styles.contactRow} onPress={handlePhone}>
+                <View style={styles.contactIconContainer}>
+                  <Ionicons name="call-outline" size={20} color={colors.secondaryText} />
+                </View>
+                <View style={styles.contactInfo}>
+                  <Text style={styles.contactLabel}>Phone</Text>
+                  <Text style={styles.contactLink}>{venue.phone}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
 
-            <View style={styles.contactDivider} />
+            {venue.phone && venue.website && <View style={styles.contactDivider} />}
 
             {/* Website */}
-            <TouchableOpacity style={styles.contactRow} onPress={handleWebsite}>
-              <View style={styles.contactIconContainer}>
-                <Ionicons name="globe-outline" size={20} color={colors.secondaryText} />
-              </View>
-              <View style={styles.contactInfo}>
-                <Text style={styles.contactLabel}>Website</Text>
-                <Text style={styles.contactLink}>thegrandballroom.com</Text>
-              </View>
-            </TouchableOpacity>
+            {venue.website && (
+              <TouchableOpacity style={styles.contactRow} onPress={handleWebsite}>
+                <View style={styles.contactIconContainer}>
+                  <Ionicons name="globe-outline" size={20} color={colors.secondaryText} />
+                </View>
+                <View style={styles.contactInfo}>
+                  <Text style={styles.contactLabel}>Website</Text>
+                  <Text style={styles.contactLink}>{websiteDisplay}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -234,68 +261,19 @@ const VenueDetailsScreen = () => {
           </View>
         </TouchableOpacity> */}
 
-        {/* Reviews Section */}
-        <View style={styles.section}>
-          <View style={styles.reviewsHeaderRow}>
-            <Text style={styles.sectionTitle}>Reviews</Text>
-            <View style={styles.reviewsSummaryContainer}>
-              <Text style={styles.starIconSmall}>★</Text>
-              <Text style={styles.reviewsSummaryRating}>{rating}</Text>
-              <Text style={styles.reviewsSummaryCount}>· {reviewCount} total</Text>
-            </View>
-          </View>
-
-          {/* Review 1 */}
-          <View style={styles.reviewCard}>
-            <View style={styles.reviewHeader}>
-              <View style={[styles.reviewerAvatar, {backgroundColor: '#2F456B'}]}>
-                <Text style={styles.reviewerInitial}>M</Text>
-              </View>
-              <View style={styles.reviewerInfo}>
-                <Text style={styles.reviewerName}>Morgan S.</Text>
-                <View style={styles.reviewerStarsRow}>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.reviewDate}> Nov 2024</Text>
-                </View>
+        {/* Reviews Section — only show when rating data exists */}
+        {rating && (
+          <View style={styles.section}>
+            <View style={styles.reviewsHeaderRow}>
+              <Text style={styles.sectionTitle}>Reviews</Text>
+              <View style={styles.reviewsSummaryContainer}>
+                <Text style={styles.starIconSmall}>★</Text>
+                <Text style={styles.reviewsSummaryRating}>{rating}</Text>
+                {reviewCount && <Text style={styles.reviewsSummaryCount}>· {reviewCount} total</Text>}
               </View>
             </View>
-            <Text style={styles.reviewText}>
-              Hosted our product launch here. The team was exceptional — every detail was handled without us lifting a finger. The main hall looked breathtaking lit up at night.
-            </Text>
           </View>
-
-          {/* Review 2 */}
-          <View style={styles.reviewCard}>
-            <View style={styles.reviewHeader}>
-              <View style={[styles.reviewerAvatar, {backgroundColor: '#2F3C59'}]}>
-                <Text style={styles.reviewerInitial}>J</Text>
-              </View>
-              <View style={styles.reviewerInfo}>
-                <Text style={styles.reviewerName}>James R.</Text>
-                <View style={styles.reviewerStarsRow}>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.starIconSmall}>★</Text>
-                  <Text style={styles.reviewDate}> Oct 2024</Text>
-                </View>
-              </View>
-            </View>
-            <Text style={styles.reviewText}>
-              Used the Gallery Room for a 120-person gala dinner. Acoustics are incredible and the staff bent over backwards to accommodate our custom menu.
-            </Text>
-          </View>
-
-          {/* See All Reviews Button */}
-          <TouchableOpacity style={styles.seeAllReviewsButton}>
-            <Text style={styles.seeAllReviewsText}>See all {reviewCount} reviews 〉</Text>
-          </TouchableOpacity>
-        </View>
+        )}
 
       </ScrollView>
     </View>
