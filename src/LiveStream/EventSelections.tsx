@@ -879,19 +879,12 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                       : colors.border,
                   height: 60,
                   width: 60,
-                  backgroundColor:
-                    selectedCategory === item.key
-                      ? colors.selectedIconBG
-                      : colors.iconsBG,
+                  backgroundColor: colors.selectedIconBG,
                   justifyContent: 'center',
                   alignItems: 'center',
                   borderRadius: 8,
                 }}>
-                {item.emoji(
-                  selectedCategory === item.key
-                    ? colors.selectedIconColor
-                    : colors.iconColor,
-                )}
+                {item.emoji(colors.selectedIconColor)}
               </View>
               <Text style={styles.categoryLabel}>{item.label}</Text>
             </TouchableOpacity>

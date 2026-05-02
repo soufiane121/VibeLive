@@ -90,21 +90,18 @@ const StackNavigation = () => {
     <>
       <VotingInitializer />
       <Stack.Navigator
+        initialRouteName={isSuccess && data?.['_id'] ? 'Bottom' : 'Login'}
         screenOptions={{
           animation: 'fade',
           headerBackVisible: false,
           headerShown: false,
         }}>
-        {!isSuccess && !data?.['_id'] && (
-          <>
-            <Stack.Screen name="Login" component={LoginContainer} />
-            <Stack.Screen
-              name="sign-up"
-              component={SignUpContainer}
-              options={{headerShown: false}}
-            />
-          </>
-        )}
+        <Stack.Screen name="Login" component={LoginContainer} />
+        <Stack.Screen
+          name="sign-up"
+          component={SignUpContainer}
+          options={{headerShown: false}}
+        />
         <Stack.Screen name="Bottom" component={BottomNavigation} />
         <Stack.Screen name="StreamPlayer" component={StreamPlayer} />
         <Stack.Screen name="carrouselSwiper" component={CarrouselContainer} />

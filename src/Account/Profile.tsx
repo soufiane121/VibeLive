@@ -12,7 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { useAnalytics } from '../Hooks/useAnalytics';
@@ -162,6 +162,13 @@ const Profile = () => {
             _id: '', firstName: '', lastName: '', email: '', userName: '', password: '', createdAt: '',
             location: { type: 'Point', coordinates: [] },
           } as any));
+          const targetNav = navigation.getParent() ?? navigation;
+          targetNav.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            }),
+          );
         },
       },
     ]);

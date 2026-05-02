@@ -74,7 +74,7 @@ const baseColors = {
 baseColors.deepBlack = baseColors.newBackGroundColor;
 
 
-if (isDarkMode) {
+if (!isDarkMode) {
   premiumDark = premiumColors.light;
 } else {
   premiumDark = premiumColors.dark;
@@ -485,6 +485,11 @@ export const GlobalColors = {
     successSurface: premiumDark.successSurface,
     successBorder: premiumDark.successBorder,
     error: premiumDark.hotPrimary,
+    errorSurface: premiumDark.hotSurface,
+    errorBorder: premiumDark.hotBorder,
+    warningSurface: premiumDark.hotSurface,
+    warningBorder: premiumDark.hotBorder,
+    warningText: premiumDark.hotPrimary,
     rsvpButton: 'transparent',
     shareButton: premiumDark.primarySurface,
     ticketButton: premiumDark.accentPrimary,

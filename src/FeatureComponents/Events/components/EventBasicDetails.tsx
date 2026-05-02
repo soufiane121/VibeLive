@@ -22,10 +22,14 @@ import {
 
 const eventTypes = [
   {key: 'music', label: 'Music', icon: 'music-note'},
-  {key: 'sports', label: 'Sports', icon: 'basketball'},
   {key: 'nightlife', label: 'Nightlife', icon: 'glass-cocktail'},
   {key: 'festival', label: 'Festival', icon: 'star-outline'},
   {key: 'conference', label: 'Conference', icon: 'calendar-blank'},
+  {key: 'comedy', label: 'Comedy', icon: 'drama-masks'},
+  {key: 'theater', label: 'Theater', icon: 'theater'},
+  {key: 'art', label: 'Art', icon: 'palette'},
+  {key: 'food', label: 'Food', icon: 'silverware-fork-knife'},
+  {key: 'happyhour', label: 'Happy Hour', icon: 'glass-mug-variant'},
   {key: 'other', label: 'Other', icon: 'alert-circle-outline'},
 ];
 
@@ -39,6 +43,7 @@ interface EventBasicDetailsProps {
   };
   errors: {[key: string]: string};
   onUpdateFormData: (updates: any) => void;
+  isOperator?: boolean;
 }
 
 const colors = GlobalColors.EventCreationFlow;
@@ -47,6 +52,7 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
   formData,
   errors,
   onUpdateFormData,
+  isOperator = true,
 }) => {
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [showAndroidActionSheet, setShowAndroidActionSheet] = useState(false);
@@ -367,44 +373,59 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
         )}
       </View>
 
-      <View style={styles.inputGroup}>
-        <View style={styles.labelContainer}>
-          <View style={styles.labelDot} />
-          <Text style={styles.label}>Event type</Text>
-        </View>
-        <View style={styles.eventTypeGrid}>
-          {eventTypes.map(type => {
-            const isActive = formData.eventType === type.key;
-            return (
-              <TouchableOpacity
-                key={type.key}
-                style={[
-                  styles.eventTypeItem,
-                  isActive && styles.eventTypeItemActive,
-                ]}
-                onPress={() => onUpdateFormData({eventType: type.key})}>
-                <View style={[styles.eventIconWrapper, isActive && styles.eventIconWrapperActive]}>
-                  <CommonMaterialCommunityIcons
-                    name={type.icon as any}
-                    size={20}
-                    color={isActive ? colors.background : colors.textMuted}
-                  />
-                </View>
-                <Text
+      {isOperator ? (
+        <View style={styles.inputGroup}>
+          <View style={styles.labelContainer}>
+            <View style={styles.labelDot} />
+            <Text style={styles.label}>Event type</Text>
+          </View>
+          <View style={styles.eventTypeGrid}>
+            {eventTypes.map(type => {
+              const isActive = formData.eventType === type.key;
+              return (
+                <TouchableOpacity
+                  key={type.key}
                   style={[
-                    styles.eventTypeText,
-                    isActive && styles.eventTypeTextActive,
-                  ]}>
-                  {type.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+                    styles.eventTypeItem,
+                    isActive && styles.eventTypeItemActive,
+                  ]}
+                  onPress={() => onUpdateFormData({eventType: type.key})}>
+                  <View style={[styles.eventIconWrapper, isActive && styles.eventIconWrapperActive]}>
+                    <CommonMaterialCommunityIcons
+                      name={type.icon as any}
+                      size={20}
+                      color={isActive ? colors.background : colors.textMuted}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.eventTypeText,
+                      isActive && styles.eventTypeTextActive,
+                    ]}>
+                    {type.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {errors.eventType && (
+            <Text style={styles.errorText}>{errors.eventType}</Text>
+          )}
         </View>
-        {errors.eventType && (
-          <Text style={styles.errorText}>{errors.eventType}</Text>
-        )}
-      </View>
+      ) : (
+        <View style={styles.inputGroup}>
+          <View style={styles.labelContainer}>
+            <View style={styles.labelDot} />
+            <Text style={styles.label}>Event type</Text>
+          </View>
+          <View style={[styles.eventTypeItem, styles.eventTypeItemActive, { width: '100%', aspectRatio: undefined, paddingVertical: 16, flexDirection: 'row' }]}>
+            <View style={[styles.eventIconWrapper, styles.eventIconWrapperActive, { marginBottom: 0, marginRight: 12 }]}>
+              <CommonMaterialCommunityIcons name="glass-mug-variant" size={20} color={colors.background} />
+            </View>
+            <Text style={[styles.eventTypeText, styles.eventTypeTextActive, { fontSize: 16 }]}>Happy Hour</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

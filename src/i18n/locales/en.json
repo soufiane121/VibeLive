@@ -2143,5 +2143,8 @@
     "legal": "LEGAL",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service"
+  },
+  "eventDetailsScreen": {
+    "communityTipLabel": "Community tip, not verified by venue. hours may differ"
   }
 }

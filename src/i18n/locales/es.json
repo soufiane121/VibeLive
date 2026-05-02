@@ -2157,5 +2157,8 @@
     "legal": "LEGAL",
     "privacyPolicy": "Política de Privacidad",
     "termsOfService": "Términos de Servicio"
+  },
+  "eventDetailsScreen": {
+    "communityTipLabel": "Consejo de la comunidad, no verificado por el local. Los horarios pueden variar"
   }
 }

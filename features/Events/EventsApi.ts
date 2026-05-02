@@ -10,10 +10,17 @@ export interface Event {
   endDate: string;
   source?: string;
   externalId?: string;
+  venue?: {
+    _id: string;
+    name: string;
+  };
   location: {
     type: 'Point';
     coordinates: [number, number]; // [longitude, latitude]
     address: string;
+    address1?: string;
+    city?: string;
+    zip?: string;
   };
   eventType: string;
   ticketing: {
@@ -58,6 +65,8 @@ export interface Event {
   isPromotionActive?: boolean;
   userRSVPStatus?: 'interested' | 'going' | null;
   hasUserRSVP?: boolean;
+  reviewStatus?: 'approved' | 'pending' | 'rejected';
+  rejectionReason?: string;
 }
 
 export interface CreateEventRequest {
@@ -65,9 +74,13 @@ export interface CreateEventRequest {
   description: string;
   startDate: string;
   endDate: string;
+  venueId?: string;
   location: {
     coordinates: [number, number];
     address: string;
+    address1?: string;
+    city?: string;
+    zip?: string;
   };
   eventType: string;
   ticketing?: {
@@ -83,6 +96,26 @@ export interface CreateEventRequest {
   coverImageUrl?: string;
   tags?: string[];
   capacity?: number;
+}
+
+export interface MyVenue {
+  _id: string;
+  name: string;
+  address: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
+  location: {
+    coordinates: [number, number];
+  };
+}
+
+export interface MyVenueResponse {
+  success: boolean;
+  data: MyVenue | null;
 }
 
 export interface UploadUrlResponse {

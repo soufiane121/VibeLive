@@ -24,6 +24,7 @@ import { Linking } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSelector } from 'react-redux';
+import { useTranslation } from '../../Hooks/useTranslation';
 // import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 const colors = GlobalColors.EventDetailsScreen;
@@ -39,6 +40,7 @@ const EventDetailsScreen: React.FC = () => {
   const [removeRSVP, { isLoading: isRemovingRsvp }] = useRemoveRSVPMutation();
   
   const { currentUser } = useSelector((state: any) => state?.currentUser);
+  const { t } = useTranslation();
   
   const [selectedRsvpStatus, setSelectedRsvpStatus] = useState<'interested' | 'going'>('interested');
 
@@ -384,7 +386,35 @@ const EventDetailsScreen: React.FC = () => {
                   )}
                 </View>
               )}
+
             </View>
+
+            {/* Rejection reason or community tip */}
+            {event.reviewStatus === 'rejected' && event.rejectionReason ? (
+              <View style={styles.rejectionBadge}>
+                <CommonMaterialCommunityIcons
+                  name="close-circle-outline"
+                  size={14}
+                  color={colors.error}
+                  style={{marginRight: 6}}
+                />
+                <Text style={styles.rejectionText}>
+                  {event.rejectionReason}
+                </Text>
+              </View>
+            ) : !event.venue && (
+              <View style={styles.communityTipBadge}>
+                <CommonMaterialCommunityIcons
+                  name="information-outline"
+                  size={14}
+                  color={colors.warningText}
+                  style={{marginRight: 6}}
+                />
+                <Text style={styles.communityTipText}>
+                  {t('eventDetailsScreen.communityTipLabel')}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Tags */}
@@ -702,6 +732,43 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   tagText: { fontSize: 12, color: colors.textSecondary },
+
+  communityTipBadge: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.warningSurface,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: colors.warningBorder,
+  },
+  communityTipText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.warningText,
+    lineHeight: 18,
+  },
+  rejectionBadge: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.errorSurface,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: colors.errorBorder,
+  },
+  rejectionText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.error,
+    lineHeight: 18,
+  },
   
   bottomBar: {
     backgroundColor: colors.background,
