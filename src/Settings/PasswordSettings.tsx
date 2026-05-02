@@ -15,6 +15,7 @@ import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon, ShieldCheckmarkIcon, CheckmarkIcon, InformationCircleIcon, BulbIcon, PasswordIcons } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import {
   useChangePasswordMutation,
   useToggleTwoFactorMutation,
@@ -23,6 +24,7 @@ import {
 const PasswordSettings = () => {
   const navigation = useNavigation();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   
   const [currentPassword, setCurrentPassword] = useState('');
@@ -51,28 +53,28 @@ const PasswordSettings = () => {
     return {
       isValid: password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar,
       errors: [
-        ...(password.length < minLength ? ['At least 8 characters'] : []),
-        ...(!hasUpperCase ? ['One uppercase letter'] : []),
-        ...(!hasLowerCase ? ['One lowercase letter'] : []),
-        ...(!hasNumbers ? ['One number'] : []),
-        ...(!hasSpecialChar ? ['One special character'] : []),
+        ...(password.length < minLength ? [t('password.requirements.minLength')] : []),
+        ...(!hasUpperCase ? [t('password.requirements.uppercase')] : []),
+        ...(!hasLowerCase ? [t('password.requirements.lowercase')] : []),
+        ...(!hasNumbers ? [t('password.requirements.number')] : []),
+        ...(!hasSpecialChar ? [t('password.requirements.special')] : []),
       ]
     };
   };
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(t('common.error'), t('errors.fillAllFields'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
+      Alert.alert(t('common.error'), t('errors.passwordsDoNotMatch'));
       return;
     }
 
     if (newPassword.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters long');
+      Alert.alert(t('common.error'), t('errors.invalidPassword'));
       return;
     }
 
@@ -83,7 +85,7 @@ const PasswordSettings = () => {
       }).unwrap();
       
       if (response.success) {
-        Alert.alert('Success', 'Password changed successfully');
+        Alert.alert(t('common.success'), t('password.changeSuccess'));
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -92,11 +94,11 @@ const PasswordSettings = () => {
           user_id: currentUser?._id,
         });
       } else {
-        Alert.alert('Error', response.message || 'Failed to change password');
+        Alert.alert(t('common.error'), response.message || t('password.changeFailed'));
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      Alert.alert('Error', 'Failed to change password');
+      Alert.alert(t('common.error'), t('password.changeFailed'));
     }
   };
 
@@ -110,12 +112,12 @@ const PasswordSettings = () => {
       });
 
       Alert.alert(
-        'Success',
-        `Two-factor authentication has been ${enabled ? 'enabled' : 'disabled'}.`
+        t('common.success'),
+        enabled ? t('password.twoFactorEnabledSuccess') : t('password.twoFactorDisabledSuccess')
       );
     } catch (error: any) {
       console.error('Error toggling two-factor:', error);
-      Alert.alert('Error', error.message || 'Failed to update two-factor authentication.');
+      Alert.alert(t('common.error'), error.message || t('password.twoFactorFailed'));
     }
   };
 
@@ -133,7 +135,7 @@ const PasswordSettings = () => {
           onPress={() => navigation.goBack()}>
           <ChevronBackIcon size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Password & Security</Text>
+        <Text style={styles.headerTitle}>{t('settings.sections.passwordSecurity.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -141,21 +143,21 @@ const PasswordSettings = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Change Password</Text>
+          <Text style={styles.sectionTitle}>{t('password.changePasswordTitle')}</Text>
           <Text style={styles.sectionDescription}>
-            Create a strong password to keep your account secure
+            {t('password.changePasswordDescription')}
           </Text>
         </View>
 
         {/* Current Password */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Current Password</Text>
+          <Text style={styles.inputLabel}>{t('password.currentPassword')}</Text>
           <View style={styles.passwordInput}>
             <TextInput
               style={styles.textInput}
               value={currentPassword}
               onChangeText={setCurrentPassword}
-              placeholder="Enter current password"
+              placeholder={t('password.currentPasswordPlaceholder')}
               placeholderTextColor="#6b7280"
               secureTextEntry={!showCurrentPassword}
               autoCapitalize="none"
@@ -174,13 +176,13 @@ const PasswordSettings = () => {
 
         {/* New Password */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>New Password</Text>
+          <Text style={styles.inputLabel}>{t('password.newPassword')}</Text>
           <View style={styles.passwordInput}>
             <TextInput
               style={styles.textInput}
               value={newPassword}
               onChangeText={setNewPassword}
-              placeholder="Enter new password"
+              placeholder={t('password.newPasswordPlaceholder')}
               placeholderTextColor="#6b7280"
               secureTextEntry={!showNewPassword}
               autoCapitalize="none"
@@ -199,20 +201,20 @@ const PasswordSettings = () => {
           {/* Password Strength Indicator */}
           {newPassword.length > 0 && (
             <View style={styles.passwordStrength}>
-              <Text style={styles.strengthTitle}>Password Requirements:</Text>
+              <Text style={styles.strengthTitle}>{t('password.requirementsTitle')}</Text>
               {[
-                {text: 'At least 8 characters', valid: newPassword.length >= 8},
+                {text: t('password.requirements.minLength'), valid: newPassword.length >= 8},
                 {
-                  text: 'One uppercase letter',
+                  text: t('password.requirements.uppercase'),
                   valid: /[A-Z]/.test(newPassword),
                 },
                 {
-                  text: 'One lowercase letter',
+                  text: t('password.requirements.lowercase'),
                   valid: /[a-z]/.test(newPassword),
                 },
-                {text: 'One number', valid: /\d/.test(newPassword)},
+                {text: t('password.requirements.number'), valid: /\d/.test(newPassword)},
                 {
-                  text: 'One special character',
+                  text: t('password.requirements.special'),
                   valid: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword),
                 },
               ].map((requirement, index) => (
@@ -237,13 +239,13 @@ const PasswordSettings = () => {
 
         {/* Confirm Password */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Confirm New Password</Text>
+          <Text style={styles.inputLabel}>{t('password.confirmNewPassword')}</Text>
           <View style={styles.passwordInput}>
             <TextInput
               style={styles.textInput}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              placeholder="Confirm new password"
+              placeholder={t('password.confirmNewPasswordPlaceholder')}
               placeholderTextColor="#6b7280"
               secureTextEntry={!showConfirmPassword}
               autoCapitalize="none"
@@ -259,7 +261,7 @@ const PasswordSettings = () => {
             </TouchableOpacity>
           </View>
           {confirmPassword.length > 0 && newPassword !== confirmPassword && (
-            <Text style={styles.errorText}>Passwords do not match</Text>
+            <Text style={styles.errorText}>{t('errors.passwordsDoNotMatch')}</Text>
           )}
         </View>
 
@@ -276,15 +278,15 @@ const PasswordSettings = () => {
           onPress={handleChangePassword}
           disabled={changePasswordLoading || toggleTwoFactorLoading}>
           <Text style={styles.changePasswordText}>
-            {changePasswordLoading ? 'Changing Password...' : 'Change Password'}
+            {changePasswordLoading ? t('password.changing') : t('password.changePasswordButton')}
           </Text>
         </TouchableOpacity>
 
         {/* Two-Factor Authentication */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Two-Factor Authentication</Text>
+          <Text style={styles.sectionTitle}>{t('password.twoFactorTitle')}</Text>
           <Text style={styles.sectionDescription}>
-            Add an extra layer of security to your account
+            {t('password.twoFactorDescription')}
           </Text>
         </View>
 
@@ -294,10 +296,9 @@ const PasswordSettings = () => {
               <ShieldCheckmarkIcon size={20} color="#fff" />
             </View>
             <View style={styles.textContainer}>
-              <Text style={styles.settingTitle}>Two-Factor Authentication</Text>
+              <Text style={styles.settingTitle}>{t('password.twoFactorTitle')}</Text>
               <Text style={styles.settingSubtitle}>
-                {twoFactorEnabled ? 'Enabled' : 'Disabled'} • Secure your
-                account with 2FA
+                {twoFactorEnabled ? t('common.enabled') : t('common.disabled')} • {t('password.twoFactorSubtitle')}
               </Text>
             </View>
           </View>
@@ -313,22 +314,19 @@ const PasswordSettings = () => {
         <View style={styles.securitySection}>
           <View style={styles.securityHeader}>
             <BulbIcon size={24} color="#8b5cf6" />
-            <Text style={styles.securityTitle}>Security Tips</Text>
+            <Text style={styles.securityTitle}>{t('password.securityTipsTitle')}</Text>
           </View>
           <Text style={styles.securityText}>
-            • Use a unique password that you don't use elsewhere{'\n'}• Enable
-            two-factor authentication for extra security{'\n'}• Change your
-            password regularly{'\n'}• Never share your password with anyone
-            {'\n'}• Use a password manager to generate and store secure
-            passwords
+            • {t('password.securityTips.unique')}{'\n'}•
+            {t('password.securityTips.twoFactor')}{'\n'}• {t('password.securityTips.regular')}{'\n'}• {t('password.securityTips.neverShare')}{'\n'}• {t('password.securityTips.manager')}
           </Text>
         </View>
 
         {/* Account Info */}
         <View style={styles.accountInfo}>
-          <Text style={styles.accountInfoTitle}>Account Security Status</Text>
+          <Text style={styles.accountInfoTitle}>{t('password.accountSecurityStatus')}</Text>
           <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>Email Verified:</Text>
+            <Text style={styles.statusLabel}>{t('settings.accountInfo.emailVerified')}:</Text>
             <Text
               style={[
                 styles.statusValue,
@@ -339,28 +337,28 @@ const PasswordSettings = () => {
                 },
               ]}>
               {currentUser?.accountSettings?.emailVerified
-                ? '✓ Verified'
-                : '⚠️ Not Verified'}
+                ? `✓ ${t('common.verified')}`
+                : `⚠️ ${t('common.notVerified')}`}
             </Text>
           </View>
           <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>Two-Factor Auth:</Text>
+            <Text style={styles.statusLabel}>{t('password.twoFactorAuth')}:</Text>
             <Text
               style={[
                 styles.statusValue,
                 {color: twoFactorEnabled ? '#059669' : '#dc2626'},
               ]}>
-              {twoFactorEnabled ? '✓ Enabled' : '⚠️ Disabled'}
+              {twoFactorEnabled ? `✓ ${t('common.enabled')}` : `⚠️ ${t('common.disabled')}`}
             </Text>
           </View>
           <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>Last Password Change:</Text>
+            <Text style={styles.statusLabel}>{t('password.lastPasswordChange')}:</Text>
             <Text style={styles.statusValue}>
               {currentUser?.accountSettings?.lastPasswordChange
                 ? new Date(
                     currentUser.accountSettings.lastPasswordChange,
                   ).toLocaleDateString()
-                : 'Unknown'}
+                : t('common.unknown')}
             </Text>
           </View>
         </View>

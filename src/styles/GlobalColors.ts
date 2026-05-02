@@ -74,7 +74,7 @@ const baseColors = {
 baseColors.deepBlack = baseColors.newBackGroundColor;
 
 
-if (isDarkMode) {
+if (!isDarkMode) {
   premiumDark = premiumColors.light;
 } else {
   premiumDark = premiumColors.dark;
@@ -305,48 +305,52 @@ export const GlobalColors = {
     selectedIconBG: premiumDark.accentSurface,
     iconColor: premiumDark.secondaryText,
     selectedIconColor: premiumDark.accentPrimary,
-    surface: baseColors.dark_grey,
-    overlay: baseColors.blackOverlay,
+    tonightOnlyBadge: premiumDark.hotPrimary,
+    tonightOnlyBadgeBG: premiumDark.hotSurface,
+    tonightOnlyBadgeBorder: premiumDark.hotBorder,
+    surface: premiumDark.secondarySurface,
+    overlay: premiumDark.primaryBackground,
+    continueBtnBG: premiumDark.primarySurface,
     text: premiumDark.primaryText,
     inputBG: premiumDark.secondaryBackground,
     inputText: premiumDark.primaryText,
     inputBorder: premiumDark.secondaryBorder,
     textSecondary: premiumDark.secondaryText,
-    textMuted: premiumDark.secondaryText,
-    selectedCard: premiumDark.secondaryBackground,
+    textMuted: premiumDark.tertiaryText,
+    selectedCard: premiumDark.accentSurface,
     selectedSubCategory: premiumDark.accentSurface,
     benchMark: premiumDark.accentPrimary,
     primary: premiumDark.primaryBorder,
     primaryBorder: premiumDark.secondaryBorder,
-    primaryHover: baseColors.dark_gold,
-    secondary: baseColors.gold_accent,
-    accent: baseColors.gold_accent,
-    warning: baseColors.gold_accent,
-    error: baseColors.error,
-    success: baseColors.success,
-    urgency: baseColors.gold_accent,
-    scarcity: baseColors.gold_accent,
-    socialProof: baseColors.gold_accent,
-    competition: baseColors.gold_accent,
-    tierBasic: baseColors.gold_accent,
-    tierPremium: baseColors.gold_accent,
-    tierUltimate: baseColors.gold_accent,
+    primaryHover: premiumDark.accentPrimary,
+    secondary: premiumDark.secondaryBackground,
+    accent: premiumDark.accentPrimary,
+    warning: premiumDark.hotPrimary,
+    error: premiumDark.hotPrimary,
+    success: premiumDark.successPrimary,
+    urgency: premiumDark.hotPrimary,
+    scarcity: premiumDark.hotPrimary,
+    socialProof: premiumDark.accentPrimary,
+    competition: premiumDark.accentPrimary,
+    tierBasic: premiumDark.accentPrimary,
+    tierPremium: premiumDark.accentPrimary,
+    tierUltimate: premiumDark.successPrimary,
     tierBasicBackground: premiumDark.accentSurface,
-    tierPremiumBackground: baseColors.dark_grey,
-    tierUltimateBackground: baseColors.dark_grey,
-    // Gradient colors for boost tiers
-    tierBasicGradientStart: baseColors.gold_accent,
-    tierBasicGradientEnd: baseColors.dark_gold,
-    tierPremiumGradientStart: baseColors.gold_accent,
-    tierPremiumGradientEnd: baseColors.dark_gold,
-    tierUltimateGradientStart: baseColors.gold_accent,
-    tierUltimateGradientEnd: baseColors.dark_gold,
-    buttonPrimary: baseColors.gold_accent,
+    tierPremiumBackground: premiumDark.secondaryBackground,
+    tierUltimateBackground: premiumDark.secondaryBackground,
+    tierBasicGradientStart: premiumDark.accentPrimary,
+    tierBasicGradientEnd: premiumDark.accentPrimary,
+    tierPremiumGradientStart: premiumDark.accentPrimary,
+    tierPremiumGradientEnd: premiumDark.accentPrimary,
+    tierUltimateGradientStart: premiumDark.successPrimary,
+    tierUltimateGradientEnd: premiumDark.successPrimary,
+    buttonPrimary: premiumDark.accentPrimary,
     buttonSecondary: premiumDark.secondaryBackground,
     buttonGhost: 'transparent',
-    buttonDisabled: baseColors.mutedGray,
+    buttonDisabled: premiumDark.secondaryBackground,
     border: premiumDark.primaryBorder,
     borderActive: premiumDark.accentBorder,
+    cntBtnBorder: premiumDark.accentBorder,
     pulse: 'rgba(212, 175, 55, 0.3)',
     glow: 'rgba(212, 175, 55, 0.2)',
     flash: 'rgba(212, 175, 55, 0.6)',
@@ -453,8 +457,8 @@ export const GlobalColors = {
     stepIndicatorActive: premiumDark.accentSurface,
     stepIndicatorInactive: premiumDark.secondarySurface,
     stepIndicatorInactiveBox: premiumDark.secondaryBackground,
-    nextButtonText: premiumDark.primaryText, 
-    nextButton: premiumDark.secondaryBackground, 
+    nextButtonText: premiumDark.primaryText,
+    nextButton: premiumDark.secondaryBackground,
     backButton: premiumDark.secondarySurface,
     createButton: premiumDark.secondaryBackground,
     error: premiumDark.hotPrimary,
@@ -481,6 +485,11 @@ export const GlobalColors = {
     successSurface: premiumDark.successSurface,
     successBorder: premiumDark.successBorder,
     error: premiumDark.hotPrimary,
+    errorSurface: premiumDark.hotSurface,
+    errorBorder: premiumDark.hotBorder,
+    warningSurface: premiumDark.hotSurface,
+    warningBorder: premiumDark.hotBorder,
+    warningText: premiumDark.hotPrimary,
     rsvpButton: 'transparent',
     shareButton: premiumDark.primarySurface,
     ticketButton: premiumDark.accentPrimary,
@@ -492,7 +501,65 @@ export const GlobalColors = {
     headerIconBackground: 'rgba(0,0,0,0.3)',
     headerIconText: baseColors.white,
     accentPrimary: premiumDark.accentPrimary,
-    
+  },
+
+  // Premium Venue Card (Map Callout)
+  PremiumVenueCard: {
+    background: premiumDark.secondarySurface,
+    border: premiumDark.secondaryBorder,
+    primaryText: premiumDark.primaryText,
+    secondaryText: premiumDark.secondaryText,
+    tertiaryText: premiumDark.tertiaryText,
+    pillBackground: premiumDark.primarySurface,
+    pillBorder: premiumDark.primaryBorder,
+    pillText: premiumDark.accentPrimary,
+    openPillBackground:
+      premiumDark.successSurface ||
+      premiumDark.lightGreenBG ||
+      'rgba(76, 175, 80, 0.12)',
+    openPillBorder: premiumDark.successBorder || 'rgba(76, 175, 80, 0.18)',
+    openPillDot: premiumDark.successPrimary || '#4CAF50',
+    openPillText: premiumDark.successPrimary || '#4CAF50',
+    iconContainerBg: premiumDark.primarySurface,
+    iconContainerBorder: premiumDark.primaryBorder,
+    closeButtonBg: premiumDark.primarySurface,
+    closeButtonBorder: premiumDark.primaryBorder,
+    closeIcon: premiumDark.secondaryText,
+    directionsButtonBg: premiumDark.primarySurface,
+    directionsButtonBorder: premiumDark.primaryBorder,
+    directionsText: premiumDark.accentPrimary,
+    viewVenueButtonBg: premiumDark.accentPrimary,
+    viewVenueText: '#FFF',
+    pointerBorderTop: premiumDark.secondarySurface,
+  },
+
+  // Venue Details Screen
+  VenueDetailsScreen: {
+    background: premiumDark.primaryBackground,
+    headerBackground: premiumDark.secondarySurface,
+    headerBorder: premiumDark.secondaryBorder,
+    primaryText: premiumDark.primaryText,
+    secondaryText: premiumDark.secondaryText,
+    cardBackground: premiumDark.secondarySurface,
+    cardBorder: premiumDark.secondaryBorder,
+    iconContainerBg: premiumDark.primarySurface,
+    iconContainerBorder: premiumDark.primaryBorder,
+    statsBorder: premiumDark.primaryBorder,
+    backButtonBg: premiumDark.primarySurface,
+    backButtonBorder: premiumDark.primaryBorder,
+    backButtonCenterBg: premiumDark.accentPrimary,
+    accentPrimary: premiumDark.accentPrimary,
+    openPillBackground: premiumDark.successSurface,
+    openPillBorder: premiumDark.successBorder,
+    openPillDot: premiumDark.successPrimary,
+    openPillText: premiumDark.successPrimary,
+    starRating: '#FFB800',
+    pillBackground: premiumDark.primarySurface,
+    pillBorder: premiumDark.primaryBorder,
+    pillText: premiumDark.accentPrimary,
+    actionButtonBg: premiumDark.accentPrimary,
+    actionButtonText: premiumDark.primaryText,
+    linkText: premiumDark.accentPrimary,
   },
 
   // Stream Player
@@ -557,6 +624,20 @@ export const GlobalColors = {
     chartLine: baseColors.cyan,
     chartBar: baseColors.deepPink,
     chartArea: baseColors.cyanOverlay,
+  },
+
+  // Empty Map State
+  EmptyMapState: {
+    background: premiumDark.secondarySurface,
+    textPrimary: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textTertiary: premiumDark.tertiaryText,
+    accentOrange: premiumDark.hotPrimary,
+    accentBlue: premiumDark.accentPrimary,
+    circleBorder: premiumDark.accentPrimary,
+    pulseBackground: premiumDark.accentSurface,
+    blinkDot: premiumDark.hotPrimary,
+    border: premiumDark.primaryBorder
   },
 
   // Squad Mode
@@ -779,6 +860,75 @@ export const GlobalColors = {
     // Dividers
     divider: baseColors.whiteOverlay,
     dividerThick: baseColors.mediumGray,
+  },
+
+  // Account Screen (Hub, Edit Profile, My Interests, Buy Minutes, Transactions)
+  Account: {
+    background: premiumDark.primaryBackground,
+    secondaryBackground: premiumDark.secondaryBackground,
+    surface: premiumDark.primarySurface,
+    secondarySurface: premiumDark.secondarySurface,
+    tertiarySurface: premiumDark.tertiarySurface,
+
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.tertiaryText,
+
+    accent: premiumDark.accentPrimary,
+    accentSurface: premiumDark.accentSurface,
+    accentBorder: premiumDark.accentBorder,
+    accentSubtle: premiumDark.accentSubtle,
+
+    border: premiumDark.primaryBorder,
+    borderLight: premiumDark.secondaryBorder,
+    separator: premiumDark.separator,
+
+    success: premiumDark.successPrimary,
+    successSurface: premiumDark.successSurface,
+    successBorder: premiumDark.successBorder,
+
+    hot: premiumDark.hotPrimary,
+    hotSurface: premiumDark.hotSurface,
+    hotBorder: premiumDark.hotBorder,
+
+    // Gauge (minutes circle)
+    gaugeTrack: premiumDark.secondarySurface,
+    gaugeActive: '#D4952B', // amber/orange for gauge arc
+    gaugeText: premiumDark.primaryText,
+
+    // Badge colors
+    badgeBackground: premiumDark.hotSurface,
+    badgeBorder: premiumDark.hotBorder,
+    badgeText: premiumDark.hotPrimary,
+
+    // Input fields
+    inputBackground: premiumDark.secondaryBackground,
+    inputBorder: premiumDark.primaryBorder,
+    inputFocusBorder: premiumDark.accentBorder,
+    inputText: premiumDark.primaryText,
+    inputLabel: premiumDark.tertiaryText,
+
+    // Buttons
+    primaryButton: premiumDark.accentPrimary,
+    primaryButtonText: premiumDark.primaryText,
+    secondaryButton: premiumDark.secondaryBackground,
+    secondaryButtonBorder: premiumDark.primaryBorder,
+    secondaryButtonText: premiumDark.primaryText,
+    destructiveText: premiumDark.hotPrimary,
+
+    // Interest chips
+    chipSelected: premiumDark.accentSurface,
+    chipSelectedBorder: premiumDark.accentBorder,
+    chipSelectedText: premiumDark.accentPrimary,
+    chipUnselected: premiumDark.secondaryBackground,
+    chipUnselectedBorder: premiumDark.primaryBorder,
+    chipUnselectedText: premiumDark.secondaryText,
+
+    // Section labels
+    sectionLabel: premiumDark.accentPrimary,
+
+    // Online indicator
+    onlineGreen: premiumDark.successPrimary,
   },
 };
 

@@ -19,6 +19,7 @@ import {setLocalData} from '../../../Utils/LocalStorageHelper';
 import LoadingAnimation from '../../../UIComponents/LoadingAnimation';
 import { useDispatch } from 'react-redux';
 import { setCurrentUser } from '../../../../features/registrations/CurrentUser';
+import useTranslation from '../../../Hooks/useTranslation';
 
 const LoginContainer = () => {
   const [email, setEmail] = useState('');
@@ -28,6 +29,7 @@ const LoginContainer = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     const dispatch = useDispatch()
+    const { t } = useTranslation();
 
   const handleLogin = async () => {
     if (email && password) {
@@ -66,12 +68,12 @@ const LoginContainer = () => {
 
           {/* Title */}
           <Text className="text-white text-2xl font-bold text-center mb-8">
-            Welcome Back
+            {t('auth.login.title')}
           </Text>
 
           <TextInput
             className="bg-gray-800 text-white p-4 rounded-lg mb-4"
-            placeholder="Email"
+            placeholder={t('auth.login.emailPlaceholder')}
             placeholderTextColor="gray"
             value={email}
             onChangeText={text => setEmail(text)}
@@ -81,7 +83,7 @@ const LoginContainer = () => {
           {/* Password Input */}
           <TextInput
             className="bg-gray-800 text-white p-4 rounded-lg mb-6"
-            placeholder="Password"
+            placeholder={t('auth.login.passwordPlaceholder')}
             placeholderTextColor="gray"
             secureTextEntry
             value={password}
@@ -89,7 +91,7 @@ const LoginContainer = () => {
           />
           {/* Login Button */}
           <Button
-            btnText="Login"
+            btnText={t('auth.login.loginButton')}
             btnStyle="disabled:bg-slate-50 bg-yellow-500 p-4 rounded-lg items-center"
             textStyle="text-black font-bold text-lg"
             onPress={handleLogin}
@@ -102,8 +104,8 @@ const LoginContainer = () => {
             className="mt-6"
             onPress={() => navigation.navigate('sign-up')}>
             <Text className="text-gray-500 text-center">
-              Don't have an account?{' '}
-              <Text className="text-yellow-500">Sign Up</Text>
+              {t('auth.login.noAccount')}{' '}
+              <Text className="text-yellow-500">{t('auth.login.signUpLink')}</Text>
             </Text>
           </TouchableOpacity>
         </View>

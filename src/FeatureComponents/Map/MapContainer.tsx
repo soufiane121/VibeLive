@@ -19,12 +19,12 @@ import {
   LocationPuck,
   MarkerView,
 } from '@rnmapbox/maps';
-import {View, StyleSheet, Animated, Easing, Text} from 'react-native';
+import {View, StyleSheet, Animated, Easing, Text, Linking, Platform} from 'react-native';
 import {point} from '@turf/helpers';
 import Supercluster from 'supercluster';
 import {debounce, throttle} from 'lodash';
 import {PUB_MAPBOX_KEY} from '@env';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import {
   createRadarBeam,
   createStaticCircle,
@@ -34,7 +34,7 @@ import ResetLocationButton from './ResetLocationButton';
 import {useGetAllMapPointsMutation} from '../../../features/LiveStream/LiveStream';
 import {useDispatch, useSelector} from 'react-redux';
 import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
-import {PartialState, useNavigation} from '@react-navigation/native';
+import {PartialState, useNavigation, useIsFocused} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
 import {
@@ -46,12 +46,14 @@ import {
 import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
 import {useAnalytics} from '../../Hooks/useAnalytics';
-import {GlobalColors} from '../../styles/GlobalColors';
 import {
   useGetHeatmapQuery,
   VenueData,
 } from '../../../features/voting/VotingApi';
-import HeatMapComponentStyles from './helperMap';
+import { useAppState } from '../../Hooks/useAppState';
+import MapHeatmapLayer from './MapHeatmapLayer';
+import PremiumVenueCard from '../Voting/PremiumVenueCard';
+import EmptyMapState from './EmptyMapState';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -239,10 +241,13 @@ interface EmojisState {
   [key: string]: [{emoji: string; id: string}];
 }
 const MapContainer = () => {
-  const {coordinates} = useGetLocation();
+  const {navigate} = useNavigation<any>();
+  const { isActive } = useAppState();
+  const isFocused = useIsFocused();
+  const coordinates = useCoordinates();
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
-  const [featuresPointsData, setFeaturesPointsData] = useState([]);
+  const [featuresPointsData, setFeaturesPointsData] = useState<any[]>([]);
 
   // Fetch events for map
   const {data: eventsData} = useGetMapEventsQuery({
@@ -250,57 +255,89 @@ const MapContainer = () => {
     useDB: true, // Use database for testing
   });
 
-  const [mapEvents, setMapEvents] = useState<Event[]>([]);
+  const {data: heatmapData} = useGetHeatmapQuery<any>(
+      {
+        latitude: coordinates[1],
+        longitude: coordinates[0],
+        radius: 20,
+      },
+      {
+        skip: coordinates.length < 2,
+        pollingInterval: isActive && isFocused ? 45000 : 0,
+      },
+    );
 
-  // Voting heatmap data
-  const {data: heatmapData, error: heatmapError, isLoading: heatmapLoading} = useGetHeatmapQuery(
-    {
-      latitude: coordinates[1],
-      longitude: coordinates[0],
-      radius: 20,
-    },
-    {
-      skip: coordinates.length < 2,
-      pollingInterval: 45000,
-    },
-  );
+  const mapEvents: Event[] = eventsData?.success && eventsData.data ? eventsData.data : [];
+
+
+  const [selectedHeatmapVenue, setSelectedHeatmapVenue] = useState<VenueData | null>(null);
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    console.log('[Heatmap Debug] coordinates:', coordinates);
-    console.log('[Heatmap Debug] query params:', {latitude: coordinates[1], longitude: coordinates[0], radius: 20});
-    console.log('[Heatmap Debug] skip:', coordinates.length < 2);
-    console.log('[Heatmap Debug] loading:', heatmapLoading);
-    console.log('[Heatmap Debug] error:', heatmapError);
-    console.log('[Heatmap Debug] data:', heatmapData ? `${heatmapData.heatmap?.length || 0} venues` : 'null');
-  }, [coordinates, heatmapData, heatmapError, heatmapLoading]);
+    if (selectedHeatmapVenue) {
+      Animated.spring(slideAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 80,
+        friction: 12,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+    return(()=>(
+      slideAnim.stopAnimation()
+    ))
+  }, [selectedHeatmapVenue, slideAnim]);
 
-  const heatmapGeoJSON = useMemo(() => {
-    const venues = heatmapData?.heatmap || [];
-    if (venues.length === 0) return null;
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [300, 0],
+  });
 
-    return {
-      type: 'FeatureCollection' as const,
-      features: venues.map((v: VenueData) => ({
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: v.coordinates,
-        },
-        properties: {
-          id: v.id,
-          name: v.name,
-          vibeScore: v.vibeScore,
-          hotVotes: v.hotVotes,
-          deadVotes: v.deadVotes,
-          totalVotes: v.totalVotes,
-          isBoosted: v.isBoosted ? 1 : 0,
-          intensity: Math.min(Math.abs(v.vibeScore) / 100, 1),
-        },
-      })),
-    };
-  }, [heatmapData]);
+  const handleHeatmapVenuePress = useCallback((venue: VenueData) => {
+    setSelectedHeatmapVenue(venue);
+  }, []);
 
-  const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
+  const handleViewVenue = useCallback((venueId: string) => {
+    // Navigate to VenueDetails screen (new screen)
+    navigate('VenueDetails', { venueId, venue: selectedHeatmapVenue });
+  }, [navigate, selectedHeatmapVenue]);
+
+  const handleDirections = useCallback(async (venueId: string) => {
+    if (!selectedHeatmapVenue) return;
+
+    const [longitude, latitude] = selectedHeatmapVenue.coordinates;
+    const label = encodeURIComponent(selectedHeatmapVenue.name);
+    
+    // Construct the URL based on the platform
+    const url = Platform.select({
+      ios: `maps://app?daddr=${latitude},${longitude}&q=${label}`,
+      android: `geo:${latitude},${longitude}?q=${latitude},${longitude}(${label})`,
+    });
+
+    if (url) {
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          // Fallback to Google Maps in browser if native app fails
+          const browserUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+          await Linking.openURL(browserUrl);
+        }
+      } catch (error) {
+        console.log('Error opening map:', error);
+      }
+    }
+  }, [selectedHeatmapVenue]);
+
+
+
+  const center = coordinates; // Stable reference from LocationStore — no spread needed
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
   const angleRef = useRef(0); // Ref to track current angle
@@ -397,12 +434,6 @@ const MapContainer = () => {
     }
   }, [coordinates.length, calculateDynamicBounds]);
 
-  // Update map events when data changes
-  useEffect(() => {
-    if (eventsData?.success && eventsData.data) {
-      setMapEvents(eventsData.data);
-    }
-  }, [eventsData]);
 
   // Register dynamic images using URLs
   const images = useMemo(() => {
@@ -462,6 +493,17 @@ const MapContainer = () => {
     };
   }, [bounds, zoomLevel, supercluster, featuresPointsData.length]);
 
+  // check if map is empty, no live no heatmap, show empty screen
+  const isMapEmpty = React.useMemo(() => {
+    const hasLiveFeatures = featuresPointsData.length > 0;
+    const hasHeatmap = (heatmapData?.heatmap?.length ?? 0) > 0;
+    const hasEvents = mapEvents.length > 0;
+    
+    return !(hasLiveFeatures || hasHeatmap || hasEvents);
+  }, [featuresPointsData, heatmapData, mapEvents]);
+
+  
+
   // Pulse animation for live markers without using listeners
   useEffect(() => {
     const animatePulse = () => {
@@ -497,6 +539,7 @@ const MapContainer = () => {
 
     return () => {
       pulseAnimation.stopAnimation();
+      pulseAnimation.removeAllListeners(); // Prevent memory leak
     };
   }, [pulseAnimation]);
 
@@ -623,8 +666,11 @@ const MapContainer = () => {
             />
 
             {/* Voting heatmap layer */}
-            {heatmapGeoJSON && heatmapGeoJSON.features.length > 0 && (
-              <HeatMapComponentStyles heatmapGeoJSON={heatmapGeoJSON} />
+            {heatmapData?.heatmap?.length > 0 && (
+              <MapHeatmapLayer
+                heatmapData={heatmapData}
+                onVenuePress={handleHeatmapVenuePress}
+              />
             )}
 
             {/* Render event markers */}
@@ -638,7 +684,7 @@ const MapContainer = () => {
               ))}
             {/* Render live stream markers */}
             {shouldRenderMarkers &&
-              clusters.map(cluster => {
+              clusters.map((cluster: any) => {
                 const isCluster = cluster.properties.cluster;
                 const imageUrl = cluster?.properties?.imageUrl || 'in';
                 const coordinates = cluster.geometry.coordinates;
@@ -744,6 +790,18 @@ const MapContainer = () => {
               width: 40,
             }}
           />
+          {/* Selected Venue Card Overlay */}
+          {selectedHeatmapVenue && (
+            <PremiumVenueCard
+              venue={selectedHeatmapVenue}
+              onClose={() => setSelectedHeatmapVenue(null)}
+              onViewVenue={handleViewVenue}
+              onDirections={handleDirections}
+              translateY={translateY}
+            />
+          )}
+
+          <EmptyMapState isVisible={isMapEmpty} />
         </>
       )}
     </View>

@@ -2,6 +2,20 @@ import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
 import {baseUrl} from '../../baseUrl';
 import {getLocalData} from '../../src/Utils/LocalStorageHelper';
 
+export interface VenueAddress {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+}
+
+export interface BusinessHour {
+  day: number;
+  open: string;
+  close: string;
+}
+
 export interface VenueData {
   id: string;
   name: string;
@@ -15,6 +29,16 @@ export interface VenueData {
   boostMultiplier: number;
   lastVoteAt: string | null;
   distance?: number;
+  // Venue detail fields
+  address?: VenueAddress | null;
+  phone?: string | null;
+  website?: string | null;
+  googleRating?: number | null;
+  googleReviewCount?: number | null;
+  priceLevel?: number | null;
+  venueDescription?: string | null;
+  businessHours?: BusinessHour[];
+  coverPhotoUrl?: string | null;
 }
 
 export interface VoteResult {

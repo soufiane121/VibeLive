@@ -27,6 +27,7 @@ const getIconComponent = (iconName: string) => {
   }
 };
 import { useAnalytics } from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import {
   useGetUserSettingsQuery,
   useUpdatePrivacySettingsMutation,
@@ -55,6 +56,7 @@ const PrivacySettings = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   
   const [settings, setSettings] = useState<PrivacySettingsType>({
@@ -118,34 +120,34 @@ const PrivacySettings = () => {
         };
         dispatch(setCurrentUser(updatedUser));
         
-        Alert.alert('Success', 'Privacy settings updated successfully');
+        Alert.alert(t('common.success'), t('privacy.updateSuccess'));
         navigation.goBack();
       } else {
-        Alert.alert('Error', response.message || 'Failed to update settings');
+        Alert.alert(t('common.error'), response.message || t('privacy.updateFailed'));
       }
     } catch (error) {
       console.error('Error updating privacy settings:', error);
-      Alert.alert('Error', 'Failed to update privacy settings');
+      Alert.alert(t('common.error'), t('privacy.updateFailed'));
     }
   };
 
   const showVisibilityOptions = () => {
     const options = [
-      { label: 'Public', value: 'public', description: 'Anyone can see your profile' },
-      { label: 'Friends Only', value: 'friends', description: 'Only people you follow can see your profile' },
-      { label: 'Private', value: 'private', description: 'Only you can see your profile' },
+      { label: t('privacy.visibility.public'), value: 'public', description: t('privacy.visibility.publicDesc') },
+      { label: t('privacy.visibility.friends'), value: 'friends', description: t('privacy.visibility.friendsDesc') },
+      { label: t('privacy.visibility.private'), value: 'private', description: t('privacy.visibility.privateDesc') },
     ];
 
     Alert.alert(
-      'Profile Visibility',
-      'Choose who can see your profile',
+      t('privacy.profileVisibility'),
+      t('privacy.profileVisibilityDesc'),
       [
         ...options.map(option => ({
           text: `${option.label} - ${option.description}`,
           onPress: () => handleToggle('profileVisibility', option.value),
           style: settings.profileVisibility === option.value ? 'default' : 'default',
         })),
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
       ]
     );
   };
@@ -207,10 +209,10 @@ const PrivacySettings = () => {
 
   const getVisibilityLabel = (value: string) => {
     switch (value) {
-      case 'public': return 'Public';
-      case 'friends': return 'Friends Only';
-      case 'private': return 'Private';
-      default: return 'Public';
+      case 'public': return t('privacy.visibility.public');
+      case 'friends': return t('privacy.visibility.friends');
+      case 'private': return t('privacy.visibility.private');
+      default: return t('privacy.visibility.public');
     }
   };
 
@@ -228,64 +230,64 @@ const PrivacySettings = () => {
           {(updateLoading || settingsLoading) ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text style={styles.saveButtonText}>Save Changes</Text>
+            <Text style={styles.saveButtonText}>{t('common.saveChanges')}</Text>
           )}
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privacy & Security</Text>
+        <Text style={styles.headerTitle}>{t('settings.sections.privacy.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile Privacy</Text>
+          <Text style={styles.sectionTitle}>{t('privacy.profilePrivacy')}</Text>
           <Text style={styles.sectionDescription}>
-            Control who can see your profile and content
+            {t('privacy.profilePrivacyDesc')}
           </Text>
         </View>
 
         <SettingPicker
           icon="eye"
-          title="Profile Visibility"
-          subtitle="Who can see your profile"
+          title={t('privacy.profileVisibility')}
+          subtitle={t('privacy.profileVisibilitySubtitle')}
           value={getVisibilityLabel(settings.profileVisibility)}
           options={[]}
           onSelect={showVisibilityOptions}
         />
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location & Activity</Text>
+          <Text style={styles.sectionTitle}>{t('privacy.locationActivity')}</Text>
           <Text style={styles.sectionDescription}>
-            Manage your location and online status visibility
+            {t('privacy.locationActivityDesc')}
           </Text>
         </View>
 
         <SettingToggle
           icon="location"
-          title="Location Sharing"
-          subtitle="Share your location with other users"
+          title={t('privacy.locationSharing')}
+          subtitle={t('privacy.locationSharingSubtitle')}
           value={settings.locationSharing}
           onToggle={(value) => handleToggle('locationSharing', value)}
         />
 
         <SettingToggle
           icon="radio-button-on"
-          title="Show Online Status"
-          subtitle="Let others see when you're online"
+          title={t('privacy.showOnlineStatus')}
+          subtitle={t('privacy.showOnlineStatusSubtitle')}
           value={settings.showOnlineStatus}
           onToggle={(value) => handleToggle('showOnlineStatus', value)}
         />
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Communication</Text>
+          <Text style={styles.sectionTitle}>{t('privacy.communication')}</Text>
           <Text style={styles.sectionDescription}>
-            Control how others can interact with you
+            {t('privacy.communicationDesc')}
           </Text>
         </View>
 
         <SettingToggle
           icon="chatbubble"
-          title="Direct Messages"
-          subtitle="Allow others to send you direct messages"
+          title={t('privacy.directMessages')}
+          subtitle={t('privacy.directMessagesSubtitle')}
           value={settings.allowDirectMessages}
           onToggle={(value) => handleToggle('allowDirectMessages', value)}
         />
@@ -293,13 +295,13 @@ const PrivacySettings = () => {
         <View style={styles.securitySection}>
           <View style={styles.securityHeader}>
             <ShieldCheckmarkIcon size={24} color="#8b5cf6" />
-            <Text style={styles.securityTitle}>Security Tips</Text>
+            <Text style={styles.securityTitle}>{t('privacy.securityTipsTitle')}</Text>
           </View>
           <Text style={styles.securityText}>
-            • Keep your profile private if you want more control over who sees your content{'\n'}
-            • Turn off location sharing if you don't want others to know where you are{'\n'}
-            • Disable direct messages if you're receiving unwanted messages{'\n'}
-            • Review your blocked users list regularly
+            • {t('privacy.tips.privateProfile')}{'\n'}
+            • {t('privacy.tips.locationOff')}{'\n'}
+            • {t('privacy.tips.disableMessages')}{'\n'}
+            • {t('privacy.tips.reviewBlocked')}
           </Text>
         </View>
 
@@ -311,7 +313,7 @@ const PrivacySettings = () => {
             <View style={styles.iconContainer}>
               <BanIcon size={20} color="#fff" />
             </View>
-            <Text style={styles.buttonText}>Manage Blocked Users</Text>
+            <Text style={styles.buttonText}>{t('privacy.manageBlockedUsers')}</Text>
           </View>
           <ChevronForwardIcon size={20} color="#6b7280" />
         </TouchableOpacity>

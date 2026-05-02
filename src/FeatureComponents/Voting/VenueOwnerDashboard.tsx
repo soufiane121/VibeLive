@@ -14,8 +14,10 @@ import {
   useGetVenueDashboardQuery,
   usePurchaseVenueBoostMutation,
 } from '../../../features/voting/VotingApi';
+import useTranslation from '../../Hooks/useTranslation';
 
 const VenueOwnerDashboard = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const venueId: string = route.params?.venueId;
@@ -38,12 +40,12 @@ const VenueOwnerDashboard = () => {
 
   const handlePurchaseBoost = (tier: string) => {
     Alert.alert(
-      'Purchase Boost',
-      `Activate ${tier} boost for this venue?`,
+      t('voting.purchaseBoost'),
+      t('voting.activateBoostConfirm', { tier }),
       [
-        {text: 'Cancel', style: 'cancel'},
+        {text: t('common.cancel'), style: 'cancel'},
         {
-          text: 'Purchase',
+          text: t('voting.purchase'),
           onPress: async () => {
             try {
               await purchaseBoost({
@@ -51,10 +53,10 @@ const VenueOwnerDashboard = () => {
                 tier,
                 durationHours: tier === 'basic' ? 2 : tier === 'premium' ? 6 : 12,
               }).unwrap();
-              Alert.alert('Boost Activated!', 'Your venue is now boosted.');
+              Alert.alert(t('voting.boostActivated'), t('voting.venueNowBoosted'));
               refetch();
             } catch (err) {
-              Alert.alert('Error', 'Failed to purchase boost.');
+              Alert.alert(t('common.error'), t('voting.failedPurchaseBoost'));
             }
           },
         },
@@ -77,12 +79,12 @@ const VenueOwnerDashboard = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Dashboard</Text>
+          <Text style={styles.headerTitle}>{t('voting.dashboard')}</Text>
         </View>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Unable to load dashboard data.</Text>
+          <Text style={styles.emptyText}>{t('voting.unableLoadDashboard')}</Text>
           <TouchableOpacity onPress={() => refetch()} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -99,7 +101,7 @@ const VenueOwnerDashboard = () => {
         </TouchableOpacity>
         <View style={{flex: 1}}>
           <Text style={styles.headerTitle}>{venue.name}</Text>
-          <Text style={styles.headerSub}>Owner Dashboard</Text>
+          <Text style={styles.headerSub}>{t('voting.ownerDashboard')}</Text>
         </View>
         <TouchableOpacity onPress={() => refetch()} style={styles.refreshBtn}>
           <Text style={styles.refreshText}>↻</Text>
@@ -109,35 +111,35 @@ const VenueOwnerDashboard = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Vibe Score Hero */}
         <View style={[styles.heroCard, {borderColor: vibeColor}]}>
-          <Text style={styles.heroLabel}>Current Vibe Score</Text>
+          <Text style={styles.heroLabel}>{t('voting.currentVibeScore')}</Text>
           <Text style={[styles.heroScore, {color: vibeColor}]}>
             {venue.currentVibeScore > 0 ? '+' : ''}{venue.currentVibeScore}
           </Text>
           <View style={styles.heroRow}>
             <View style={styles.heroStat}>
               <Text style={styles.heroStatValue}>🔥 {venue.hotVotes}</Text>
-              <Text style={styles.heroStatLabel}>Hot</Text>
+              <Text style={styles.heroStatLabel}>{t('voting.hot')}</Text>
             </View>
             <View style={styles.heroDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatValue}>💀 {venue.deadVotes}</Text>
-              <Text style={styles.heroStatLabel}>Dead</Text>
+              <Text style={styles.heroStatLabel}>{t('voting.dead')}</Text>
             </View>
             <View style={styles.heroDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatValue}>📊 {venue.totalVotesTonight}</Text>
-              <Text style={styles.heroStatLabel}>Tonight</Text>
+              <Text style={styles.heroStatLabel}>{t('voting.tonight')}</Text>
             </View>
           </View>
         </View>
 
         {/* Vote Velocity */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Vote Velocity (Last 30 min)</Text>
+          <Text style={styles.cardTitle}>{t('voting.voteVelocity')}</Text>
           <View style={styles.velocityRow}>
             <View style={styles.velocityStat}>
               <Text style={styles.velocityValue}>{tonight.velocity.rate.toFixed(1)}</Text>
-              <Text style={styles.velocityLabel}>votes/min</Text>
+              <Text style={styles.velocityLabel}>{t('voting.votesPerMin')}</Text>
             </View>
             <View style={[styles.trendBadge, {
               backgroundColor: tonight.velocity.trend === 'heating_up' ? '#FF450020' :
@@ -147,9 +149,9 @@ const VenueOwnerDashboard = () => {
                 color: tonight.velocity.trend === 'heating_up' ? '#FF4500' :
                   tonight.velocity.trend === 'cooling_down' ? '#4169E1' : '#888',
               }]}>
-                {tonight.velocity.trend === 'heating_up' ? '📈 Heating Up' :
-                  tonight.velocity.trend === 'cooling_down' ? '📉 Cooling Down' :
-                  tonight.velocity.trend === 'warm' ? '🌡️ Warm' : '➡️ Stable'}
+                {tonight.velocity.trend === 'heating_up' ? t('voting.heatingUp') :
+                  tonight.velocity.trend === 'cooling_down' ? t('voting.coolingDown') :
+                  tonight.velocity.trend === 'warm' ? t('voting.warm') : t('voting.stable')}
               </Text>
             </View>
           </View>
@@ -158,7 +160,7 @@ const VenueOwnerDashboard = () => {
         {/* Hourly Breakdown */}
         {tonight.hourlyBreakdown.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Tonight's Hourly Breakdown</Text>
+            <Text style={styles.cardTitle}>{t('voting.hourlyBreakdown')}</Text>
             {tonight.hourlyBreakdown.map((hour) => {
               const total = hour.hot + hour.dead;
               const hotPct = total > 0 ? (hour.hot / total) * 100 : 50;
@@ -181,15 +183,15 @@ const VenueOwnerDashboard = () => {
 
         {/* Weekly Stats */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Weekly Stats</Text>
+          <Text style={styles.cardTitle}>{t('voting.weeklyStats')}</Text>
           <View style={styles.weeklyRow}>
             <View style={styles.weeklyStat}>
               <Text style={styles.weeklyValue}>{weeklyStats.totalVotes}</Text>
-              <Text style={styles.weeklyLabel}>Total Votes</Text>
+              <Text style={styles.weeklyLabel}>{t('voting.totalVotes')}</Text>
             </View>
             <View style={styles.weeklyStat}>
               <Text style={styles.weeklyValue}>{venue.totalLifetimeVotes}</Text>
-              <Text style={styles.weeklyLabel}>All Time</Text>
+              <Text style={styles.weeklyLabel}>{t('voting.allTime')}</Text>
             </View>
           </View>
         </View>
@@ -197,7 +199,7 @@ const VenueOwnerDashboard = () => {
         {/* Vibe Shifts */}
         {vibeShifts.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Recent Vibe Shifts</Text>
+            <Text style={styles.cardTitle}>{t('voting.recentVibeShifts')}</Text>
             {vibeShifts.slice(0, 5).map((shift: any, idx: number) => (
               <View key={idx} style={styles.shiftRow}>
                 <Text style={styles.shiftText}>
@@ -213,22 +215,22 @@ const VenueOwnerDashboard = () => {
 
         {/* Promotion Boost */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Promotion Boost</Text>
+          <Text style={styles.cardTitle}>{t('voting.promotionBoost')}</Text>
           {venue.promotionBoost?.isActive ? (
             <View style={styles.boostActive}>
               <Text style={styles.boostActiveText}>
-                ⚡ {venue.promotionBoost.boostTier.toUpperCase()} boost active
+                ⚡ {venue.promotionBoost.boostTier.toUpperCase()} {t('voting.boostActive')}
               </Text>
               <Text style={styles.boostExpiry}>
-                {venue.promotionBoost.boostMultiplier}x visibility
+                {venue.promotionBoost.boostMultiplier}x {t('voting.visibility')}
               </Text>
             </View>
           ) : (
             <View style={styles.boostOptions}>
               {[
-                {tier: 'basic', label: 'Basic', price: '$9.99', mult: '2x', color: '#00FFFF'},
-                {tier: 'premium', label: 'Premium', price: '$24.99', mult: '5x', color: '#FF69B4'},
-                {tier: 'featured', label: 'Featured', price: '$49.99', mult: '10x', color: '#FFD700'},
+                {tier: 'basic', label: t('voting.basic'), price: '$9.99', mult: '2x', color: '#00FFFF'},
+                {tier: 'premium', label: t('voting.premium'), price: '$24.99', mult: '5x', color: '#FF69B4'},
+                {tier: 'featured', label: t('voting.featured'), price: '$49.99', mult: '10x', color: '#FFD700'},
               ].map(opt => (
                 <TouchableOpacity
                   key={opt.tier}
