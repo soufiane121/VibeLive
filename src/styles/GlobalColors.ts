@@ -74,7 +74,7 @@ const baseColors = {
 baseColors.deepBlack = baseColors.newBackGroundColor;
 
 
-if (!isDarkMode) {
+if (isDarkMode) {
   premiumDark = premiumColors.light;
 } else {
   premiumDark = premiumColors.dark;
@@ -929,6 +929,27 @@ export const GlobalColors = {
 
     // Online indicator
     onlineGreen: premiumDark.successPrimary,
+  },
+
+  // Location Permission Wall
+  LocationPermissionWall: {
+    background: premiumDark.primaryBackground,
+    surface: premiumDark.primarySurface,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    accent: premiumDark.accentPrimary,
+    accentSurface: premiumDark.accentSurface,
+    accentBorder: premiumDark.accentBorder,
+    buttonBackground: premiumDark.accentPrimary,
+    buttonText: premiumDark.primaryText,
+    iconColor: premiumDark.accentPrimary,
+    hotIcon: premiumDark.hotPrimary,
+    hotSurface: premiumDark.hotSurface,
+    hotBorder: premiumDark.hotBorder,
+    goldIcon: baseColors.gold_accent,
+    goldSurface: 'rgba(212, 175, 55, 0.12)',
+    border: premiumDark.primaryBorder,
+    separator: premiumDark.separator,
   },
 
   // Onboarding Screens

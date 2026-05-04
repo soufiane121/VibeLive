@@ -2,6 +2,7 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import locationSuppressionService from './LocationSuppressionService';
 
 // Background task name for location updates
 const BACKGROUND_LOCATION_TASK = 'background-location-task';
@@ -59,6 +60,10 @@ class BackgroundLocationService {
     };
 
     this.setupAppStateListener();
+
+    // Stop any stale background task left over from a previous app launch
+    // where background permission may have since been revoked.
+    this._stopStaleBackgroundTask();
   }
 
   public static getInstance(config?: LocationServiceConfig): BackgroundLocationService {
@@ -75,43 +80,37 @@ class BackgroundLocationService {
     try {
       console.log('[BackgroundLocationService] Initializing...');
 
-      // Check if foreground permission is granted
+      // ── Only CHECK permissions — never REQUEST them. ──────────────
+      // The LocationPermissionWall is the sole user-facing gate for
+      // requesting permissions. Requesting here would race with the
+      // wall and could start tracking before the user grants "Always".
+
       const foregroundStatus = await Location.getForegroundPermissionsAsync();
       console.log('[BackgroundLocationService] Foreground permission status:', foregroundStatus.status);
 
       if (foregroundStatus.status !== 'granted') {
-        console.log('[BackgroundLocationService] Requesting foreground permission...');
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        
-        if (status !== 'granted') {
-          console.error('[BackgroundLocationService] Foreground permission denied');
-          await AsyncStorage.setItem(LOCATION_PERMISSION_GRANTED_KEY, 'false');
-          return status;
-        }
+        console.log('[BackgroundLocationService] Foreground permission not granted — skipping init');
+        await AsyncStorage.setItem(LOCATION_PERMISSION_GRANTED_KEY, 'false');
+        return foregroundStatus.status;
       }
 
       await AsyncStorage.setItem(LOCATION_PERMISSION_GRANTED_KEY, 'true');
 
-      // Check if background permission is granted (for iOS)
-      if (Platform.OS === 'ios') {
-        const backgroundStatus = await Location.getBackgroundPermissionsAsync();
-        console.log('[BackgroundLocationService] Background permission status:', backgroundStatus.status);
+      const backgroundStatus = await Location.getBackgroundPermissionsAsync();
+      console.log('[BackgroundLocationService] Background permission status:', backgroundStatus.status);
 
-        if (backgroundStatus.status !== 'granted') {
-          console.log('[BackgroundLocationService] Background permission not granted, requesting...');
-          const { status } = await Location.requestBackgroundPermissionsAsync();
-          
-          if (status !== 'granted') {
-            console.warn('[BackgroundLocationService] Background permission denied, foreground only');
-          } else {
-            await AsyncStorage.setItem(BACKGROUND_MODE_ENABLED_KEY, 'true');
-          }
-          return status;
-        }
-        await AsyncStorage.setItem(BACKGROUND_MODE_ENABLED_KEY, 'true');
+      if (backgroundStatus.status !== 'granted') {
+        console.log('[BackgroundLocationService] Background permission not granted — foreground only');
+        // Return foreground-granted status; caller must NOT start background tracking.
+        return foregroundStatus.status;
       }
 
-      console.log('[BackgroundLocationService] Initialization complete');
+      await AsyncStorage.setItem(BACKGROUND_MODE_ENABLED_KEY, 'true');
+
+      // Initialize location suppression service (battery, daytime, notification cap)
+      await locationSuppressionService.initialize();
+
+      console.log('[BackgroundLocationService] Initialization complete (background granted)');
       return 'granted';
     } catch (error) {
       console.error('[BackgroundLocationService] Initialization error:', error);
@@ -451,6 +450,14 @@ class BackgroundLocationService {
           console.error('[BackgroundLocationService] Failed to start foreground tracking:', error);
         });
       }
+
+      // When app comes to foreground and GPS was stopped by suppression,
+      // check if suppression has lifted and restart if so.
+      if (nextAppState === 'active' && !this.isRunning) {
+        this.resumeIfNotSuppressed().catch(error => {
+          console.error('[BackgroundLocationService] Failed to resume after suppression:', error);
+        });
+      }
     });
   }
 
@@ -507,6 +514,18 @@ class BackgroundLocationService {
    * GeofenceMonitorService 4-gate pipeline is the authoritative filter.
    */
   public handleBackgroundLocationUpdate(coordinates: LocationCoordinates): void {
+    // ── Suppression gate ─────────────────────────────────────────────
+    // When a suppression rule fires, stop the OS-level background task
+    // entirely. This removes the blue GPS indicator and saves battery.
+    // The task will be restarted when suppression lifts (via periodic
+    // check or AppState resume in the suppression service).
+    if (locationSuppressionService.shouldSuppress()) {
+      const reason = locationSuppressionService.getSuppressionReason();
+      console.log(`[BackgroundLocationService] Background update suppressed: ${reason} — stopping GPS task`);
+      this._stopBackgroundTaskForSuppression();
+      return;
+    }
+
     // ── Time-based throttle ────────────────────────────────────────────
     // iOS delivers background updates as fast as the hardware allows (~1/s)
     // when distanceInterval=0 + pausesUpdatesAutomatically=false. We need
@@ -535,6 +554,82 @@ class BackgroundLocationService {
         console.error('[BackgroundLocationService] Error in background callback:', error);
       }
     });
+  }
+
+  // ────────────────────────────────────────────────────────────────────
+  // Suppression — stop / resume the OS-level GPS task
+  // ────────────────────────────────────────────────────────────────────
+
+  /** Fire-and-forget from the synchronous handleBackgroundLocationUpdate. */
+  private _stopBackgroundTaskForSuppression(): void {
+    // Run async stop without blocking the task callback
+    (async () => {
+      try {
+        const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+        if (isRegistered) {
+          await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+          console.log('[BackgroundLocationService] Background GPS task stopped due to suppression');
+        }
+        this.isRunning = false;
+      } catch (err) {
+        console.warn('[BackgroundLocationService] Error stopping task for suppression:', (err as Error).message);
+      }
+    })();
+  }
+
+  /** Call periodically (e.g. on AppState resume) to restart background
+   *  tracking after suppression conditions have lifted. */
+  public async resumeIfNotSuppressed(): Promise<void> {
+    if (locationSuppressionService.shouldSuppress()) {
+      return; // still suppressed — do nothing
+    }
+
+    if (this.isRunning) {
+      return; // already running
+    }
+
+    // Only resume if background was previously enabled
+    const wasEnabled = await AsyncStorage.getItem(BACKGROUND_MODE_ENABLED_KEY);
+    if (wasEnabled !== 'true') {
+      return;
+    }
+
+    // Re-check that background permission is still granted before resuming.
+    // The user may have revoked it since the flag was stored.
+    const { status } = await Location.getBackgroundPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('[BackgroundLocationService] Background permission no longer granted — not resuming');
+      await AsyncStorage.setItem(BACKGROUND_MODE_ENABLED_KEY, 'false');
+      return;
+    }
+
+    console.log('[BackgroundLocationService] Suppression lifted — restarting background GPS');
+    await this.startBackgroundTracking();
+  }
+
+  /**
+   * Stop any stale background task left over from a previous app launch.
+   * iOS persists registered TaskManager tasks across app restarts. If the
+   * user revoked background permission since the last run, the OS still
+   * delivers updates and shows the blue location indicator.
+   */
+  private _stopStaleBackgroundTask(): void {
+    (async () => {
+      try {
+        const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+        if (!isRegistered) return;
+
+        const { status } = await Location.getBackgroundPermissionsAsync();
+        if (status === 'granted') return; // permission still valid — leave it running
+
+        await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+        await AsyncStorage.setItem(BACKGROUND_MODE_ENABLED_KEY, 'false');
+        this.isRunning = false;
+        console.log('[BackgroundLocationService] Stopped stale background task — background permission not granted');
+      } catch (err) {
+        console.warn('[BackgroundLocationService] Error cleaning up stale task:', (err as Error).message);
+      }
+    })();
   }
 }
 

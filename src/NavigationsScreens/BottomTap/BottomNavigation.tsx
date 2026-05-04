@@ -18,6 +18,7 @@ import Profile from '../../Account/Profile';
 import EventsListScreen from '../../FeatureComponents/Events/EventsListScreen';
 import {GlobalColors} from '../../styles/GlobalColors';
 import Settings from '../../Settings/Settings';
+import LocationPermissionWall from '../../FeatureComponents/Permissions/LocationPermissionWall';
 
 const colors = GlobalColors.BottomNavigation;
 
@@ -26,6 +27,7 @@ const BottomTap = createBottomTabNavigator();
 export default function BottomNavigation() {
   // <LiveStreamContainer
   return (
+    <LocationPermissionWall>
     <BottomTap.Navigator
       initialRouteName="Bottom"
       screenOptions={{
@@ -120,5 +122,6 @@ export default function BottomNavigation() {
         }}
       />
     </BottomTap.Navigator>
+    </LocationPermissionWall>
   );
 }

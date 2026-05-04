@@ -14,6 +14,8 @@ PODS:
     - ExpoModulesCore
   - ExpoAsset (10.0.10):
     - ExpoModulesCore
+  - ExpoBattery (8.0.1):
+    - ExpoModulesCore
   - ExpoFileSystem (17.0.1):
     - ExpoModulesCore
   - ExpoFont (12.0.10):
@@ -1916,6 +1918,7 @@ DEPENDENCIES:
   - EXLocation (from `../node_modules/expo-location/ios`)
   - Expo (from `../node_modules/expo`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
+  - ExpoBattery (from `../node_modules/expo-battery/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
@@ -2049,6 +2052,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo"
   ExpoAsset:
     :path: "../node_modules/expo-asset/ios"
+  ExpoBattery:
+    :path: "../node_modules/expo-battery/ios"
   ExpoFileSystem:
     :path: "../node_modules/expo-file-system/ios"
   ExpoFont:
@@ -2236,6 +2241,7 @@ SPEC CHECKSUMS:
   EXLocation: c52e800875ce2a5974b3b796ff2f3a8b978e0b28
   Expo: ed0a748eb6be0efd2c3df7f6de3f3158a14464c9
   ExpoAsset: 286fee7ba711ce66bf20b315e68106b13b8629fc
+  ExpoBattery: 9575fe12e063206275013cf0dfc1583e8e7fd00c
   ExpoFileSystem: 2988caaf68b7cb706e36d382829d99811d9d76a5
   ExpoFont: 38dddf823e32740c2a9f37c926a33aeca736b5c4
   ExpoImagePicker: 7038c1740853c170002c491de63f9f9780c8139b

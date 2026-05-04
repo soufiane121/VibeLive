@@ -1,4 +1,5 @@
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
+import {View, ActivityIndicator} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import LoginContainer from '../../FeatureComponents/Auth/Login/LoginContainer';
 import BottomNavigation from '../BottomTap/BottomNavigation';
@@ -58,8 +59,9 @@ const Stack = createNativeStackNavigator();
 
 const StackNavigation = () => {
   const dispatch = useDispatch();
-  const [autoLoginFetch, {data, isSuccess}] = useAutoLoginMutation();
+  const [autoLoginFetch, {data, isSuccess, isError}] = useAutoLoginMutation();
   const [fetchSignOut] = useSingOutMutation();
+  const [authChecked, setAuthChecked] = useState(false);
   // const [singOutFetch] = useSingOutMutation();
 
   useEffect(() => {
@@ -67,6 +69,19 @@ const StackNavigation = () => {
       fetchAutoLogin();
     }
     // handleSignOut();
+  }, [data]);
+
+  useEffect(() => {
+    if (isSuccess || isError) {
+      setAuthChecked(true);
+    }
+  }, [isSuccess, isError]);
+
+  // If data already exists from a previous session, auth is known
+  useEffect(() => {
+    if (data) {
+      setAuthChecked(true);
+    }
   }, [data]);
 
   const handleSignOut = async () => {
@@ -87,11 +102,25 @@ const StackNavigation = () => {
     }
   };
 
+  if (!authChecked) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#0B0E14',
+        }}>
+        <ActivityIndicator size="large" color="#FFD700" />
+      </View>
+    );
+  }
+
   return (
     <>
       <VotingInitializer />
       <Stack.Navigator
-        initialRouteName={isSuccess && data?.['_id'] ? 'Bottom' : 'Login'}
+        initialRouteName={isSuccess && data?.data?._id ? 'Bottom' : 'Login'}
         screenOptions={{
           animation: 'fade',
           headerBackVisible: false,

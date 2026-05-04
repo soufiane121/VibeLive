@@ -2184,5 +2184,12 @@
   },
   "eventDetailsScreen": {
     "communityTipLabel": "Consejo de la comunidad, no verificado por el local. Los horarios pueden variar"
+  },
+  "locationPermissionWall": {
+    "title": "Acceso a Ubicación Requerido",
+    "body": "VibeLive necesita acceso de ubicación \"Permitir Siempre\" para descubrir locales cercanos, enviarte actualizaciones en vivo y mantener tu experiencia funcionando en segundo plano.",
+    "enableButton": "Activar Acceso a Ubicación",
+    "footnote": "Puedes cambiar esto en cualquier momento en la configuración de tu dispositivo.",
+    "iosInstructions": "Abre Configuración > VibeLive > Ubicación > Siempre"
   }
 }

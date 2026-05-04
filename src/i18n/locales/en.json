@@ -2216,5 +2216,22 @@
   },
   "eventDetailsScreen": {
     "communityTipLabel": "Community tip, not verified by venue. hours may differ"
+  },
+  "locationPermissionWall": {
+    "title": "Without location, you're invisible to the city",
+    "body": "Live events, streams, and moments within walking distance — you just can't see them yet.",
+    "feature1Title": "Real-time events as they happen",
+    "feature1Body": "See streams and parties the moment they go live within your radius.",
+    "feature2Title": "Find people where you are",
+    "feature2Body": "Discover who's streaming from your neighbourhood, bar, or block right now.",
+    "feature3Title": "Last-minute drops, first access",
+    "feature3Body": "Flash invites and exclusive event alerts go to the closest people first.",
+    "settingsLabel": "To enable \"Always Allow\"",
+    "settingsPath": "Settings → [Your App] → Location → Always",
+    "enableButton": "Enable Location Access",
+    "footnote": "Your location is never shared with other users. You can change this anytime in settings.",
+    "preciseTitle": "Precise Location Required",
+    "preciseBody": "Your location permission is set to 'Always', but precise location is turned off. We need exact positioning to show you nearby events, people, and live moments accurately.",
+    "preciseButton": "Enable Precise Location"
   }
 }
