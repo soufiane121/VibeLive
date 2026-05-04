@@ -1303,11 +1303,7 @@
     "rebooting": "Rebooting",
     "resetting": "Resetting",
     "reloading": "Reloading",
-    "refreshing": "Refreshing",
-    "updating": "Updating",
-    "upgrading": "Upgrading",
-    "improving": "Improving",
-    "enhancing": "Enhancing",
+
     "optimizing": "Optimizing",
     "tuning": "Tuning",
     "adjusting": "Adjusting",
@@ -1321,9 +1317,7 @@
     "polishing": "Polishing",
     "refining": "Refining",
     "perfecting": "Perfecting",
-    "completing": "Completing",
-    "finalizing": "Finalizing",
-    "concluding": "Concluding"
+    "finalizing": "Finalizing"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1382,6 +1376,58 @@
     "runtimeError": "Runtime error. Please try again.",
     "systemError": "System error. Please try again.",
     "fillAllFields": "Please fill in all fields."
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to see what's happening near you.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Your password",
+      "loginButton": "Log in",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign up",
+      "forgotPassword": "Forgot password?",
+      "rememberMe": "Remember me",
+      "privacyNote": "Your data is encrypted end-to-end"
+    },
+    "signup": {
+      "title": "Create account",
+      "subtitle": "Join thousands discovering live events near you.",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "@yourname",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@email.com",
+      "phoneLabel": "Phone number",
+      "phonePlaceholder": "+1 (555) 000-0000",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Min. 6 characters",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Repeat password",
+      "signUpButton": "Sign Up",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Log In",
+      "agreeTerms": "I agree to the ",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy",
+      "validationFailed": "Could not validate account information. Please try again."
+    },
+    "logout": {
+      "title": "Sign out",
+      "confirmMessage": "Are you sure you want to sign out?",
+      "cancel": "Cancel",
+      "confirm": "Sign out"
+    },
+    "forgotPassword": {
+      "title": "Reset password",
+      "description": "Enter your email and we'll send you a link to reset your password.",
+      "emailPlaceholder": "Email",
+      "sendButton": "Send link",
+      "backToLogin": "Back to login",
+      "emailSent": "Reset email sent. Please check your inbox."
+    }
   },
   "password": {
     "title": "Password & Security",
@@ -1616,6 +1662,12 @@
     "ageRequiredError": "Age is required",
     "enterAgeToContinue": "Please enter your age to continue.",
     "ageValid18": "Please enter a valid age (18+)",
+    "gender": "Gender",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "genderNonBinary": "Non-binary",
+    "genderPreferNotToSay": "Prefer not to say",
+    "genderRequired": "Please select your gender",
     "invalidName": "Invalid Name",
     "ageRestriction": "Age Restriction",
     "ageRestrictionDesc": "VibeLive is only available to users 18 years of age or older. We apologize for any inconvenience.",

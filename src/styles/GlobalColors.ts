@@ -930,6 +930,32 @@ export const GlobalColors = {
     // Online indicator
     onlineGreen: premiumDark.successPrimary,
   },
+
+  // Onboarding Screens
+  Onboarding: {
+    background: premiumDark.primaryBackground,
+    surface: premiumDark.primarySurface,
+    surfaceSecondary: premiumDark.secondarySurface,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.tertiaryText,
+    accent: premiumDark.accentPrimary,
+    accentSurface: premiumDark.accentSurface,
+    accentBorder: premiumDark.accentBorder,
+    border: premiumDark.primaryBorder,
+    borderSecondary: premiumDark.secondaryBorder,
+    inputBackground: premiumDark.secondaryBackground,
+    inputBorder: premiumDark.primaryBorder,
+    buttonBackground: premiumDark.secondaryBackground,
+    buttonText: premiumDark.primaryText,
+    buttonDisabled: premiumDark.secondarySurface,
+    buttonDisabledText: premiumDark.tertiaryText,
+    infoIconBg: premiumDark.accentSurface,
+    infoIcon: premiumDark.accentPrimary,
+    success: premiumDark.successPrimary,
+    error: premiumDark.hotPrimary,
+    separator: premiumDark.separator,
+  },
 };
 
 // Utility functions for color manipulation

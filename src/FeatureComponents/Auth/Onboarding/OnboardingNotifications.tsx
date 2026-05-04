@@ -76,7 +76,7 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
     const signupData = route.params?.signupData || {};
     
     // Validation: Check if all required data is present
-    if (!signupData.firstName || !signupData.lastName || !signupData.age) {
+    if (!signupData.firstName || !signupData.lastName || !signupData.age || !signupData.gender) {
       Alert.alert(
         t('onboarding.missingInfo'),
         t('onboarding.missingInfoDesc'),
@@ -114,6 +114,7 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
         firstName: signupData.firstName || '',
         lastName: signupData.lastName || '',
         age: signupData.age || 18,
+        gender: signupData.gender || '',
         interests: signupData.interests || [],
         interestCategories: signupData.interestCategories || [],
         locationPermission: signupData.locationPermission || false,
@@ -151,124 +152,121 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color={GlobalColors.Settings.text} />
-        </TouchableOpacity>
-      </View>
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.8}>
+        <Icon name="arrow-left" size={20} color={GlobalColors.Onboarding.textSecondary} />
+      </TouchableOpacity>
 
       {/* Progress Indicator */}
       <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, {width: '100%'}]} />
+        <View style={styles.progressBarsRow}>
+          <View style={[styles.progressBar, styles.progressBarFilled]} />
+          <View style={[styles.progressBar, styles.progressBarFilled]} />
+          <View style={[styles.progressBar, styles.progressBarFilled]} />
+          <View style={[styles.progressBar, styles.progressBarActive]} />
         </View>
         <Text style={styles.progressText}>{t('onboarding.step4Of4')}</Text>
       </View>
 
-      {/* Main Content */}
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <View style={styles.iconBackground}>
-            <Icon 
-              name="bell-ring" 
-              size={60} 
-              color={GlobalColors.Settings.accent} 
-            />
-            <View style={styles.pulseRing} />
-          </View>
+      {/* Bell Icon */}
+      <View style={styles.iconContainer}>
+        <View style={styles.iconBackground}>
+          <Icon
+            name="bell"
+            size={28}
+            color={GlobalColors.Onboarding.accent}
+          />
         </View>
+      </View>
 
+      {/* Title */}
+      <View style={styles.titleSection}>
         <Text style={styles.title}>{t('onboarding.neverMissAction')}</Text>
         <Text style={styles.subtitle}>
           {t('onboarding.neverMissActionDesc')}
         </Text>
-
-        {/* FOMO Alerts */}
-        <View style={styles.fomoContainer}>
-          <View style={styles.fomoAlert}>
-            <Icon name="lightning-bolt" size={20} color={GlobalColors.Settings.accent} />
-            <Text style={styles.fomoText}>
-              <Text style={styles.fomoHighlight}>{t('onboarding.fomoBreaking')}</Text>{t('onboarding.fomoHotEvent')}
-            </Text>
-          </View>
-          <View style={styles.fomoAlert}>
-            <Icon name="account-group" size={20} color={GlobalColors.Settings.accent} />
-            <Text style={styles.fomoText}>
-              <Text style={styles.fomoHighlight}>{t('onboarding.fomoLiveNow')}</Text>{t('onboarding.fomoLiveEvent')}
-            </Text>
-          </View>
-          <View style={styles.fomoAlert}>
-            <Icon name="star" size={20} color={GlobalColors.Settings.accent} />
-            <Text style={styles.fomoText}>
-              <Text style={styles.fomoHighlight}>{t('onboarding.fomoExclusive')}</Text>{t('onboarding.fomoVipEvent')}
-            </Text>
-          </View>
-        </View>
-
-        {/* Benefits */}
-        <View style={styles.benefitsContainer}>
-          <Text style={styles.benefitsTitle}>{t('onboarding.benefitsTitle')}</Text>
-          <View style={styles.benefit}>
-            <Icon name="fire" size={18} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>{t('onboarding.benefitBreaking')}</Text>
-          </View>
-          <View style={styles.benefit}>
-            <Icon name="video" size={18} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>{t('onboarding.benefitFriends')}</Text>
-          </View>
-          <View style={styles.benefit}>
-            <Icon name="ticket" size={18} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>{t('onboarding.benefitExclusive')}</Text>
-          </View>
-          <View style={styles.benefit}>
-            <Icon name="heart" size={18} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>{t('onboarding.benefitInterests')}</Text>
-          </View>
-        </View>
-
-        {/* Success State */}
-        {isNotificationGranted && (
-          <View style={styles.successContainer}>
-            <Icon name="check-circle" size={24} color={GlobalColors.Common.successIcon} />
-            <Text style={styles.successText}>{t('onboarding.welcomeMessage')}</Text>
-          </View>
-        )}
       </View>
+
+      {/* Preview Cards */}
+      <View style={styles.previewCardsContainer}>
+        <View style={styles.previewCard}>
+          <View style={styles.previewIconBox}>
+            <Icon name="flash" size={18} color={GlobalColors.Onboarding.accent} />
+          </View>
+          <Text style={styles.previewCardText}>
+            <Text style={styles.previewHighlight}>{t('onboarding.fomoBreaking')}</Text>
+            {' '}{t('onboarding.fomoHotEvent')}
+          </Text>
+        </View>
+        <View style={styles.previewCard}>
+          <View style={styles.previewIconBox}>
+            <Icon name="account" size={18} color={GlobalColors.Onboarding.accent} />
+          </View>
+          <Text style={styles.previewCardText}>
+            <Text style={styles.previewHighlight}>{t('onboarding.fomoLiveNow')}</Text>
+            {' '}{t('onboarding.fomoLiveEvent')}
+          </Text>
+        </View>
+      </View>
+
+      {/* Benefits Section */}
+      <Text style={styles.sectionLabel}>{t('onboarding.benefitsTitle')}</Text>
+      <View style={styles.benefitsList}>
+        <View style={styles.benefitItem}>
+          <Icon name="check" size={16} color={GlobalColors.Onboarding.accent} />
+          <Text style={styles.benefitText}>{t('onboarding.benefitBreaking')}</Text>
+        </View>
+        <View style={styles.benefitItem}>
+          <Icon name="check" size={16} color={GlobalColors.Onboarding.accent} />
+          <Text style={styles.benefitText}>{t('onboarding.benefitFriends')}</Text>
+        </View>
+        <View style={styles.benefitItem}>
+          <Icon name="check" size={16} color={GlobalColors.Onboarding.accent} />
+          <Text style={styles.benefitText}>{t('onboarding.benefitExclusive')}</Text>
+        </View>
+      </View>
+
+      {/* Spacer */}
+      <View style={styles.spacer} />
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
         {!isNotificationGranted ? (
           <>
             <TouchableOpacity
-              style={[styles.enableButton, isLoading && styles.enableButtonDisabled]}
+              style={[styles.primaryButton, isLoading && styles.primaryButtonDisabled]}
               onPress={requestNotificationPermission}
-              disabled={isLoading}>
-              <Text style={styles.enableButtonText}>
+              disabled={isLoading}
+              activeOpacity={0.9}>
+              <Icon name="bell" size={18} color={GlobalColors.Onboarding.background} style={styles.buttonIcon} />
+              <Text style={styles.primaryButtonText}>
                 {isLoading ? t('onboarding.requestingPermission') : t('onboarding.enableNotifications')}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+            <TouchableOpacity onPress={handleSkip} style={styles.skipButton} activeOpacity={0.8}>
               <Text style={styles.skipButtonText}>{t('onboarding.skipFinish')}</Text>
             </TouchableOpacity>
           </>
         ) : (
           <TouchableOpacity
-            style={[styles.completeButton, isSigningUp && styles.completeButtonDisabled]}
+            style={[styles.primaryButton, isSigningUp && styles.primaryButtonDisabled]}
             onPress={validateAndCompleteSignUp}
-            disabled={isSigningUp || isSignUpLoading}>
-            <Text style={styles.completeButtonText}>
+            disabled={isSigningUp || isSignUpLoading}
+            activeOpacity={0.9}>
+            <Text style={styles.primaryButtonText}>
               {isSigningUp ? t('onboarding.creatingAccount') : t('onboarding.completeSetup')}
             </Text>
+            <Icon name="arrow-right" size={18} color={GlobalColors.Onboarding.background} style={styles.buttonArrow} />
           </TouchableOpacity>
         )}
       </View>
 
       {/* Privacy Note */}
       <View style={styles.privacyContainer}>
-        <Icon name="shield-check" size={16} color={GlobalColors.Settings.textMuted} />
+        <Icon name="information-outline" size={14} color={GlobalColors.Onboarding.textMuted} />
         <Text style={styles.privacyText}>
           {t('onboarding.customizePrefs')}
         </Text>
@@ -280,192 +278,183 @@ const OnboardingNotifications: React.FC<OnboardingNotificationsProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: GlobalColors.Settings.background,
+    backgroundColor: GlobalColors.Onboarding.background,
     paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-  header: {
-    marginBottom: 20,
+    paddingTop: 24,
+    paddingBottom: 32,
   },
   backButton: {
-    padding: 8,
-    alignSelf: 'flex-start',
-  },
-  progressContainer: {
-    marginBottom: 32,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: GlobalColors.Settings.border,
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: GlobalColors.Settings.accent,
-    borderRadius: 2,
-  },
-  progressText: {
-    fontSize: 14,
-    color: GlobalColors.Settings.textMuted,
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  iconContainer: {
-    marginBottom: 24,
-    position: 'relative',
-  },
-  iconBackground: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: GlobalColors.Settings.surface,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.border,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: GlobalColors.Settings.accent + '20',
+    marginBottom: 24,
   },
-  pulseRing: {
-    position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 2,
-    borderColor: GlobalColors.Settings.accent + '30',
+  progressContainer: {
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  progressBarsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+    width: '100%',
+  },
+  progressBar: {
+    flex: 1,
+    height: 3,
+    backgroundColor: GlobalColors.Onboarding.surfaceSecondary,
+    borderRadius: 2,
+  },
+  progressBarFilled: {
+    backgroundColor: GlobalColors.Onboarding.accent,
+    opacity: 0.5,
+  },
+  progressBarActive: {
+    backgroundColor: GlobalColors.Onboarding.accent,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: GlobalColors.Onboarding.accent,
+    letterSpacing: 0.5,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  iconBackground: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.accentBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleSection: {
+    marginBottom: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.text,
-    textAlign: 'center',
+    fontSize: 26,
+    fontWeight: '700',
+    color: GlobalColors.Onboarding.text,
     marginBottom: 8,
+    lineHeight: 32,
   },
   subtitle: {
-    fontSize: 16,
-    color: GlobalColors.Settings.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  fomoContainer: {
-    width: '100%',
-    marginBottom: 24,
-  },
-  fomoAlert: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: GlobalColors.Settings.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: GlobalColors.Settings.accent,
-  },
-  fomoText: {
-    flex: 1,
     fontSize: 14,
-    color: GlobalColors.Settings.text,
-    marginLeft: 12,
+    color: GlobalColors.Onboarding.textSecondary,
     lineHeight: 20,
   },
-  fomoHighlight: {
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.accent,
-  },
-  benefitsContainer: {
-    width: '100%',
+  previewCardsContainer: {
+    gap: 12,
     marginBottom: 24,
   },
-  benefitsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: GlobalColors.Settings.text,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  benefit: {
+  previewCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.border,
+    borderRadius: 14,
+    padding: 14,
+  },
+  previewIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: GlobalColors.Onboarding.accentSurface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.accentBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  previewCardText: {
+    flex: 1,
+    fontSize: 13,
+    color: GlobalColors.Onboarding.text,
+    lineHeight: 18,
+  },
+  previewHighlight: {
+    fontWeight: '700',
+    color: GlobalColors.Onboarding.accent,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: GlobalColors.Onboarding.textMuted,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     marginBottom: 12,
-    paddingHorizontal: 4,
+  },
+  benefitsList: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   benefitText: {
-    fontSize: 14,
-    color: GlobalColors.Settings.textSecondary,
-    marginLeft: 12,
+    fontSize: 13,
+    color: GlobalColors.Onboarding.textSecondary,
+    lineHeight: 18,
+  },
+  spacer: {
     flex: 1,
   },
-  successContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: GlobalColors.Settings.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  successText: {
-    fontSize: 16,
-    color: GlobalColors.Common.successText,
-    marginLeft: 12,
-    fontWeight: '600',
-  },
   buttonContainer: {
-    paddingTop: 20,
+    marginTop: 8,
   },
-  enableButton: {
-    backgroundColor: GlobalColors.Settings.accent,
-    padding: 16,
+  primaryButton: {
+    backgroundColor: GlobalColors.Onboarding.accent,
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginBottom: 12,
   },
-  enableButtonDisabled: {
-    backgroundColor: GlobalColors.Settings.border,
+  primaryButtonDisabled: {
+    opacity: 0.6,
   },
-  enableButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.background,
+  primaryButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: GlobalColors.Onboarding.background,
   },
-  completeButton: {
-    backgroundColor: GlobalColors.Settings.accent,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+  buttonIcon: {
+    marginRight: 8,
   },
-  completeButtonDisabled: {
-    backgroundColor: GlobalColors.Settings.border,
-  },
-  completeButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.background,
+  buttonArrow: {
+    marginLeft: 6,
   },
   skipButton: {
-    padding: 16,
     alignItems: 'center',
+    paddingVertical: 8,
   },
   skipButtonText: {
-    fontSize: 16,
-    color: GlobalColors.Settings.textMuted,
+    fontSize: 14,
+    color: GlobalColors.Onboarding.textMuted,
   },
   privacyContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
-    paddingHorizontal: 20,
+    marginTop: 12,
+    gap: 6,
   },
   privacyText: {
-    fontSize: 12,
-    color: GlobalColors.Settings.textMuted,
-    marginLeft: 8,
-    textAlign: 'center',
-    flex: 1,
+    fontSize: 11,
+    color: GlobalColors.Onboarding.textMuted,
     lineHeight: 16,
   },
 });
