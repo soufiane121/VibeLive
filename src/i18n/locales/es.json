@@ -1056,6 +1056,24 @@
       "agreeTerms": "Acepto los Términos de servicio y la Política de privacidad",
       "validationFailed": "No se pudo validar la información de la cuenta. Por favor, inténtalo de nuevo."
     },
+    "emailVerification": {
+      "title": "Verifica tu correo",
+      "subtitle": "Enviamos un código de 6 dígitos a",
+      "enterCode": "Introduce el código de verificación",
+      "verify": "Verificar",
+      "verifying": "Verificando...",
+      "resendCode": "Reenviar código",
+      "resendIn": "Reenviar en {{seconds}}s",
+      "codeSent": "Se envió un nuevo código a tu correo.",
+      "codeExpired": "El código expiró. Solicita uno nuevo.",
+      "invalidCode": "Código inválido. Por favor, inténtalo de nuevo.",
+      "tooManyAttempts": "Demasiados intentos. Solicita un nuevo código.",
+      "tooManyRequests": "Demasiadas solicitudes. Por favor, espera antes de intentar de nuevo.",
+      "sendFailed": "No se pudo enviar el código. Por favor, inténtalo de nuevo.",
+      "serverError": "Algo salió mal. Por favor, inténtalo de nuevo.",
+      "didntReceive": "¿No recibiste el código?",
+      "checkSpam": "Revisa tu carpeta de spam o solicita un nuevo código."
+    },
     "logout": {
       "title": "Cerrar sesión",
       "confirmMessage": "¿Estás seguro de que quieres cerrar sesión?",

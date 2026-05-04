@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {useValidateFieldsMutation} from '../../../../features/registrations/LoginSliceApi';
+import {useValidateFieldsMutation, useSendVerificationCodeMutation} from '../../../../features/registrations/LoginSliceApi';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import useTranslation from '../../../Hooks/useTranslation';
 import {GlobalColors} from '../../../styles/GlobalColors';
@@ -33,6 +33,7 @@ const SignUpContainer = ({navigation}) => {
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [validateFields, {isLoading: isValidationPass}] = useValidateFieldsMutation();
+  const [sendVerificationCode, {isLoading: isSendingCode}] = useSendVerificationCodeMutation();
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -95,7 +96,26 @@ const SignUpContainer = ({navigation}) => {
         return;
       }
 
-      navigation.navigate('OnboardingAccountCreation', {
+      // Send verification code before navigating
+      try {
+        await sendVerificationCode({email: form.email}).unwrap();
+      } catch (sendErr: any) {
+        const sendError = sendErr?.data?.error || '';
+        if (sendError === 'TOO_MANY_REQUESTS') {
+          setFieldErrors(prev => ({
+            ...prev,
+            general: t('auth.emailVerification.tooManyRequests'),
+          }));
+        } else {
+          setFieldErrors(prev => ({
+            ...prev,
+            general: t('auth.emailVerification.sendFailed'),
+          }));
+        }
+        return;
+      }
+
+      navigation.navigate('EmailVerification', {
         signupData: {
           userName: form.userName,
           email: form.email,
@@ -122,6 +142,8 @@ const SignUpContainer = ({navigation}) => {
   const isFormValid =
     requiredFields.every(field => !!form[field as keyof typeof form]) &&
     agreedToTerms;
+
+  const isSubmitting = isValidationPass || isSendingCode;
 
   const getInputBorder = (field: string) =>
     missingFields.includes(field) || fieldErrors[field]
@@ -322,12 +344,12 @@ const SignUpContainer = ({navigation}) => {
       <TouchableOpacity
         style={[
           styles.signUpButton,
-          (!isFormValid || isValidationPass) && styles.signUpButtonDisabled,
+          (!isFormValid || isSubmitting) && styles.signUpButtonDisabled,
         ]}
         onPress={handleSignUp}
-        disabled={!isFormValid || isValidationPass}
+        disabled={!isFormValid || isSubmitting}
         activeOpacity={0.85}>
-        {isValidationPass ? (
+        {isSubmitting ? (
           <ActivityIndicator color={GlobalColors.Onboarding.buttonText} />
         ) : (
           <View style={styles.buttonContent}>

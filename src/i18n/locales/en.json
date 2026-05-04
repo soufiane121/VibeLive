@@ -1414,6 +1414,24 @@
       "privacyPolicy": "Privacy Policy",
       "validationFailed": "Could not validate account information. Please try again."
     },
+    "emailVerification": {
+      "title": "Verify your email",
+      "subtitle": "We sent a 6-digit code to",
+      "enterCode": "Enter verification code",
+      "verify": "Verify",
+      "verifying": "Verifying...",
+      "resendCode": "Resend code",
+      "resendIn": "Resend in {{seconds}}s",
+      "codeSent": "A new code has been sent to your email.",
+      "codeExpired": "Code expired. Please request a new one.",
+      "invalidCode": "Invalid code. Please try again.",
+      "tooManyAttempts": "Too many attempts. Please request a new code.",
+      "tooManyRequests": "Too many requests. Please wait before trying again.",
+      "sendFailed": "Failed to send code. Please try again.",
+      "serverError": "Something went wrong. Please try again.",
+      "didntReceive": "Didn't receive the code?",
+      "checkSpam": "Check your spam folder or request a new code."
+    },
     "logout": {
       "title": "Sign out",
       "confirmMessage": "Are you sure you want to sign out?",

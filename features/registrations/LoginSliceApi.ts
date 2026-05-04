@@ -86,9 +86,23 @@ export const loginApi = createApi({
         body,
       }),
     }),
+    sendVerificationCode: builder.mutation({
+      query: (body: {email: string}) => ({
+        url: 'users/send-verification-code',
+        method: 'POST',
+        body,
+      }),
+    }),
+    verifyEmailCode: builder.mutation({
+      query: (body: {email: string; code: string}) => ({
+        url: 'users/verify-code',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const {useLoginMutation, useAutoLoginMutation, useSignUpMutation, useSingOutMutation, useBoostStreamMutation, useValidateFieldsMutation} = loginApi;
+export const {useLoginMutation, useAutoLoginMutation, useSignUpMutation, useSingOutMutation, useBoostStreamMutation, useValidateFieldsMutation, useSendVerificationCodeMutation, useVerifyEmailCodeMutation} = loginApi;
