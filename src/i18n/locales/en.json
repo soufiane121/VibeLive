@@ -1439,12 +1439,57 @@
       "confirm": "Sign out"
     },
     "forgotPassword": {
-      "title": "Reset password",
-      "description": "Enter your email and we'll send you a link to reset your password.",
-      "emailPlaceholder": "Email",
-      "sendButton": "Send link",
+      "title": "Forgot password?",
+      "description": "No worries. Enter the email associated with your account and we'll send you a link to reset your password.",
+      "emailLabel": "EMAIL ADDRESS",
+      "emailPlaceholder": "Enter your email",
+      "sendButton": "Send reset link",
       "backToLogin": "Back to login",
-      "emailSent": "Reset email sent. Please check your inbox."
+      "invalidEmail": "Please enter a valid email address.",
+      "emptyEmail": "Please enter your email address.",
+      "genericError": "Something went wrong. Please try again.",
+      "emailSent": {
+        "title": "Check your email",
+        "subtitle": "We've sent a password reset link to",
+        "expiresIn": "Link expires in",
+        "expired": "Link expired — please request a new one",
+        "infoNote": "If an account exists for this email, you'll receive a reset link. Check your spam folder if you don't see it.",
+        "openEmail": "Open email app",
+        "didntReceive": "Didn't receive it?",
+        "resend": "Resend email",
+        "resendIn": "Resend in",
+        "tooManyAttempts": "Too many attempts. Try again in 10 minutes."
+      },
+      "resetPassword": {
+        "title": "Create new password",
+        "subtitle": "Your new password must be different from your previously used password.",
+        "newPasswordLabel": "NEW PASSWORD",
+        "newPasswordPlaceholder": "Enter new password",
+        "confirmPasswordLabel": "CONFIRM PASSWORD",
+        "confirmPasswordPlaceholder": "Confirm new password",
+        "submitButton": "Reset password",
+        "strengthWeak": "Weak",
+        "strengthFair": "Fair",
+        "strengthStrong": "Strong",
+        "passwordsMatch": "Passwords match",
+        "passwordsDontMatch": "Passwords do not match",
+        "rules": {
+          "minLength": "At least 8 characters",
+          "uppercase": "One uppercase letter",
+          "number": "One number",
+          "special": "One special character"
+        },
+        "expiredToken": "This reset link has expired. Please request a new one."
+      },
+      "success": {
+        "title": "Password updated!",
+        "subtitle": "Your password has been changed successfully. You can now sign in with your new password.",
+        "sessionsNote": "All other sessions have been signed out",
+        "sessionsDescription": "For your security, all other active sessions have been terminated. You'll need to sign in again on those devices.",
+        "signIn": "Sign in",
+        "notYou": "This wasn't you?",
+        "contactSupport": "Contact support"
+      }
     }
   },
   "password": {
@@ -1934,7 +1979,9 @@
       "whatsYourVibe": "What's your vibe?",
       "tagVenue": "Tag a venue",
       "readyToStream": "Ready to stream?",
-      "unknownError": "Unknown error"
+      "unknownError": "Unknown error",
+      "nothingNearby": "Nothing nearby right now",
+      "moveCloser": "Move closer to unlock venues"
     },
     "voting": {
       "purchaseBoost": "Purchase Boost",

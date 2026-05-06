@@ -274,11 +274,9 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       setVenueLoadingState(prev => (prev === 'loading' ? 'hidden' : prev));
     }, 5000);
 
-    fetchNearbyVenues({lat, lng, limit: 5})
+    fetchNearbyVenues({lat, lng, limit: 5, radius: 250})
       .unwrap()
       .then(result => {
-        console.log({result});
-        
         clearTimeout(timeoutId);
         setNearbyVenues(result.venues || []);
         setVenueLoadingState('loaded');
@@ -650,7 +648,8 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
         <TouchableOpacity
           style={styles.startStreamButton}
-          onPress={handleBoostConfirmation}>
+          onPress={handleBoostConfirmation}
+          >
           <Text style={styles.startStreamButtonText}>{t('event.startStreaming')}</Text>
         </TouchableOpacity>
       </View>
@@ -972,7 +971,27 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           </View>
         )}
 
-        {selectedCategory && (
+        {venueLoadingState === 'loaded' &&
+          nearbyVenues.length === 0 && (
+            <View style={venueStyles.section}>
+              <Text style={styles.categoryTitle}>{t('event.tagVenue')}</Text>
+              <View style={venueStyles.emptyCard}>
+                <CommonMaterialCommunityIcons
+                  name="map-marker-off"
+                  size={28}
+                  color={colors.textMuted || colors.textSecondary}
+                />
+                <Text style={venueStyles.emptyTitle}>
+                  {t('event.nothingNearby')}
+                </Text>
+                <Text style={venueStyles.emptySubtitle}>
+                  {t('event.moveCloser')}
+                </Text>
+              </View>
+            </View>
+          )}
+
+        {selectedCategory && nearbyVenues.length > 0 && (
           <View style={styles.actionSection}>
             <Text style={styles.actionTitle}>{t('event.readyToStream')}</Text>
 
@@ -1080,6 +1099,31 @@ const venueStyles = StyleSheet.create({
     color: colors.textMuted || colors.textSecondary,
     textAlign: 'center',
   },
+  emptyCard: {
+    width: '100%',
+    minHeight: 100,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surface || 'rgba(255,255,255,0.03)',
+  },
+  emptyTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  emptySubtitle: {
+    fontSize: 12,
+    color: colors.textMuted || colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 4,
+  },
 });
 
 const styles = StyleSheet.create({
@@ -1089,7 +1133,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: 20,
     paddingTop: 20,
-    marginTop: '10%'
+    marginTop: '10%',
   },
   scrollContent: {
     paddingBottom: 30,
@@ -1111,7 +1155,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     textAlign: 'center',
-    fontWeight:'700'
+    fontWeight: '700',
   },
 
   // ── Category selection ──
@@ -1149,7 +1193,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: 7
+    marginTop: 7,
   },
 
   // ── Action section ──
@@ -1378,20 +1422,20 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 8,
   },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: colors.text,
-    letterSpacing: -0.5,
-    marginBottom: 10,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 16,
-  },
+  // headerTitle: {
+  //   fontSize: 26,
+  //   fontWeight: '900',
+  //   color: colors.text,
+  //   letterSpacing: -0.5,
+  //   marginBottom: 10,
+  // },
+  // headerSubtitle: {
+  //   fontSize: 14,
+  //   color: colors.textSecondary,
+  //   textAlign: 'center',
+  //   lineHeight: 20,
+  //   paddingHorizontal: 16,
+  // },
   topInfoBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1472,7 +1516,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.tonightOnlyBadgeBG,
     borderColor: colors.tonightOnlyBadgeBorder,
     borderWidth: 1,
-    
   },
   packageBadgeTextInline: {
     fontSize: 10,
@@ -1614,7 +1657,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
-  },
+  }
 });
 
 export default EventSelections;

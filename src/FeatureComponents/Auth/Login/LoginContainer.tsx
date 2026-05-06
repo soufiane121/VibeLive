@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -31,7 +31,7 @@ const LoginContainer = () => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
 
-  const handleLogin = async () => {
+  const handleLogin = useCallback(async () => {
     if (email && password) {
       try {
         const answer = await verifyLogin({password, email}).unwrap();
@@ -47,7 +47,7 @@ const LoginContainer = () => {
         console.log({error});
       }
     }
-  };
+  }, [email, password, verifyLogin, dispatch, navigation]);
 
   return (
     <KeyboardAvoidingView
@@ -84,9 +84,10 @@ const LoginContainer = () => {
               placeholder={t('auth.login.emailPlaceholder')}
               placeholderTextColor={GlobalColors.Onboarding.textMuted}
               value={email}
-              onChangeText={text => setEmail(text)}
+              onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
             />
           </View>
 
@@ -105,7 +106,7 @@ const LoginContainer = () => {
               placeholderTextColor={GlobalColors.Onboarding.textMuted}
               secureTextEntry={!showPassword}
               value={password}
-              onChangeText={text => setPassword(text)}
+              onChangeText={setPassword}
               autoCapitalize="none"
             />
             <TouchableOpacity
@@ -303,4 +304,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginContainer;
+export default React.memo(LoginContainer);

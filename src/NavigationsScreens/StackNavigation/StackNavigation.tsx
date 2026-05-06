@@ -19,6 +19,11 @@ import OnboardingAccountCreation from '../../FeatureComponents/Auth/Onboarding/O
 import OnboardingLocationAccess from '../../FeatureComponents/Auth/Onboarding/OnboardingLocationAccess';
 import OnboardingInterests from '../../FeatureComponents/Auth/Onboarding/OnboardingInterests';
 import OnboardingNotifications from '../../FeatureComponents/Auth/Onboarding/OnboardingNotifications';
+// Forgot Password Screens
+import ForgotPasswordScreen from '../../FeatureComponents/Auth/ForgotPassword/ForgotPasswordScreen';
+import EmailSentScreen from '../../FeatureComponents/Auth/ForgotPassword/EmailSentScreen';
+import ResetPasswordScreen from '../../FeatureComponents/Auth/ForgotPassword/ResetPasswordScreen';
+import ResetSuccessScreen from '../../FeatureComponents/Auth/ForgotPassword/ResetSuccessScreen';
 // Settings Screens
 import NotificationSettings from '../../Settings/NotificationSettings';
 import PrivacySettings from '../../Settings/PrivacySettings';
@@ -187,6 +192,11 @@ const StackNavigation = () => {
           component={VenueClaimStatusScreen}
         />
         <Stack.Screen name="VenueTagging" component={VenueTaggingScreen} />
+        {/* Forgot Password Screens */}
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="EmailSent" component={EmailSentScreen} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+        <Stack.Screen name="ResetSuccess" component={ResetSuccessScreen} />
         {/* Onboarding Screens */}
         <Stack.Screen
           name="OnboardingAccountCreation"

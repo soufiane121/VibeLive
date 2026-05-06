@@ -1081,12 +1081,57 @@
       "confirm": "Cerrar sesión"
     },
     "forgotPassword": {
-      "title": "Restablecer contraseña",
-      "description": "Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
-      "emailPlaceholder": "Correo electrónico",
-      "sendButton": "Enviar enlace",
+      "title": "¿Olvidaste tu contraseña?",
+      "description": "No te preocupes. Introduce el correo electrónico asociado a tu cuenta y te enviaremos un enlace para restablecer tu contraseña.",
+      "emailLabel": "DIRECCIÓN DE CORREO",
+      "emailPlaceholder": "Introduce tu correo",
+      "sendButton": "Enviar enlace de restablecimiento",
       "backToLogin": "Volver al inicio de sesión",
-      "emailSent": "Se envió el correo de restablecimiento. Por favor, revisa tu bandeja de entrada."
+      "invalidEmail": "Introduce una dirección de correo válida.",
+      "emptyEmail": "Introduce tu dirección de correo.",
+      "genericError": "Algo salió mal. Inténtalo de nuevo.",
+      "emailSent": {
+        "title": "Revisa tu correo",
+        "subtitle": "Hemos enviado un enlace de restablecimiento a",
+        "expiresIn": "El enlace expira en",
+        "expired": "Enlace expirado — solicita uno nuevo",
+        "infoNote": "Si existe una cuenta con este correo, recibirás un enlace de restablecimiento. Revisa tu carpeta de spam si no lo ves.",
+        "openEmail": "Abrir app de correo",
+        "didntReceive": "¿No lo recibiste?",
+        "resend": "Reenviar correo",
+        "resendIn": "Reenviar en",
+        "tooManyAttempts": "Demasiados intentos. Inténtalo de nuevo en 10 minutos."
+      },
+      "resetPassword": {
+        "title": "Crear nueva contraseña",
+        "subtitle": "Tu nueva contraseña debe ser diferente a la contraseña anterior.",
+        "newPasswordLabel": "NUEVA CONTRASEÑA",
+        "newPasswordPlaceholder": "Introduce nueva contraseña",
+        "confirmPasswordLabel": "CONFIRMAR CONTRASEÑA",
+        "confirmPasswordPlaceholder": "Confirma la nueva contraseña",
+        "submitButton": "Restablecer contraseña",
+        "strengthWeak": "Débil",
+        "strengthFair": "Regular",
+        "strengthStrong": "Fuerte",
+        "passwordsMatch": "Las contraseñas coinciden",
+        "passwordsDontMatch": "Las contraseñas no coinciden",
+        "rules": {
+          "minLength": "Al menos 8 caracteres",
+          "uppercase": "Una letra mayúscula",
+          "number": "Un número",
+          "special": "Un carácter especial"
+        },
+        "expiredToken": "Este enlace ha expirado. Solicita uno nuevo."
+      },
+      "success": {
+        "title": "¡Contraseña actualizada!",
+        "subtitle": "Tu contraseña se cambió correctamente. Ya puedes iniciar sesión con tu nueva contraseña.",
+        "sessionsNote": "Se cerraron todas las demás sesiones",
+        "sessionsDescription": "Por tu seguridad, todas las sesiones activas han sido cerradas. Necesitarás iniciar sesión de nuevo en esos dispositivos.",
+        "signIn": "Iniciar sesión",
+        "notYou": "¿No fuiste tú?",
+        "contactSupport": "Contactar soporte"
+      }
     }
   },
   "settings": {
@@ -1902,7 +1947,9 @@
       "whatsYourVibe": "¿Cuál es tu vibe?",
       "tagVenue": "Etiquetar un lugar",
       "readyToStream": "¿Listo para transmitir?",
-      "unknownError": "Error desconocido"
+      "unknownError": "Error desconocido",
+      "nothingNearby": "Nada cerca ahora",
+      "moveCloser": "Acércate para desbloquear lugares"
     },
     "voting": {
       "purchaseBoost": "Comprar Boost",

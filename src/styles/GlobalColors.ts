@@ -952,6 +952,33 @@ export const GlobalColors = {
     separator: premiumDark.separator,
   },
 
+  // Forgot Password Flow
+  ForgotPassword: {
+    background: premiumDark.primaryBackground,
+    surface: premiumDark.primarySurface,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.tertiaryText,
+    accent: premiumDark.accentPrimary,
+    accentSurface: premiumDark.accentSurface,
+    accentBorder: premiumDark.accentBorder,
+    border: premiumDark.primaryBorder,
+    inputBackground: premiumDark.secondaryBackground,
+    inputBorder: premiumDark.primaryBorder,
+    error: premiumDark.hotPrimary,
+    success: premiumDark.successPrimary,
+    successSurface: premiumDark.successSurface,
+    successBorder: premiumDark.successBorder,
+    strengthWeak: '#EF4444',
+    strengthFair: '#F59E0B',
+    strengthStrong: '#10B981',
+    buttonBackground: premiumDark.accentPrimary,
+    buttonText: premiumDark.primaryText,
+    buttonDisabled: premiumDark.secondarySurface,
+    timerActive: premiumDark.accentPrimary,
+    timerExpired: premiumDark.hotPrimary,
+  },
+
   // Onboarding Screens
   Onboarding: {
     background: premiumDark.primaryBackground,

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useMemo} from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,45 @@ const requiredFields = [
   'confirmPassword',
   'phoneNumber',
 ];
+
+interface PasswordRule {
+  label: string;
+  test: (password: string) => boolean;
+}
+
+const PASSWORD_RULES: PasswordRule[] = [
+  {label: 'At least 8 characters', test: (p: string) => p.length >= 8},
+  {label: 'One uppercase letter', test: (p: string) => /[A-Z]/.test(p)},
+  {label: 'One number', test: (p: string) => /[0-9]/.test(p)},
+  {
+    label: 'One special character',
+    test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(p),
+  },
+];
+
+type PasswordStrength = 'none' | 'weak' | 'fair' | 'strong';
+
+const getPasswordStrength = (password: string): PasswordStrength => {
+  if (!password) return 'none';
+  const passedRules = PASSWORD_RULES.filter(rule => rule.test(password)).length;
+  if (passedRules <= 1) return 'weak';
+  if (passedRules <= 3) return 'fair';
+  return 'strong';
+};
+
+const STRENGTH_COLORS: Record<PasswordStrength, string> = {
+  none: GlobalColors.Onboarding.border,
+  weak: '#EF4444',
+  fair: '#F59E0B',
+  strong: '#10B981',
+};
+
+const STRENGTH_LABELS: Record<PasswordStrength, string> = {
+  none: '',
+  weak: 'Weak',
+  fair: 'Fair',
+  strong: 'Strong',
+};
 
 const SignUpContainer = ({navigation}) => {
   const [form, setForm] = useState({
@@ -139,9 +178,13 @@ const SignUpContainer = ({navigation}) => {
     }
   };
 
+  const passwordStrength = useMemo(() => getPasswordStrength(form.password), [form.password]);
+  const allRulesPassed = useMemo(() => PASSWORD_RULES.every(rule => rule.test(form.password)), [form.password]);
+
   const isFormValid =
     requiredFields.every(field => !!form[field as keyof typeof form]) &&
-    agreedToTerms;
+    agreedToTerms &&
+    allRulesPassed;
 
   const isSubmitting = isValidationPass || isSendingCode;
 
@@ -268,6 +311,64 @@ const SignUpContainer = ({navigation}) => {
           />
         </TouchableOpacity>
       </View>
+      {/* Password Strength Indicator */}
+      {form.password.length > 0 && (
+        <View style={styles.strengthContainer}>
+          <View style={styles.strengthBarTrack}>
+            <View
+              style={[
+                styles.strengthBarFill,
+                {
+                  width:
+                    passwordStrength === 'weak'
+                      ? '33%'
+                      : passwordStrength === 'fair'
+                      ? '66%'
+                      : passwordStrength === 'strong'
+                      ? '100%'
+                      : '0%',
+                  backgroundColor: STRENGTH_COLORS[passwordStrength],
+                },
+              ]}
+            />
+          </View>
+          <Text
+            style={[
+              styles.strengthLabel,
+              {color: STRENGTH_COLORS[passwordStrength]},
+            ]}>
+            {STRENGTH_LABELS[passwordStrength]}
+          </Text>
+        </View>
+      )}
+
+      {/* Password Rules Checklist */}
+      <View style={styles.rulesContainer}>
+        {PASSWORD_RULES.map((rule, index) => {
+          const passed = rule.test(form.password);
+          return (
+            <View key={index} style={styles.ruleRow}>
+              <MaterialCommunityIcons
+                name={passed ? 'check-circle' : 'circle-outline'}
+                size={16}
+                color={
+                  passed
+                    ? '#10B981'
+                    : GlobalColors.Onboarding.textMuted
+                }
+              />
+              <Text
+                style={[
+                  styles.ruleText,
+                  passed && styles.ruleTextPassed,
+                ]}>
+                {rule.label}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+
       {renderError('password')}
 
       {/* Confirm Password */}
@@ -299,6 +400,39 @@ const SignUpContainer = ({navigation}) => {
         </TouchableOpacity>
       </View>
       {renderError('confirmPassword')}
+
+      {/* Passwords match indicator */}
+      {form.confirmPassword.length > 0 && (
+        <View style={styles.matchContainer}>
+          <MaterialCommunityIcons
+            name={
+              form.password === form.confirmPassword
+                ? 'check-circle'
+                : 'close-circle'
+            }
+            size={14}
+            color={
+              form.password === form.confirmPassword
+                ? '#10B981'
+                : GlobalColors.Onboarding.error
+            }
+          />
+          <Text
+            style={[
+              styles.matchText,
+              {
+                color:
+                  form.password === form.confirmPassword
+                    ? '#10B981'
+                    : GlobalColors.Onboarding.error,
+              },
+            ]}>
+            {form.password === form.confirmPassword
+              ? 'Passwords match'
+              : 'Passwords do not match'}
+          </Text>
+        </View>
+      )}
 
       {fieldErrors.general && (
         <Text style={[styles.errorText, {textAlign: 'center', marginVertical: 10}]}>
@@ -522,6 +656,55 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: GlobalColors.Onboarding.accent,
+  },
+  strengthContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  strengthBarTrack: {
+    flex: 1,
+    height: 4,
+    backgroundColor: GlobalColors.Onboarding.border,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginRight: 10,
+  },
+  strengthBarFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  strengthLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    width: 50,
+  },
+  rulesContainer: {
+    marginBottom: 12,
+  },
+  ruleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  ruleText: {
+    fontSize: 12,
+    color: GlobalColors.Onboarding.textMuted,
+    marginLeft: 8,
+  },
+  ruleTextPassed: {
+    color: '#10B981',
+  },
+  matchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  matchText: {
+    fontSize: 12,
+    marginLeft: 4,
   },
 });
 
