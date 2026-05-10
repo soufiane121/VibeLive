@@ -275,6 +275,7 @@ const StreamPlayer = (props: Props) => {
           <CloseIcon
             style={styles.close}
             onPress={() => {
+              console.log("go back");
               goBack();
             }}
           />
@@ -326,6 +327,7 @@ const StreamPlayer = (props: Props) => {
         liveDetails={liveDetails || props?.liveDetails}
         coordinates={coordinates || props?.coordinates}
         parentGroupStreamId={props?.parentGroupStreamId}
+        currentUser={currentUser}
       />
       {/* </SafeAreaView> */}
     </>
@@ -349,7 +351,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     position: 'absolute',
     marginTop: '8%',
-    zIndex: 2,
+    zIndex: 3,
     // display: 'flex',
     height: '6.5%',
     // backgroundColor: 'black',

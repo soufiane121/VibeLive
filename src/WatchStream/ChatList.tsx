@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Animated,
   FlatList,
@@ -13,12 +13,12 @@ import {
   Keyboard,
 } from 'react-native';
 import Video from 'react-native-video';
-import {SendIcon} from '../UIComponents/Icons';
-import {useSocketInstance} from '../CustomHooks/useSocketInstance';
+import { SendIcon } from '../UIComponents/Icons';
+import { useSocketInstance } from '../CustomHooks/useSocketInstance';
 import FloatingActionButton from '../FloatingAction/FloatingButton';
-import {useDispatch} from 'react-redux';
-import {addReaction} from '../../features/LiveStream/LiveStreamSlice';
-import {GlobalColors} from '../styles/GlobalColors';
+import { useDispatch } from 'react-redux';
+import { addReaction } from '../../features/LiveStream/LiveStreamSlice';
+import { GlobalColors } from '../styles/GlobalColors';
 
 const colors = GlobalColors.ChatList;
 
@@ -32,13 +32,14 @@ interface Props {
   coordinates?: string[];
   parentGroupStreamId?: string;
   showInput?: boolean;
+  currentUser?: any;
 }
 const ChatList = (props: Props) => {
-  const {showInput = true} = props;
+  const { showInput = true } = props;
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef(null);
-  const {socket, offEvent, emitEvent} = useSocketInstance();
+  const { socket, offEvent, emitEvent } = useSocketInstance();
   const dispatch = useDispatch();
 
   const fadeMessagesHelper = (prevMessages, newMessage) => {
@@ -73,6 +74,7 @@ const ChatList = (props: Props) => {
         roomName: props?.streamId,
         streamerId: props.userId,
         newMessage,
+        token: props?.currentUser?.email
       });
 
       // socket?.emit('send-message', {
@@ -88,13 +90,13 @@ const ChatList = (props: Props) => {
   };
 
   useEffect(() => {
-    flatListRef.current?.scrollToEnd({animated: true});
+    flatListRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
 
   const sendReactions = (reactEmogi: string) => {
     let isThrottled = false;
     if (!isThrottled) {
-      dispatch(addReaction({id: props?.streamId, emoji: reactEmogi}));
+      dispatch(addReaction({ id: props?.streamId, emoji: reactEmogi }));
       emitEvent('reaction-to-stream', {
         roomName: props?.streamId,
         streamerId: props.userId,
@@ -102,6 +104,7 @@ const ChatList = (props: Props) => {
         reactEmogi,
         coordinates: props.coordinates,
         parentGroupStreamId: props?.parentGroupStreamId,
+        token: props?.currentUser?.email
       });
       isThrottled = true;
 
@@ -112,45 +115,48 @@ const ChatList = (props: Props) => {
   };
 
   useEffect(() => {
-    if (socket) {
-      socket.on('get-chat', data => {
-        if (data?.data.newMessage?.hasOwnProperty('id')) {
-          setMessages(prevMessages => {
-            return fadeMessagesHelper(prevMessages, data?.data.newMessage);
-          });
-        }
-      });
-      socket.on('get-reaction', data => {
-        const {id, reactEmogi} = data?.data;
-        dispatch(addReaction({id: id, emoji: reactEmogi}));
-      });
-    }
-    // return (
-    // socket?.off("get-chat-messages")
-    // socket?.off("get-chat-messages")
-    // adding off event for get-chat will stop listening to the event, NOT WORKING WITH IT
-    // offEvent('get-chat-messages')
-    // );
-  }, [socket]);
+    if (!socket) return;
 
-  useEffect(() => {
-    if (socket) {
-      emitEvent('join-chat-room', {
-        roomName: props?.liveDetails?.streamId,
-      });
-    }
-
-    return () => {
-      offEvent('join-chat-room');
+    // Attach listeners
+    const handleChat = (data) => {
+      console.log("get-chat message received", {data});
+      if (data?.data.newMessage?.hasOwnProperty('id')) {
+        setMessages(prevMessages => {
+          return fadeMessagesHelper(prevMessages, data?.data.newMessage);
+        });
+      }
     };
-  }, [socket]);
 
-  const renderItem = ({item}) => {
+    const handleReaction = (data) => {
+      console.log("get-reaction from UI", data);
+      const { id, reactEmogi } = data?.data;
+      dispatch(addReaction({ id: id, emoji: reactEmogi }));
+    };
+
+    socket.on('get-chat', handleChat);
+    socket.on('get-reaction', handleReaction);
+
+    // Join the room
+    if (props?.streamId) {
+      emitEvent('join-chat-room', {
+        roomName: props.streamId,
+        token: props?.currentUser?.email
+      });
+    }
+
+    // Cleanup: remove only OUR listeners, re-attaches on next run
+    return () => {
+      socket.off('get-chat', handleChat);
+      socket.off('get-reaction', handleReaction);
+    };
+  }, [socket, props?.streamId]);
+
+  const renderItem = ({ item }) => {
     return (
       <Animated.View
-        style={[styles.messageContainer, {opacity: item?.fadeAnim}]}
+        style={[styles.messageContainer, { opacity: item?.fadeAnim }]}
         key={item?.id + JSON.stringify(new Date())}>
-        <Image source={{uri: item?.avatar}} style={styles.avatar} />
+        <Image source={{ uri: item?.avatar }} style={styles.avatar} />
         <View style={styles.messageContent}>
           <Text style={styles.userName}>{item?.user}</Text>
           <Text style={styles.messageText}>{item?.message}</Text>
@@ -163,7 +169,7 @@ const ChatList = (props: Props) => {
     <View style={styles.container}>
       {/* Live Video Background */}
       <Video
-        source={{uri: 'https://your-live-stream-url.com/stream.m3u8'}}
+        source={{ uri: 'https://your-live-stream-url.com/stream.m3u8' }}
         style={styles.video}
         resizeMode="cover"
         repeat
@@ -216,8 +222,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    marginTop: '-90%',
-    // position: "absolute"
+    // marginTop: '-90%',
+    // position: "absolute",
+    zIndex: 2,
   },
   video: {
     ...StyleSheet.absoluteFillObject,

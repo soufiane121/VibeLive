@@ -44,6 +44,7 @@ import {useNavigation, CommonActions} from '@react-navigation/native';
 import ChatList from '../WatchStream/ChatList';
 import {useSocketInstance} from '../CustomHooks/useSocketInstance';
 import useTranslation from '../Hooks/useTranslation';
+import {FREE_STREAM_WARNING_SECONDS, FREE_STREAM_MAX_SECONDS} from '@env';
 
 interface BoostPurchaseData {
   tier: 'basic' | 'premium' | 'ultimate' | 'visibility' | 'prime' | 'viral';
@@ -526,6 +527,28 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setIsStreaming(false);
         setStreamHealth('disconnected');
       });
+
+      // Handle stream-stopped-confirmed — backend confirms stream fully ended
+      socket.on('stream-stopped-confirmed', data => {
+        console.log('✅ Stream stopped confirmed by server:', data);
+        // Ensure all streaming state is cleared
+        userEndedStreamRef.current = true;
+        setUserEndedStream(true);
+        setIsStreaming(false);
+        setStreamHealth('disconnected');
+        setStreamKey(null);
+        setStreamStartTime(null);
+
+        // Navigate back to Map after a brief delay for UI feedback
+        setTimeout(() => {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Map' }],
+            }),
+          );
+        }, 500);
+      });
     }
   }, [socket]); // Removed isStreaming dependency to prevent reconnection
 
@@ -737,7 +760,22 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       // CRITICAL: Clear all reconnect attempts and timers first
       setReconnectAttempts(0);
 
-      // CRITICAL: Stop the NodePublisher directly to prevent any reconnection
+      // Capture stream identifiers before clearing state
+      const currentStreamId = streamId;
+      const currentPlaybackId = playbackId;
+      const streamDuration = streamStartTime 
+        ? Math.floor((Date.now() - streamStartTime) / 1000 / 60)
+        : 0;
+
+      // CRITICAL: Clear stream key FIRST so NodePublisher URL becomes empty
+      // This prevents NodePublisher from having a valid RTMP endpoint to reconnect to
+      setStreamKey(null);
+      setIsStreaming(false);
+      setStreamHealth('disconnected');
+      setDataFlowActive(false);
+      setStreamStartTime(null);
+
+      // THEN stop the NodePublisher — it can no longer reconnect (URL is empty)
       if (rtmp.current) {
         try {
           rtmp.current.stop();
@@ -749,37 +787,22 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       // Use streaming helper to stop
       await streamingHelper.stopStreaming();
 
-      setIsStreaming(false);
-      setStreamHealth('disconnected');
-      setDataFlowActive(false);
-
-      // Notify backend with playback retention preference
+      // Notify backend with playback retention preference (using saved values)
       if (socket) {
-        const streamDuration = streamStartTime 
-          ? Math.floor((Date.now() - streamStartTime) / 1000 / 60)
-          : 0;
-          
         socket.emit('stop-streaming', {
           token: currentUser?.email,
-          streamId: streamId, // Send MUX stream ID for proper termination
-          playbackId: playbackId,
+          streamId: currentStreamId,
+          playbackId: currentPlaybackId,
           keepPlayback: keepPlayback,
           isBoosted: !!boostData || currentUser?.isBoosted,
-          reason: reason || 'USER_INITIATED', // Include the reason
-          streamDuration: streamDuration, // Include actual duration
+          reason: reason || 'USER_INITIATED',
+          streamDuration: streamDuration,
         });
       }
-
-      setStreamStartTime(null); // Stop the duration timer when stream stops
-      
-      // CRITICAL: Clear stream key AFTER notifying backend so NodePublisher URL becomes empty
-      // This prevents NodePublisher from having a valid RTMP endpoint to reconnect to
-      setStreamKey(null);
     } catch (error) {
       setIsStreaming(false);
       setStreamHealth('disconnected');
-      setReconnectAttempts(0); // Ensure no restart even on error
-      // Still clear the stream key on error to prevent reconnection
+      setReconnectAttempts(0);
       userEndedStreamRef.current = true;
       setUserEndedStream(true);
       setStreamKey(null);
@@ -1320,6 +1343,10 @@ interface StreamTimerProps {
   onTenMinuteLimit: () => void;
 }
 
+// Read from env, fall back to 7min/10min defaults
+const WARNING_SECONDS = parseInt(FREE_STREAM_WARNING_SECONDS || '420', 10);
+const MAX_SECONDS = parseInt(FREE_STREAM_MAX_SECONDS || '600', 10);
+
 const StreamTimer = React.memo(
   ({
     streamStartTime,
@@ -1346,14 +1373,14 @@ const StreamTimer = React.memo(
 
         // Only enforce limits for non-boosted users
         if (!isBoosted && isStreaming) {
-          // 7-minute warning (420 seconds)
-          if (elapsed >= 60 && !sevenMinWarningShown.current) {
+          // Warning threshold (default 420 seconds = 7 minutes)
+          if (elapsed >= WARNING_SECONDS && !sevenMinWarningShown.current) {
             sevenMinWarningShown.current = true;
             onSevenMinuteWarning();
           }
 
-          // 10-minute limit (600 seconds)
-          if (elapsed >= 120 && !tenMinLimitReached.current) {
+          // Hard limit threshold (default 600 seconds = 10 minutes)
+          if (elapsed >= MAX_SECONDS && !tenMinLimitReached.current) {
             tenMinLimitReached.current = true;
             onTenMinuteLimit();
           }
@@ -1380,8 +1407,8 @@ const StreamTimer = React.memo(
     // Color coding for free streaming limits
     const getTimerColor = (): string => {
       if (isBoosted) return 'white'; // Normal color for boosted users
-      if (duration >= 600) return '#EF4444'; // Red when limit reached
-      if (duration >= 420) return '#F59E0B'; // Amber when warning shown
+      if (duration >= MAX_SECONDS) return '#EF4444'; // Red when limit reached
+      if (duration >= WARNING_SECONDS) return '#F59E0B'; // Amber when warning shown
       return 'white'; // Normal color
     };
 

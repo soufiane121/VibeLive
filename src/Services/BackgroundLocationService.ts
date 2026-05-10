@@ -207,6 +207,14 @@ class BackgroundLocationService {
         console.log('[BackgroundLocationService] Stopped foreground subscription (switching to background)');
       }
 
+      // Check if background tracking should be suppressed (e.g. low battery, daytime)
+      if (locationSuppressionService.shouldSuppress()) {
+        const reason = locationSuppressionService.getSuppressionReason();
+        console.log(`[BackgroundLocationService] Cannot start background tracking: suppressed by ${reason}`);
+        this._stopBackgroundTaskForSuppression();
+        return false;
+      }
+
       // Always (re)register the task so the latest options are applied.
       // A stale registration from a previous launch would otherwise keep old
       // options and silently ignore the new ones.

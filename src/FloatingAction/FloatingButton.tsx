@@ -48,11 +48,13 @@ const FloatingActionButton: React.FC<Props> = ({sendReactions}) => {
 
 const styles = StyleSheet.create({
   containr: {
+    // position: 'absolute',
     borderRadius: 30,
     width: 60,
     height: 70,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 900,
   },
   parentIcon: {
     color: 'rgba(230, 232, 235, 0.6)',

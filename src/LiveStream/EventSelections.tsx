@@ -902,7 +902,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           </View>
         )}
 
-        {venueLoadingState === 'loaded' && nearbyVenues.length > 0 && (
+        {venueLoadingState === 'loaded' && nearbyVenues.length >= 0 && (
           <View style={venueStyles.section}>
             <Text style={styles.categoryTitle}>{t('event.tagVenue')}</Text>
             <FlatList
@@ -971,7 +971,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           </View>
         )}
 
-        {venueLoadingState === 'loaded' &&
+        {/* {venueLoadingState === 'loaded' &&
           nearbyVenues.length === 0 && (
             <View style={venueStyles.section}>
               <Text style={styles.categoryTitle}>{t('event.tagVenue')}</Text>
@@ -989,9 +989,9 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                 </Text>
               </View>
             </View>
-          )}
+          )} */}
 
-        {selectedCategory && nearbyVenues.length > 0 && (
+        {selectedCategory && nearbyVenues.length >= 0 && (
           <View style={styles.actionSection}>
             <Text style={styles.actionTitle}>{t('event.readyToStream')}</Text>
 

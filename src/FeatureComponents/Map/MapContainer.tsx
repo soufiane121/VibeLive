@@ -370,32 +370,41 @@ const MapContainer = () => {
   }, [socket]);
 
   useEffect(() => {
-    // socket?.emit('get-updated-user', {}, (resp)=>{
-    //   console.log({resp: resp.data.streamsDetails});
-    //   dispatch(setCurrentUser(resp.data))
-    // });
+    if (!socket) return;
 
-    // add new marker to map
-    socket?.on('add-to-map', data => {
-      console.log({data}, 'add-to-map---------------------');
+    const handleAddToMap = (data: any) => {
+      console.log({data}, 'add-to-map');
       setFeaturesPointsData(prevState => [...prevState, data?.data?.mapItem]);
-    });
-    socket?.on('update-current-user', data => {
+    };
+    const handleUpdateUser = (data: any) => {
       console.log('socket new user', {data});
-    });
-    socket?.on('add-reaction-to-map', data => {
+    };
+    const handleReactionToMap = (data: any) => {
       const {id, reactEmogi} = data?.data;
+      console.log('add-reaction-to-map', {id, reactEmogi});
       setEmojis(prevState => ({
         ...prevState,
         [id]: [...(prevState[id] || []), {id: Date.now(), emoji: reactEmogi}],
       }));
-    });
-    socket?.on('stream-stopped', data => {
-      console.log(data, 'stream-stopped---------------------');
-      handleRemoveStoppedStreamFromMap({
-        streamId: data?.playbackId,
-      });
-    });
+    };
+    const handleStreamStopped = (data: any) => {
+      console.log(data, 'stream-stopped');
+      handleRemoveStoppedStreamFromMap({streamId: data?.playbackId});
+    };
+
+    socket.on('add-to-map', handleAddToMap);
+    socket.on('update-current-user', handleUpdateUser);
+    socket.on('add-reaction-to-map', handleReactionToMap);
+    socket.on('stream-stopped', handleStreamStopped);
+
+    // CRITICAL: remove listeners on cleanup to prevent accumulation
+    // Without this, each effect run (on socket reconnect) stacks a new listener
+    return () => {
+      socket.off('add-to-map', handleAddToMap);
+      socket.off('update-current-user', handleUpdateUser);
+      socket.off('add-reaction-to-map', handleReactionToMap);
+      socket.off('stream-stopped', handleStreamStopped);
+    };
   }, [socket]);
 
   const handleRemoveStoppedStreamFromMap = ({streamId}: {streamId: string}) => {
@@ -732,33 +741,37 @@ const MapContainer = () => {
                       trackMapInteraction={trackMapInteraction}
                     />
 
-                    {emojis[cluster?.properties?.streamId] && (
+                    {/* Look up emojis by playbackId (stored in liveDetails.playbackId) */}
+                    {emojis[cluster?.properties?.liveDetails?.playbackId] && (
                       <MarkerView coordinate={cluster?.properties?.coordinates}>
-                        <>
-                          {emojis[cluster?.properties?.streamId]?.map(
-                            (emoji, idx) => {
+                        {/* Fixed anchor: all emojis start from the same point, don't push each other */}
+                        <View style={{width: 1, height: 1}}>
+                          {emojis[cluster?.properties?.liveDetails?.playbackId]?.map(
+                            (emoji) => {
+                              const emojiLookupKey = cluster?.properties?.liveDetails?.playbackId;
                               return (
-                                <FloatingEmoji
-                                  key={idx}
-                                  coordinates={cluster?.properties?.coordinates} // Ensure correct coordinates are passed here
-                                  mapRef={mapRef} // Ensure mapRef is passed here correctly
-                                  emoji={
-                                    EMOJIS[emoji.emoji.toLocaleLowerCase()]
-                                  }
-                                  onComplete={() => {
-                                    setEmojis(prevState => ({
-                                      ...prevState,
-                                      [cluster?.properties?.streamId]:
-                                        prevState[
-                                          cluster?.properties?.streamId
-                                        ]?.filter(e => e.id !== emoji.id),
-                                    }));
-                                  }}
-                                />
+                                <View
+                                  key={emoji.id}
+                                  style={{position: 'absolute', bottom: 0, left: -10}}>
+                                  <FloatingEmoji
+                                    coordinates={cluster?.properties?.coordinates}
+                                    mapRef={mapRef}
+                                    emoji={
+                                      EMOJIS[emoji.emoji.toLocaleLowerCase()]
+                                    }
+                                    onComplete={() => {
+                                      setEmojis(prevState => ({
+                                        ...prevState,
+                                        [emojiLookupKey]:
+                                          prevState[emojiLookupKey]?.filter(e => e.id !== emoji.id),
+                                      }));
+                                    }}
+                                  />
+                                </View>
                               );
                             },
                           )}
-                        </>
+                        </View>
                       </MarkerView>
                     )}
                   </>

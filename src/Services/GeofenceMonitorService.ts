@@ -68,15 +68,17 @@ class KnownPlaceCache {
   private static readonly PRUNE_THROTTLE_MS = 60 * 60 * 1000; // prune at most once per hour
 
   async load(): Promise<void> {
+    // this.clear()
     try {
       const data = await getLocalData({key: KNOWN_PLACES_STORAGE_KEY});
+      console.log("[KnownPlaceCache] Loading known places...", data);
       if (data && typeof data === 'string') {
         const parsed = JSON.parse(data);
         // Filter out expired entries on load
         const now = Date.now();
         this.places = parsed.filter(
           (p: ResolvedPlace) =>
-            !p.cachedAt || now - p.cachedAt < KNOWN_PLACE_TTL_MS,
+            p.cachedAt && now - p.cachedAt < KNOWN_PLACE_TTL_MS,
         );
         console.log(
           `[KnownPlaceCache] Loaded ${this.places.length} places (${parsed.length - this.places.length} expired)`,
@@ -117,8 +119,8 @@ class KnownPlaceCache {
   findPlace(lat: number, lon: number): ResolvedPlace | null {
     const now = Date.now();
     for (const place of this.places) {
-      // Skip expired entries
-      if (place.cachedAt && now - place.cachedAt > KNOWN_PLACE_TTL_MS) {
+      // Skip expired entries or those missing a cachedAt timestamp
+      if (!place.cachedAt || now - place.cachedAt > KNOWN_PLACE_TTL_MS) {
         continue;
       }
       const dist = this._haversineDistance(lat, lon, place.lat, place.lon);
@@ -145,7 +147,7 @@ class KnownPlaceCache {
 
     const before = this.places.length;
     this.places = this.places.filter(
-      p => !p.cachedAt || now - p.cachedAt < KNOWN_PLACE_TTL_MS,
+      p => p.cachedAt && now - p.cachedAt < KNOWN_PLACE_TTL_MS,
     );
     const removed = before - this.places.length;
     if (removed > 0) {
@@ -762,62 +764,62 @@ class GeofenceMonitorService {
    * Play GPX track through 4-gate pipeline.
    * Points are processed by _onLocationReceived (not sent directly to server).
    */
-  playGpxTrack(points: Array<{lat: number; lng: number; delayMs: number}>) {
-    if (this.gpxTimer) {
-      this.stopGpxTrack();
-    }
+  // playGpxTrack(points: Array<{lat: number; lng: number; delayMs: number}>) {
+  //   if (this.gpxTimer) {
+  //     this.stopGpxTrack();
+  //   }
 
-    this.gpxPoints = points;
-    console.log(`[GPX] Playing ${points.length} points through 4-gate pipeline`);
+  //   this.gpxPoints = points;
+  //   console.log(`[GPX] Playing ${points.length} points through 4-gate pipeline`);
 
-    let index = 0;
+  //   let index = 0;
 
-    const playNext = () => {
-      if (index >= points.length) {
-        console.log('[GPX] Track complete');
-        return;
-      }
+  //   const playNext = () => {
+  //     if (index >= points.length) {
+  //       console.log('[GPX] Track complete');
+  //       return;
+  //     }
 
-      const point = points[index];
-      const elapsed = Date.now() - startTime;
-      const waitMs = Math.max(0, point.delayMs - elapsed);
+  //     const point = points[index];
+  //     const elapsed = Date.now() - startTime;
+  //     const waitMs = Math.max(0, point.delayMs - elapsed);
 
-      this.gpxTimer = setTimeout(() => {
-        // Route through 4-gate pipeline
-        const update: LocationUpdate = {
-          latitude: point.lat,
-          longitude: point.lng,
-          accuracy: 5 + Math.random() * 5,
-          timestamp: Date.now(),
-        };
+  //     this.gpxTimer = setTimeout(() => {
+  //       // Route through 4-gate pipeline
+  //       const update: LocationUpdate = {
+  //         latitude: point.lat,
+  //         longitude: point.lng,
+  //         accuracy: 5 + Math.random() * 5,
+  //         timestamp: Date.now(),
+  //       };
 
-        console.log(
-          `[GPX] ${index + 1}/${points.length} at t=${point.delayMs}ms`,
-        );
+  //       console.log(
+  //         `[GPX] ${index + 1}/${points.length} at t=${point.delayMs}ms`,
+  //       );
 
-        this.lastLocation = update;
-        this._onLocationReceived(update);
+  //       this.lastLocation = update;
+  //       this._onLocationReceived(update);
 
-        index++;
-        playNext();
-      }, waitMs);
-    };
+  //       index++;
+  //       playNext();
+  //     }, waitMs);
+  //   };
 
-    const startTime = Date.now();
-    playNext();
-  }
+  //   const startTime = Date.now();
+  //   playNext();
+  // }
 
-  stopGpxTrack() {
-    if (this.gpxTimer) {
-      clearTimeout(this.gpxTimer);
-      this.gpxTimer = null;
-      console.log('[GPX] Stopped');
-    }
-  }
+  // stopGpxTrack() {
+  //   if (this.gpxTimer) {
+  //     clearTimeout(this.gpxTimer);
+  //     this.gpxTimer = null;
+  //     console.log('[GPX] Stopped');
+  //   }
+  // }
 
-  isPlayingGpx(): boolean {
-    return this.gpxTimer !== null;
-  }
+  // isPlayingGpx(): boolean {
+  //   return this.gpxTimer !== null;
+  // }
 
   /**
    * TODO:: remove the bottom only for testing
@@ -828,26 +830,26 @@ class GeofenceMonitorService {
    * - Testing server-side legacy mode (TOGGLE_OLD_DWELL=true, 3-min threshold)
    * - Verifying GPS pipeline and network calls work
    */
-  playTestDwell() {
-    geofenceMonitor.playGpxTrack([
-      // Walk to venue B (5s intervals)
-      {lat: 35.225845, lng: -80.853607, delayMs: 0},
-      {lat: 35.215, lng: -80.83, delayMs: 5000},
-      {lat: 35.2, lng: -80.8, delayMs: 10000},
-      {lat: 35.185, lng: -80.77, delayMs: 15000},
-      {lat: 35.17, lng: -80.74, delayMs: 20000},
-      {lat: 35.15398, lng: -80.71379, delayMs: 25000}, // arrive
+  // playTestDwell() {
+  //   geofenceMonitor.playGpxTrack([
+  //     // Walk to venue B (5s intervals)
+  //     {lat: 35.225845, lng: -80.853607, delayMs: 0},
+  //     {lat: 35.215, lng: -80.83, delayMs: 5000},
+  //     {lat: 35.2, lng: -80.8, delayMs: 10000},
+  //     {lat: 35.185, lng: -80.77, delayMs: 15000},
+  //     {lat: 35.17, lng: -80.74, delayMs: 20000},
+  //     {lat: 35.15398, lng: -80.71379, delayMs: 25000}, // arrive
 
-      // DWELL at B: 30s intervals × 7 points = 3.5 minutes
-      {lat: 35.15398, lng: -80.71379, delayMs: 55000},
-      {lat: 35.153982, lng: -80.713788, delayMs: 85000},
-      {lat: 35.153978, lng: -80.713792, delayMs: 115000},
-      {lat: 35.153981, lng: -80.713789, delayMs: 145000},
-      {lat: 35.153979, lng: -80.713791, delayMs: 175000},
-      {lat: 35.15398, lng: -80.71379, delayMs: 205000},
-      {lat: 35.153982, lng: -80.713788, delayMs: 235000},
-    ]);
-  }
+  //     // DWELL at B: 30s intervals × 7 points = 3.5 minutes
+  //     {lat: 35.15398, lng: -80.71379, delayMs: 55000},
+  //     {lat: 35.153982, lng: -80.713788, delayMs: 85000},
+  //     {lat: 35.153978, lng: -80.713792, delayMs: 115000},
+  //     {lat: 35.153981, lng: -80.713789, delayMs: 145000},
+  //     {lat: 35.153979, lng: -80.713791, delayMs: 175000},
+  //     {lat: 35.15398, lng: -80.71379, delayMs: 205000},
+  //     {lat: 35.153982, lng: -80.713788, delayMs: 235000},
+  //   ]);
+  // }
 
   /**
    * Realistic test: 15+ minutes dwell (matches production threshold).
