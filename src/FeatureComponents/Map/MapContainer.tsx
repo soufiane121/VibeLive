@@ -507,6 +507,8 @@ const MapContainer = () => {
         const newClusters = supercluster.getClusters(bounds, zoomLevel);
 
         setClusters(newClusters);
+      } else {
+        setClusters([]);
       }
     }, 300);
 
