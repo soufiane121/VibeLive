@@ -389,7 +389,7 @@ const MapContainer = () => {
     };
     const handleStreamStopped = (data: any) => {
       console.log(data, 'stream-stopped');
-      handleRemoveStoppedStreamFromMap({streamId: data?.playbackId});
+      handleRemoveStoppedStreamFromMap({streamId: data?.streamId});
     };
 
     socket.on('add-to-map', handleAddToMap);
@@ -407,12 +407,27 @@ const MapContainer = () => {
     };
   }, [socket]);
 
-  const handleRemoveStoppedStreamFromMap = ({streamId}: {streamId: string}) => {
-    const updatedFeaturesPointsData = featuresPointsData.filter(
-      feature => feature?.properties?.liveDetails?.streamId !== streamId,
+  const handleRemoveStoppedStreamFromMap = useCallback(({streamId}: {streamId: string}) => {
+    setFeaturesPointsData(prevFeatures => 
+      prevFeatures
+        .map(feature => {
+          // Clean up nested streams if it's a grouped feature
+          if (feature?.groupedFeatures) {
+            feature.groupedFeatures = feature.groupedFeatures.filter(
+              (f: any) => f?.properties?.liveDetails?.streamId !== streamId
+            );
+          }
+          return feature;
+        })
+        .filter(feature => {
+          // Remove if it's the main feature
+          if (feature?.properties?.liveDetails?.streamId === streamId) {
+            return false;
+          }
+          return true;
+        })
     );
-    setFeaturesPointsData(updatedFeaturesPointsData);
-  };
+  }, []);
 
   // Calculate dynamic bounds based on user location
   const calculateDynamicBounds = useCallback(

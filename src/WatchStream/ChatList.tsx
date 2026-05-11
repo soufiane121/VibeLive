@@ -166,16 +166,7 @@ const ChatList = (props: Props) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Live Video Background */}
-      <Video
-        source={{ uri: 'https://your-live-stream-url.com/stream.m3u8' }}
-        style={styles.video}
-        resizeMode="cover"
-        repeat
-        muted
-      />
-
+    <View style={styles.container} pointerEvents="box-none">
       {/* Chat Messages */}
       <View style={styles.chatContainer}>
         <FlatList
@@ -220,14 +211,13 @@ const ChatList = (props: Props) => {
 // Styles
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    // marginTop: '-90%',
-    // position: "absolute",
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
     zIndex: 2,
-  },
-  video: {
-    ...StyleSheet.absoluteFillObject,
   },
   chatContainer: {
     position: 'absolute',

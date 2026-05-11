@@ -4,6 +4,7 @@ import {
   Button,
   StyleSheet,
   Platform,
+  StatusBar,
   Text,
   Alert,
   TouchableOpacity,
@@ -25,6 +26,27 @@ import {
 import { GlobalColors } from '../styles/GlobalColors';
 
 const colors = GlobalColors.LiveStreamContainer;
+
+// ─────────────────────────────────────────────────────────────
+// Responsive helpers — scale values relative to a baseline
+// iPhone 14 Pro (393 × 852) is the design baseline.
+// ─────────────────────────────────────────────────────────────
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const BASE_WIDTH = 393;
+const BASE_HEIGHT = 852;
+
+/** Scale a value horizontally (width-relative) */
+const sw = (size: number) => (SCREEN_WIDTH / BASE_WIDTH) * size;
+/** Scale a value vertically (height-relative) */
+const sh = (size: number) => (SCREEN_HEIGHT / BASE_HEIGHT) * size;
+/** Scale font sizes — clamped between 80% and 120% of original */
+const sf = (size: number) => {
+  const scale = SCREEN_WIDTH / BASE_WIDTH;
+  return Math.round(size * Math.min(Math.max(scale, 0.8), 1.2));
+};
+
+// Bottom safe area inset for home indicator (iPhone X+)
+const BOTTOM_INSET = Platform.OS === 'ios' && SCREEN_HEIGHT >= 812 ? 34 : 0;
 
 import EndStreamModal from './EndStreamModal';
 import MonthlyLimitModal from './MonthlyLimitModal';
@@ -581,11 +603,13 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         streamTitle: streamTitle || t('streaming.defaultTitle'),
         subcategoriesTags: subcategoriesTags || [],
         parentCategory: parentCategory || '',
-        // Include boost data if available
+        // Include boost data if available so backend can verify the purchase
+        // and skip limit enforcement for this user.
         ...(boostData && {
           boostTier: boostData.tier,
           boostDuration: boostData.duration,
           boostTransactionId: boostData.transactionId,
+          boostPurchaseTime: boostData.purchaseTime,
         }),
         // Include venue tag if available
         ...(venueTag && {
@@ -607,7 +631,13 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       }
     } catch (error) {
       console.log('from error side', error);
-      if (error?.data?.code === 'MONTHLY_LIMIT_REACHED') {
+      // CRITICAL (Issue 2): If the user has just purchased minutes (boostData is
+      // present), do NOT re-set the limit flags. The backend may still return a
+      // limit error if the boost hasn't fully propagated yet, but the purchase
+      // receipt is valid and the user should be allowed to proceed.
+      if (boostData) {
+        console.log('⏩ Ignoring limit error — user has active boostData:', boostData.tier);
+      } else if (error?.data?.code === 'MONTHLY_LIMIT_REACHED') {
         setIsMonthlyLimitReached(true);
       } else if (error?.data?.code === 'FREE_STREAMING_LIMIT_REACHED') {
         setIsWeeklyLimitReached(true);
@@ -960,12 +990,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           ]}
           disabled={isMonthlyLimitReached}
           onPress={() => {
-            // if (isStreaming) {
-            //   handleClosePress(); // Show confirmation modal
-            // } else {
-            //   startStreaming();
-            if (!isMonthlyLimitReached) {
-              startStreaming();
+            if (isStreaming) {
+              handleClosePress(); // Show confirmation modal
+            } else {
+              if (!isMonthlyLimitReached) {
+                startStreaming();
+              }
             }
           }}>
           <CommonMaterialCommunityIcons name="bullseye" size={24} color={colors.text} style={{marginRight: 8}} />
@@ -1071,7 +1101,6 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   );
 }
 
-const {width} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -1088,9 +1117,9 @@ const styles = StyleSheet.create({
   },
   header: {
     position: 'absolute',
-    top: 10,
-    left: 20,
-    right: 20,
+    top: sh(10),
+    left: sw(20),
+    right: sw(20),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1108,51 +1137,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#EF4444',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: sw(8),
+    paddingVertical: sh(4),
     borderRadius: 16,
-    marginRight: 8,
+    marginRight: sw(8),
   },
   liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: sw(6),
+    height: sw(6),
+    borderRadius: sw(3),
     backgroundColor: colors.text,
-    marginRight: 4,
+    marginRight: sw(4),
   },
   liveText: {
     color: colors.text,
-    fontSize: 12,
+    fontSize: sf(12),
     fontWeight: 'bold',
   },
   viewerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.controls,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: sw(12),
+    paddingVertical: sh(6),
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
   },
   viewerCount: {
     color: colors.text,
-    fontSize: 12,
+    fontSize: sf(12),
     fontWeight: '600',
   },
   timer: {
     color: colors.text,
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '700',
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: sw(36),
+    height: sw(36),
+    borderRadius: sw(18),
     backgroundColor: colors.controls,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 16,
+    marginLeft: sw(16),
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -1188,14 +1217,14 @@ const styles = StyleSheet.create({
   },
   controlPanel: {
     position: 'absolute',
-    bottom: 40,
-    left: 20,
-    right: 20,
+    bottom: sh(40),
+    left: sw(20),
+    right: sw(20),
     zIndex: 1,
   },
   streamButton: {
     width: '100%',
-    height: 56,
+    height: sh(56),
     borderRadius: 16,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1209,49 +1238,49 @@ const styles = StyleSheet.create({
   },
   streamButtonText: {
     color: colors.text,
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '800',
   },
   locationPillContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   locationPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.controls,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(8),
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
   },
   locationDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: sw(6),
+    height: sw(6),
+    borderRadius: sw(3),
     backgroundColor: '#EF4444',
-    marginRight: 8,
+    marginRight: sw(8),
   },
   locationText: {
     color: colors.text,
-    fontSize: 13,
+    fontSize: sf(13),
     fontWeight: '600',
   },
   sideControls: {
     position: 'absolute',
-    right: 20,
-    top: '30%',
+    right: sw(20),
+    top: SCREEN_HEIGHT * 0.3,
     zIndex: 1,
   },
   controlButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: sw(48),
+    height: sw(48),
+    borderRadius: sw(24),
     backgroundColor: colors.controls,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: sh(16),
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -1273,8 +1302,8 @@ const styles = StyleSheet.create({
   },
   warningContainer: {
     backgroundColor: '#1F2937',
-    margin: 20,
-    padding: 20,
+    margin: sw(20),
+    padding: sw(20),
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#F59E0B',
@@ -1289,39 +1318,39 @@ const styles = StyleSheet.create({
   },
   warningTitle: {
     color: '#F59E0B',
-    fontSize: 18,
+    fontSize: sf(18),
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: sh(12),
   },
   warningMessage: {
     color: 'white',
-    fontSize: 16,
+    fontSize: sf(16),
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 20,
+    lineHeight: sh(24),
+    marginBottom: sh(20),
   },
   warningActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: sw(12),
   },
   boostWarningButton: {
     flex: 1,
     backgroundColor: '#FFD700',
-    paddingVertical: 12,
+    paddingVertical: sh(12),
     borderRadius: 8,
     alignItems: 'center',
   },
   boostWarningButtonText: {
     color: '#000',
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: 'bold',
   },
   continueWarningButton: {
     flex: 1,
     backgroundColor: 'transparent',
-    paddingVertical: 12,
+    paddingVertical: sh(12),
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
@@ -1329,7 +1358,7 @@ const styles = StyleSheet.create({
   },
   continueWarningButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '500',
   },
 });
