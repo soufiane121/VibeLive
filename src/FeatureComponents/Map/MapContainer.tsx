@@ -374,7 +374,13 @@ const MapContainer = () => {
 
     const handleAddToMap = (data: any) => {
       console.log({data}, 'add-to-map');
-      setFeaturesPointsData(prevState => [...prevState, data?.data?.mapItem]);
+      setFeaturesPointsData(prevState => {
+        // Remove any existing feature with the same ID to prevent duplicates
+        const filtered = prevState.filter(
+          feature => feature.properties?.id !== data?.data?.mapItem?.properties?.id
+        );
+        return [...filtered, data?.data?.mapItem];
+      });
     };
     const handleUpdateUser = (data: any) => {
       console.log('socket new user', {data});

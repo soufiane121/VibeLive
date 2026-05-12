@@ -900,6 +900,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
                 smoothSkinEnable={false} // Disable beauty filters for speed
                 videoPreviewMirror={false} // No mirror for streaming
                 audioEnable={isMuted ? false : true} // Ensure audio capture
+                volume={isMuted ? 0.0 : 1.0} // Control microphone mute state
                 videoEnable={true} // Ensure video capture
                 lowLatencyMode={true} // Enable low latency mode if available
                 onStatus={(status: any) => {
@@ -1109,7 +1110,7 @@ const styles = StyleSheet.create({
   },
   overlayWrapper: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
+    zIndex: 3, // Increased to 3 to sit above ChatList (zIndex: 2)
   },
   overlayInner: {
     flex: 1,
@@ -1283,6 +1284,7 @@ const styles = StyleSheet.create({
     marginBottom: sh(16),
     borderWidth: 1,
     borderColor: colors.border,
+    zIndex: 9999,
   },
   controlButtonActive: {
     backgroundColor: colors.controlsActive,

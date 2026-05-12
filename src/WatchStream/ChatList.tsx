@@ -65,7 +65,8 @@ const ChatList = (props: Props) => {
 
       const newMessage = {
         id: Date.now().toString(),
-        avatar: 'https://via.placeholder.com/40',
+        avatar: props?.currentUser?.avatar || 'https://via.placeholder.com/40',
+        user: props?.currentUser?.userName || props?.currentUser?.firstName || 'Guest',
         message: inputText,
         fadeAnim,
       };
@@ -151,14 +152,34 @@ const ChatList = (props: Props) => {
     };
   }, [socket, props?.streamId]);
 
+  const getUserColor = (username: string) => {
+    if (!username) return colors.userColors?.[0] || '#FFF';
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+      hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % (colors.userColors?.length || 1);
+    return colors.userColors?.[index] || '#FFF';
+  };
+
   const renderItem = ({ item }) => {
+    const isPlaceholder = !item?.avatar || item.avatar.includes('via.placeholder.com') || item.avatar.includes('unsplash.com/photo-1472457897821');
+    const initial = (item?.user || 'G').charAt(0).toUpperCase();
+    const userColor = getUserColor(item?.user);
+
     return (
       <Animated.View
         style={[styles.messageContainer, { opacity: item?.fadeAnim }]}
-        key={item?.id + JSON.stringify(new Date())}>
-        <Image source={{ uri: item?.avatar }} style={styles.avatar} />
+        key={item?.id}>
+        {isPlaceholder ? (
+          <View style={[styles.avatarFallback, { backgroundColor: userColor }]}>
+            <Text style={styles.avatarInitial}>{initial}</Text>
+          </View>
+        ) : (
+          <Image source={{ uri: item?.avatar }} style={styles.avatar} />
+        )}
         <View style={styles.messageContent}>
-          <Text style={styles.userName}>{item?.user}</Text>
+          <Text style={[styles.userName, { color: userColor }]}>{item?.user}</Text>
           <Text style={styles.messageText}>{item?.message}</Text>
         </View>
       </Animated.View>
@@ -229,27 +250,42 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginVertical: 4,
     paddingHorizontal: 10,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 8,
+  },
+  avatarFallback: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarInitial: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   messageContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.messageBackground,
-    borderRadius: 10,
-    padding: 10,
-    flex: 1,
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    flexWrap: 'wrap',
   },
   userName: {
-    color: colors.userName,
-    fontWeight: 'bold',
-    fontSize: 14,
-    marginBottom: 2,
+    fontWeight: '700',
+    fontSize: 13,
+    marginRight: 6,
   },
   messageText: {
     color: colors.messageText,

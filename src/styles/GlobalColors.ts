@@ -407,21 +407,26 @@ export const GlobalColors = {
   // Chat List
   ChatList: {
     background: 'transparent',
-    messageBackground: 'rgba(30, 30, 30, 0.8)',
-    messageText: baseColors.mutedWhite,
-    messageTime: baseColors.mutedWhite,
-    userName: baseColors.white,
-    usernameModerator: baseColors.gold,
-    usernameVIP: baseColors.deepPink,
-    usernameRegular: baseColors.cyan,
-    inputBackground: 'rgba(30, 30, 30, 0.9)',
-    inputText: baseColors.white,
-    inputPlaceholder: baseColors.mutedWhite,
-    sendIcon: baseColors.mutedGray,
-    reactionBackground: 'rgba(95,103,111, 0.5)',
-    reactionIcon: baseColors.offWhite,
+    messageBackground: 'rgba(0, 0, 0, 0.5)', // Match screenshot pill style
+    messageText: premiumDark.primaryText,
+    messageTime: premiumDark.secondaryText,
+    userName: premiumDark.primaryText,
+    inputBackground: 'rgba(0, 0, 0, 0.5)',
+    inputText: premiumDark.primaryText,
+    inputPlaceholder: premiumDark.secondaryText,
+    sendIcon: premiumDark.primaryText,
+    reactionBackground: 'rgba(0, 0, 0, 0.5)',
+    reactionIcon: premiumDark.primaryText,
     emojiReaction: baseColors.warning,
-    border: baseColors.mediumGray,
+    border: premiumDark.primaryBorder,
+    userColors: [
+      premiumDark.hotPrimary, // Orange/Red
+      baseColors.warning, // Yellow
+      premiumDark.accentPrimary, // Blue
+      premiumDark.successPrimary, // Green
+      baseColors.deepPink,
+      baseColors.purple
+    ],
   },
 
   // Bottom Navigation
