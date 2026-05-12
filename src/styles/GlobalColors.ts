@@ -566,19 +566,19 @@ export const GlobalColors = {
   StreamPlayer: {
     background: 'transparent',
     headerBackground: 'transparent',
-    userInfoBackground: 'rgba(136, 48, 78, 0.3)',
-    liveInfoBackground: 'rgba(95,103,111, 0.2)',
-    followBackground: 'rgba(136, 48, 78, 0.8)',
-    liveBackground: baseColors.error, // Red for live indicator
-    text: baseColors.white_ivory, // #CFD6DF
-    titleText: baseColors.offWhite,
-    userName: baseColors.offWhite,
-    countText: baseColors.offWhite,
-    followText: baseColors.offWhite,
-    liveText: baseColors.white,
-    closeIcon: baseColors.white,
-    eyeIcon: baseColors.offWhite,
-    border: 'transparent',
+    userInfoBackground: 'rgba(0,0,0,0.4)',
+    liveInfoBackground: 'rgba(0,0,0,0.4)',
+    followBackground: premiumDark.accentPrimary,
+    liveBackground: premiumDark.hotPrimary,
+    text: premiumDark.primaryText,
+    titleText: premiumDark.secondaryText,
+    userName: premiumDark.primaryText,
+    countText: premiumDark.primaryText,
+    followText: '#FFFFFF',
+    liveText: '#FFFFFF',
+    closeIcon: premiumDark.primaryText,
+    eyeIcon: premiumDark.primaryText,
+    border: premiumDark.primaryBorder,
   },
   ModalBottom: {
     // Background and surfaces

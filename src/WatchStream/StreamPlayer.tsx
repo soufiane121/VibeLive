@@ -194,6 +194,10 @@ const StreamPlayer = (props: Props) => {
         }
         socket.off('stream-counts', handleStreamCounts);
         socket.off('stream-stopped', handleStreamStopped);
+        socket.emit('leave-stream', {
+          streamId: streamId,
+          streamerId: userId,
+        });
       };
     }
   }, [socket]);
@@ -261,65 +265,57 @@ const StreamPlayer = (props: Props) => {
       <SafeAreaView style={styles.safeHeaderArea}>
         <View style={styles.headerContainer}>
           <View style={styles.headerSubContainer}>
-            <View style={styles.userInfoContainer}>
-              <Image
-                src={`https://images.unsplash.com/photo-1472457897821-70d3819a0e24?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`}
-                style={styles.avatar}
-              />
-              <Text style={styles.userName}>User Name</Text>
-              <TouchableWithoutFeedback onPress={e => handleFollowAndUnfollow(e)}>
-                <View style={styles.followContainer}>
-                  {areYouFollowing ? (
-                    <Text style={styles.followText} key={'unfollow'}>
-                      Unfollow
-                    </Text>
-                  ) : (
-                    <Text style={styles.followText} key={'follow'}>
-                      +Follow
-                    </Text>
-                  )}
+            <View style={styles.leftHeaderGroup}>
+              <View style={styles.userInfoContainer}>
+                <View>
+                  <Image
+                    src={`https://images.unsplash.com/photo-1472457897821-70d3819a0e24?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`}
+                    style={styles.avatar}
+                  />
+                  <View style={styles.avatarBadge} />
+                </View>
+                <View style={styles.nameLocationGroup}>
+                  <Text style={styles.userName}>Alex Johnson</Text>
+                  {/* <View style={styles.locationRow}>
+                    <Text style={styles.locationIcon}>⚲</Text>
+                    <Text style={styles.locationText}>Charlotte, NC</Text>
+                  </View> */}
+                </View>
+                <TouchableWithoutFeedback onPress={e => handleFollowAndUnfollow(e)}>
+                  <View style={styles.followContainer}>
+                    {areYouFollowing ? (
+                      <Text style={styles.followText} key={'unfollow'}>
+                        Unfollow
+                      </Text>
+                    ) : (
+                      <Text style={styles.followText} key={'follow'}>
+                        Follow
+                      </Text>
+                    )}
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+              {/* <Text style={styles.durationText}>• 00:55</Text> */}
+            </View>
+
+            <View style={styles.rightHeaderGroup}>
+              <View style={styles.liveInfoContainer}>
+                <View style={styles.viewerRow}>
+                  <EyeViewsIcon style={styles.eyeIcon} />
+                  <Text style={styles.countNumber}>
+                    {formatToKSymbol(liveCount)}
+                  </Text>
+                </View>
+                <View style={styles.liveContainer}>
+                  <Text style={styles.live}>LIVE</Text>
+                </View>
+              </View>
+              <TouchableWithoutFeedback onPress={() => { console.log("go back"); goBack(); }}>
+                <View style={styles.closeContainer}>
+                  <CloseIcon style={styles.close} />
                 </View>
               </TouchableWithoutFeedback>
             </View>
-            <View
-              style={{
-                flex: 1,
-                overflow: 'hidden',
-                justifyContent: 'center',
-                alignItems: 'flex-start',
-                marginHorizontal: sw(8),
-              }}>
-              <Animated.Text
-                style={{
-                  color: colors.titleText,
-                  fontSize: sf(15),
-                  fontWeight: '500',
-                  width: titleTextWidth,
-                  transform: [{translateX: titleAnim}],
-                }}
-                numberOfLines={1}>
-                {liveDetails?.streamTitle || "DJ vibe from rooftop don't miss it"}
-              </Animated.Text>
-            </View>
-            <View style={styles.liveInfoContainer}>
-              <View style={styles.viewerRow}>
-                <EyeViewsIcon style={styles.eyeIcon} />
-                <Text style={styles.countNumber}>
-                  {formatToKSymbol(liveCount)}
-                </Text>
-              </View>
-              <View style={styles.liveContainer}>
-                <Text style={styles.live}>Live</Text>
-              </View>
-              {/* <Image source={live} style={styles.liveLogo} /> */}
-            </View>
-            <CloseIcon
-              style={styles.close}
-              onPress={() => {
-                console.log("go back");
-                goBack();
-              }}
-            />
           </View>
         </View>
       </SafeAreaView>
@@ -329,6 +325,7 @@ const StreamPlayer = (props: Props) => {
         source={{
           uri: `https://stream.mux.com/${streamId}.m3u8`,
         }}
+
         fullscreen={true}
         paused={false}
         resizeMode="contain"
@@ -411,87 +408,136 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-between',
   },
+  leftHeaderGroup: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  rightHeaderGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: sw(8),
+  },
   userInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.userInfoBackground,
-    borderRadius: 50,
+    backgroundColor: 'transparent', // removed background from container to match screenshot
+  },
+  avatarBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: sw(10),
+    height: sw(10),
+    borderRadius: sw(5),
+    backgroundColor: colors.liveBackground,
+    borderWidth: 1.5,
+    borderColor: '#000',
+  },
+  nameLocationGroup: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    marginLeft: sw(8),
+    marginRight: sw(8),
   },
   avatar: {
-    height: sw(30),
-    width: sw(30),
-    borderRadius: 50,
-    marginTop: sh(1),
+    height: sw(42),
+    width: sw(42),
+    borderRadius: sw(21),
   },
   userName: {
     color: colors.userName,
     fontSize: sf(14),
     fontWeight: '700',
-    paddingHorizontal: sw(2),
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: sh(2),
+  },
+  locationIcon: {
+    color: '#9CA3AF',
+    fontSize: sf(10),
+    marginRight: sw(2),
+  },
+  locationText: {
+    color: '#9CA3AF',
+    fontSize: sf(11),
+    fontWeight: '500',
+  },
+  durationText: {
+    color: colors.liveBackground,
+    fontSize: sf(11),
+    fontWeight: '600',
+    marginTop: sh(4),
+    marginLeft: sw(50),
   },
   liveInfoContainer: {
-    borderWidth: 2,
-    minWidth: sw(100),
-    maxWidth: sw(140),
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.liveInfoBackground,
-    borderRadius: 40,
+    justifyContent: 'center',
     flexDirection: 'row',
-    borderColor: colors.border,
+    gap: sw(8),
   },
   viewerRow: {
     flexDirection: 'row',
-    width: '50%',
     alignItems: 'center',
-    gap: 3,
+    backgroundColor: colors.liveInfoBackground,
+    paddingVertical: sh(4),
+    paddingHorizontal: sw(8),
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    gap: sw(4),
   },
+  closeContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    width: sw(32),
+    height: sw(32),
+    borderRadius: sw(16),
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  close: {
+    fontSize: sf(16),
+    color: colors.closeIcon,
+    fontWeight: '600',
+  },
+  followContainer: {
+    backgroundColor: colors.followBackground,
+    borderRadius: 20,
+    paddingVertical: sh(6),
+    paddingHorizontal: sw(14),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
   eyeIcon: {
-    fontSize: sf(25),
+    fontSize: sf(14),
     color: colors.eyeIcon,
-    fontWeight: 900,
+    fontWeight: '600',
   },
   countNumber: {
-    fontSize: sf(16),
-    fontWeight: 'bold',
+    fontSize: sf(13),
+    fontWeight: '600',
     color: colors.countText,
-    marginRight: sw(5),
   },
   liveContainer: {
     backgroundColor: colors.liveBackground,
-    color: colors.text,
-    width: '45%',
-    fontWeight: '700',
-    textAlign: 'center',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 20, // more rounded
-    marginLeft: sw(3),
+    borderRadius: 20,
     paddingVertical: sh(4),
-    paddingHorizontal: sw(4),
+    paddingHorizontal: sw(8),
   },
   live: {
-    color: 'white',
-    fontSize: sf(16),
-    fontWeight: '700',
+    color: colors.liveText,
+    fontSize: sf(11),
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   liveLogo: {
     // placeholder styles
-  },
-  close: {
-    fontSize: sf(23),
-    color: colors.closeIcon,
-    fontWeight: '800',
-  },
-
-  followContainer: {
-    backgroundColor: colors.followBackground,
-    borderRadius: 50,
-    paddingVertical: sh(4),
-    paddingHorizontal: sw(4),
-    marginLeft: sw(2),
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   followText: {
     color: colors.followText,
