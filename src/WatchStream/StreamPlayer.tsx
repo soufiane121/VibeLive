@@ -32,6 +32,7 @@ import {
   useRemoveFollowMutation,
 } from '../../features/LiveStream/LiveStream';
 import {setCurrentUser} from '../../features/registrations/CurrentUser';
+import useTranslation from '../Hooks/useTranslation';
 
 const colors = GlobalColors.StreamPlayer;
 
@@ -80,6 +81,7 @@ type Props = {
 };
 
 const StreamPlayer = (props: Props) => {
+  const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
   let alertTimeoutId = useRef<NodeJS.Timeout | null>(null);
 
@@ -242,9 +244,9 @@ const StreamPlayer = (props: Props) => {
           goBack();
         }}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Stream Ended</Text>
+          <Text style={styles.modalTitle}>{t('streaming.streamEnded', 'Stream Ended')}</Text>
           <Text style={styles.modalMessage}>
-            The live stream has been stopped by the broadcaster.
+            {t('streaming.streamStoppedMessage', 'The live stream has been stopped by the broadcaster.')}
           </Text>
           <TouchableWithoutFeedback
             onPress={() => {
@@ -255,7 +257,7 @@ const StreamPlayer = (props: Props) => {
               goBack();
             }}>
             <View style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>OK</Text>
+              <Text style={styles.modalButtonText}>{t('common.ok', 'OK')}</Text>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -275,7 +277,7 @@ const StreamPlayer = (props: Props) => {
                   <View style={styles.avatarBadge} />
                 </View>
                 <View style={styles.nameLocationGroup}>
-                  <Text style={styles.userName}>Alex Johnson</Text>
+                  <Text style={styles.userName}>{liveDetails?.userName || liveDetails?.streamTitle || t('streaming.anonymousUser', 'Alex Johnson')}</Text>
                   {/* <View style={styles.locationRow}>
                     <Text style={styles.locationIcon}>⚲</Text>
                     <Text style={styles.locationText}>Charlotte, NC</Text>
@@ -285,11 +287,11 @@ const StreamPlayer = (props: Props) => {
                   <View style={styles.followContainer}>
                     {areYouFollowing ? (
                       <Text style={styles.followText} key={'unfollow'}>
-                        Unfollow
+                        {t('common.unfollow', 'Unfollow')}
                       </Text>
                     ) : (
                       <Text style={styles.followText} key={'follow'}>
-                        Follow
+                        {t('common.follow', 'Follow')}
                       </Text>
                     )}
                   </View>
@@ -307,7 +309,7 @@ const StreamPlayer = (props: Props) => {
                   </Text>
                 </View>
                 <View style={styles.liveContainer}>
-                  <Text style={styles.live}>LIVE</Text>
+                  <Text style={styles.live}>{t('streaming.live', 'LIVE')}</Text>
                 </View>
               </View>
               <TouchableWithoutFeedback onPress={() => { console.log("go back"); goBack(); }}>
@@ -354,7 +356,7 @@ const StreamPlayer = (props: Props) => {
           data: {
             env_key: MAPBOX_ENV_KEY, // (required)
             video_id: streamId, // Use actual stream ID
-            video_title: liveDetails?.streamTitle || 'Live Stream',
+            video_title: liveDetails?.streamTitle || t('streaming.liveStream', 'Live Stream'),
             player_software_version: '6.0.0', // Updated version
             player_name: 'VibeLive Player', // See metadata docs for available metadata fields /docs/web-integration-guide#section-5-add-metadata
           },
