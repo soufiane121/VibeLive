@@ -19,7 +19,7 @@ import {
   LocationPuck,
   MarkerView,
 } from '@rnmapbox/maps';
-import {View, StyleSheet, Animated, Easing, Text, Linking, Platform} from 'react-native';
+import {View, StyleSheet, Animated, Easing, Text, Linking, Platform, useColorScheme} from 'react-native';
 import {point} from '@turf/helpers';
 import Supercluster from 'supercluster';
 import {debounce, throttle} from 'lodash';
@@ -248,6 +248,7 @@ const MapContainer = () => {
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
   const [featuresPointsData, setFeaturesPointsData] = useState<any[]>([]);
+  const isDarkMode = useColorScheme() === 'dark';
 
   // Fetch events for map
   const {data: eventsData} = useGetMapEventsQuery({
@@ -661,7 +662,7 @@ const MapContainer = () => {
             ref={mapRef}
             style={styles.map}
             onCameraChanged={handleRegionChange}
-            styleURL="mapbox://styles/test-121/cmmi3vwu8000901qp6q0554cd" // original dark mode map"mapbox://styles/mapbox/dark-v11"
+            styleURL={isDarkMode ? "mapbox://styles/test-121/cmmi3vwu8000901qp6q0554cd" :  "mapbox://styles/test-121/cmpa0v9sb007r01s8djrbawri"} // original dark mode map"mapbox://styles/mapbox/dark-v11"
             scaleBarEnabled={false}
             logoEnabled={false}>
             <Camera

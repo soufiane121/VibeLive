@@ -75,9 +75,9 @@ baseColors.deepBlack = baseColors.newBackGroundColor;
 
 
 if (isDarkMode) {
-  premiumDark = premiumColors.light;
-} else {
   premiumDark = premiumColors.dark;
+} else {
+  premiumDark = premiumColors.light;
 }
 
 
@@ -116,6 +116,16 @@ export interface ColorScheme {
 export const GlobalColors = {
   VenueSelectionScreen: {
     background: 'red',
+  },
+  // Map Heatmap Colors
+  Heatmap: {
+    coldest: premiumDark.heatmap.coldest,
+    cold: premiumDark.heatmap.cold,
+    neutral: premiumDark.heatmap.neutral,
+    warm: premiumDark.heatmap.warm,
+    hot: premiumDark.heatmap.hot,
+    boostBorder: premiumDark.hotPrimary,
+    ring: premiumDark.heatmap.ring,
   },
   // Events List Screen
   EventsListScreen: {

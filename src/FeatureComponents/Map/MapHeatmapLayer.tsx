@@ -1,6 +1,7 @@
 import React, {useMemo} from 'react';
 import {CircleLayer, ShapeSource} from '@rnmapbox/maps';
 import {VenueData} from '../../../features/voting/VotingApi';
+import GlobalColors from '../../styles/GlobalColors';
 
 interface MapHeatmapLayerProps {
   onVenuePress: (venue: VenueData) => void;
@@ -86,19 +87,15 @@ const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
             ['linear'],
             ['get', 'vibeScore'],
             -100,
-            '#8CABFF',
+            GlobalColors.Heatmap.coldest,
             -50,
-            '#A0BAFF',
-            -10,
-            '#B8CCFF',
+            GlobalColors.Heatmap.cold,
             0,
-            '#555555',
-            10,
-            '#7055b9',
+            GlobalColors.Heatmap.neutral,
             50,
-            '#6e51bd',
+            GlobalColors.Heatmap.warm,
             100,
-            '#6C4FBB',
+            GlobalColors.Heatmap.hot,
           ],
           circleOpacity: [
             'interpolate',
@@ -138,19 +135,15 @@ const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
             ['linear'],
             ['get', 'vibeScore'],
             -100,
-            '#8CABFF',
+            GlobalColors.Heatmap.coldest,
             -50,
-            '#9AB5FF',
-            -10,
-            '#AABFFF',
+            GlobalColors.Heatmap.cold,
             0,
-            '#666666',
-            10,
-            '#7055b9',
+            GlobalColors.Heatmap.neutral,
             50,
-            '#6e51bd',
+            GlobalColors.Heatmap.warm,
             100,
-            '#6C4FBB',
+            GlobalColors.Heatmap.hot,
           ],
           circleOpacity: [
             'interpolate',
@@ -190,15 +183,15 @@ const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
             ['linear'],
             ['get', 'vibeScore'],
             -100,
-            '#8CABFF',
+            GlobalColors.Heatmap.coldest,
             -40,
-            '#9AB5FF',
+            GlobalColors.Heatmap.cold,
             0,
-            '#777777',
+            GlobalColors.Heatmap.neutral,
             40,
-            '#7055b9',
+            GlobalColors.Heatmap.warm,
             100,
-            '#6C4FBB',
+            GlobalColors.Heatmap.hot,
           ],
           circleOpacity: [
             'interpolate',
@@ -219,12 +212,7 @@ const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
             2,
             0.5,
           ],
-          circleStrokeColor: [
-            'case',
-            ['==', ['get', 'isBoostedValue'], 1],
-            '#D4AF37',
-            'rgba(255,255,255,0.3)',
-          ],
+          circleStrokeColor: GlobalColors.Heatmap.ring,
         }}
       />
     </ShapeSource>
