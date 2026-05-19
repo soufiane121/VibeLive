@@ -1,9 +1,12 @@
 import {
   Alert,
   Animated,
+  Dimensions,
   Easing,
   Image,
+  Platform,
   SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   Touchable,
@@ -29,8 +32,36 @@ import {
   useRemoveFollowMutation,
 } from '../../features/LiveStream/LiveStream';
 import {setCurrentUser} from '../../features/registrations/CurrentUser';
+import useTranslation from '../Hooks/useTranslation';
 
 const colors = GlobalColors.StreamPlayer;
+
+// ─────────────────────────────────────────────────────────────
+// Responsive helpers — scale values relative to a baseline
+// iPhone 14 Pro (393 × 852) is the design baseline.
+// ─────────────────────────────────────────────────────────────
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const BASE_WIDTH = 393;
+const BASE_HEIGHT = 852;
+
+/** Scale a value horizontally (width-relative) */
+const sw = (size: number) => (SCREEN_WIDTH / BASE_WIDTH) * size;
+/** Scale a value vertically (height-relative) */
+const sh = (size: number) => (SCREEN_HEIGHT / BASE_HEIGHT) * size;
+/** Scale font sizes — clamped between 80% and 120% of original */
+const sf = (size: number) => {
+  const scale = SCREEN_WIDTH / BASE_WIDTH;
+  return Math.round(size * Math.min(Math.max(scale, 0.8), 1.2));
+};
+
+// Status bar height for iOS (varies by device)
+const STATUS_BAR_HEIGHT =
+  Platform.OS === 'ios'
+    ? // iPhone X+ / Dynamic Island devices have ≥ 44pt status bar
+      SCREEN_HEIGHT >= 812
+      ? 50
+      : 20
+    : StatusBar.currentHeight || 0;
 
 type NavigationData = {
   properties?: {
@@ -50,6 +81,7 @@ type Props = {
 };
 
 const StreamPlayer = (props: Props) => {
+  const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
   let alertTimeoutId = useRef<NodeJS.Timeout | null>(null);
 
@@ -95,8 +127,8 @@ const StreamPlayer = (props: Props) => {
   const {goBack, dispatch: navigationDispatch} = useNavigation();
   const [areYouFollowing, setAreYouFollowing] = useState(amIfollowing);
   const [titleAnim] = useState(new Animated.Value(0));
-  const titleContainerWidth = 100; // Adjust as needed
-  const titleTextWidth = 260; // Adjust as needed for longest expected title
+  const titleContainerWidth = sw(100); // responsive
+  const titleTextWidth = sw(260); // responsive
 
   useEffect(() => {
     titleAnim.setValue(titleContainerWidth);
@@ -112,6 +144,36 @@ const StreamPlayer = (props: Props) => {
 
   useEffect(() => {
     if (socket) {
+      // ── Named handlers so we can reliably remove them ──
+      const handleStreamCounts = (data: any) => {
+        console.log({data: data.data.liveDetails}, 'streamCount');
+        setLiveCount(+data.data.liveDetails.liveViewrsCount);
+      };
+
+      const handleStreamStopped = (data: any) => {
+        console.log('stream-stopped', {data});
+
+        // Match on EITHER playbackId OR streamId so both normal-stop
+        // (which includes playbackId) and disconnect-stop (which now also
+        // includes playbackId) are caught.
+        const matchesPlayback =
+          data?.playbackId && data?.playbackId === streamId;
+        const matchesStream =
+          data?.streamId && data?.streamId === streamId;
+
+        if (matchesPlayback || matchesStream) {
+          if (alertTimeoutId.current) {
+            clearTimeout(alertTimeoutId.current);
+          }
+          setModalVisible(true);
+
+          alertTimeoutId.current = setTimeout(() => {
+            setModalVisible(false);
+            goBack();
+          }, 9000); // 9 seconds
+        }
+      };
+
       socket?.emit(
         'start-watching-live',
         {
@@ -122,35 +184,24 @@ const StreamPlayer = (props: Props) => {
           setLiveCount(+data?.liveDetails?.liveViewrsCount);
         },
       );
-      socket?.on('stream-counts', data => {
-        console.log({data: data.data.liveDetails}, 'streamCount');
-        setLiveCount(+data.data.liveDetails.liveViewrsCount);
-      });
-      socket?.on('stream-stopped', data => {
-        console.log('stream-stopped', {data});
-        
-        if (data?.playbackId && data?.playbackId === streamId) {
-          if (alertTimeoutId.current) {
-            clearTimeout(alertTimeoutId.current);
-          }
-          setModalVisible(true);
 
-          alertTimeoutId.current = setTimeout(() => {
-            setModalVisible(false);
-            goBack();
-          }, 9000); // 5000ms = 5 seconds
+      socket.on('stream-counts', handleStreamCounts);
+      socket.on('stream-stopped', handleStreamStopped);
+
+      // CRITICAL: Clean up listeners on unmount / socket change to prevent
+      // listener accumulation on reconnection.
+      return () => {
+        if (alertTimeoutId.current) {
+          clearTimeout(alertTimeoutId.current);
         }
-      });
+        socket.off('stream-counts', handleStreamCounts);
+        socket.off('stream-stopped', handleStreamStopped);
+        socket.emit('leave-stream', {
+          streamId: streamId,
+          streamerId: userId,
+        });
+      };
     }
-    return () => {
-      if (alertTimeoutId.current) {
-        clearTimeout(alertTimeoutId.current);
-      }
-    };
-    // return () => {
-    //   socket?.off('stream-counts');
-    //   socket?.off('stream-stopped');
-    // };
   }, [socket]);
 
   const handleFollowAndUnfollow = async (e: any) => {
@@ -193,9 +244,9 @@ const StreamPlayer = (props: Props) => {
           goBack();
         }}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Stream Ended</Text>
+          <Text style={styles.modalTitle}>{t('streaming.streamEnded', 'Stream Ended')}</Text>
           <Text style={styles.modalMessage}>
-            The live stream has been stopped by the broadcaster.
+            {t('streaming.streamStoppedMessage', 'The live stream has been stopped by the broadcaster.')}
           </Text>
           <TouchableWithoutFeedback
             onPress={() => {
@@ -206,85 +257,77 @@ const StreamPlayer = (props: Props) => {
               goBack();
             }}>
             <View style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>OK</Text>
+              <Text style={styles.modalButtonText}>{t('common.ok', 'OK')}</Text>
             </View>
           </TouchableWithoutFeedback>
         </View>
       </BottomModal>
-      {/* <SafeAreaView style={styles.safeHeaderArea}> */}
-      <View style={styles.headerContainer}>
-        <View style={styles.headerSubContainer}>
-          <View style={styles.userInfoContainer}>
-            <Image
-              src={`https://images.unsplash.com/photo-1472457897821-70d3819a0e24?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`}
-              style={styles.avatar}
-            />
-            <Text style={styles.userName}>User Name</Text>
-            <TouchableWithoutFeedback onPress={e => handleFollowAndUnfollow(e)}>
-              <View style={styles.followContainer}>
-                {areYouFollowing ? (
-                  <Text style={styles.followText} key={'unfollow'}>
-                    Unfollow
-                  </Text>
-                ) : (
-                  <Text style={styles.followText} key={'follow'}>
-                    +Follow
-                  </Text>
-                )}
+
+      {/* Header — wrapped in SafeAreaView for notch / Dynamic Island */}
+      <SafeAreaView style={styles.safeHeaderArea}>
+        <View style={styles.headerContainer}>
+          <View style={styles.headerSubContainer}>
+            <View style={styles.leftHeaderGroup}>
+              <View style={styles.userInfoContainer}>
+                <View>
+                  <Image
+                    src={`https://images.unsplash.com/photo-1472457897821-70d3819a0e24?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`}
+                    style={styles.avatar}
+                  />
+                  <View style={styles.avatarBadge} />
+                </View>
+                <View style={styles.nameLocationGroup}>
+                  <Text style={styles.userName}>{liveDetails?.userName || liveDetails?.streamTitle || t('streaming.anonymousUser', 'Alex Johnson')}</Text>
+                  {/* <View style={styles.locationRow}>
+                    <Text style={styles.locationIcon}>⚲</Text>
+                    <Text style={styles.locationText}>Charlotte, NC</Text>
+                  </View> */}
+                </View>
+                <TouchableWithoutFeedback onPress={e => handleFollowAndUnfollow(e)}>
+                  <View style={styles.followContainer}>
+                    {areYouFollowing ? (
+                      <Text style={styles.followText} key={'unfollow'}>
+                        {t('common.unfollow', 'Unfollow')}
+                      </Text>
+                    ) : (
+                      <Text style={styles.followText} key={'follow'}>
+                        {t('common.follow', 'Follow')}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableWithoutFeedback>
               </View>
-            </TouchableWithoutFeedback>
-          </View>
-          <View
-            style={{
-              width: titleContainerWidth,
-              overflow: 'hidden',
-              justifyContent: 'center',
-              alignItems: 'flex-start',
-            }}>
-            <Animated.Text
-              style={{
-                color: colors.titleText,
-                fontSize: 15,
-                fontWeight: '500',
-                width: titleTextWidth,
-                transform: [{translateX: titleAnim}],
-              }}
-              numberOfLines={1}>
-              {liveDetails?.streamTitle || "DJ vibe from rooftop don't miss it"}
-            </Animated.Text>
-          </View>
-          <View style={styles.liveInfoContainer}>
-            <View
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                width: '50%',
-                alignItems: 'center',
-                gap: 3,
-              }}>
-              <EyeViewsIcon style={styles.eyeIcon} />
-              <Text style={styles.countNumber}>
-                {formatToKSymbol(liveCount)}
-              </Text>
+              {/* <Text style={styles.durationText}>• 00:55</Text> */}
             </View>
-            <View style={styles.liveContainer}>
-              <Text style={styles.live}>Live</Text>
+
+            <View style={styles.rightHeaderGroup}>
+              <View style={styles.liveInfoContainer}>
+                <View style={styles.viewerRow}>
+                  <EyeViewsIcon style={styles.eyeIcon} />
+                  <Text style={styles.countNumber}>
+                    {formatToKSymbol(liveCount)}
+                  </Text>
+                </View>
+                <View style={styles.liveContainer}>
+                  <Text style={styles.live}>{t('streaming.live', 'LIVE')}</Text>
+                </View>
+              </View>
+              <TouchableWithoutFeedback onPress={() => { console.log("go back"); goBack(); }}>
+                <View style={styles.closeContainer}>
+                  <CloseIcon style={styles.close} />
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-            {/* <Image source={live} style={styles.liveLogo} /> */}
           </View>
-          <CloseIcon
-            style={styles.close}
-            onPress={() => {
-              goBack();
-            }}
-          />
         </View>
-      </View>
+      </SafeAreaView>
+
       <MuxVideo
         style={styles.muxVideo}
         source={{
           uri: `https://stream.mux.com/${streamId}.m3u8`,
         }}
+
         fullscreen={true}
         paused={false}
         resizeMode="contain"
@@ -313,7 +356,7 @@ const StreamPlayer = (props: Props) => {
           data: {
             env_key: MAPBOX_ENV_KEY, // (required)
             video_id: streamId, // Use actual stream ID
-            video_title: liveDetails?.streamTitle || 'Live Stream',
+            video_title: liveDetails?.streamTitle || t('streaming.liveStream', 'Live Stream'),
             player_software_version: '6.0.0', // Updated version
             player_name: 'VibeLive Player', // See metadata docs for available metadata fields /docs/web-integration-guide#section-5-add-metadata
           },
@@ -326,6 +369,7 @@ const StreamPlayer = (props: Props) => {
         liveDetails={liveDetails || props?.liveDetails}
         coordinates={coordinates || props?.coordinates}
         parentGroupStreamId={props?.parentGroupStreamId}
+        currentUser={currentUser}
       />
       {/* </SafeAreaView> */}
     </>
@@ -344,131 +388,162 @@ const styles = StyleSheet.create({
     // transform: [{rotate: '0deg'}, {scaleX: 1}],
   },
   safeHeaderArea: {
-    // backgroundColor: 'black',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 3,
   },
   headerContainer: {
-    position: 'absolute',
-    marginTop: '8%',
-    zIndex: 2,
-    // display: 'flex',
-    height: '6.5%',
-    // backgroundColor: 'black',
+    zIndex: 3,
+    height: sh(52),
     backgroundColor: colors.headerBackground,
-    display: 'flex',
     justifyContent: 'space-between',
     flexDirection: 'row',
     alignItems: 'center',
-    // paddingLeft: '3%',
-    paddingTop: '4%',
+    paddingTop: sh(4),
+    paddingHorizontal: sw(4),
   },
   headerSubContainer: {
-    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
     justifyContent: 'space-between',
   },
-  userInfoContainer: {
-    display: 'flex',
+  leftHeaderGroup: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  rightHeaderGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    // width: '62%',
-    backgroundColor: colors.userInfoBackground,
-    borderRadius: 50,
+    gap: sw(8),
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent', // removed background from container to match screenshot
+  },
+  avatarBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: sw(10),
+    height: sw(10),
+    borderRadius: sw(5),
+    backgroundColor: colors.liveBackground,
+    borderWidth: 1.5,
+    borderColor: '#000',
+  },
+  nameLocationGroup: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    marginLeft: sw(8),
+    marginRight: sw(8),
   },
   avatar: {
-    height: 30,
-    width: 30,
-    borderRadius: 50,
-    marginTop: '1%',
+    height: sw(42),
+    width: sw(42),
+    borderRadius: sw(21),
   },
   userName: {
     color: colors.userName,
-    fontSize: 14,
-    // marginLeft: '3%',
+    fontSize: sf(14),
     fontWeight: '700',
-    paddingHorizontal: 1,
-    // fontFamily: '800',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: sh(2),
+  },
+  locationIcon: {
+    color: '#9CA3AF',
+    fontSize: sf(10),
+    marginRight: sw(2),
+  },
+  locationText: {
+    color: '#9CA3AF',
+    fontSize: sf(11),
+    fontWeight: '500',
+  },
+  durationText: {
+    color: colors.liveBackground,
+    fontSize: sf(11),
+    fontWeight: '600',
+    marginTop: sh(4),
+    marginLeft: sw(50),
   },
   liveInfoContainer: {
-    borderWidth: 2,
-    minWidth: '29%',
-    maxWidth: '37%',
-    width: '30%',
-    display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.liveInfoBackground,
-    borderRadius: 40,
+    justifyContent: 'center',
     flexDirection: 'row',
-    // gap: '2%',
-    // paddingHorizontal: 4,
-    borderColor: colors.border,
+    gap: sw(8),
   },
+  viewerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.liveInfoBackground,
+    paddingVertical: sh(4),
+    paddingHorizontal: sw(8),
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    gap: sw(4),
+  },
+  closeContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    width: sw(32),
+    height: sw(32),
+    borderRadius: sw(16),
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  close: {
+    fontSize: sf(16),
+    color: colors.closeIcon,
+    fontWeight: '600',
+  },
+  followContainer: {
+    backgroundColor: colors.followBackground,
+    borderRadius: 20,
+    paddingVertical: sh(6),
+    paddingHorizontal: sw(14),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
   eyeIcon: {
-    fontSize: 25,
+    fontSize: sf(14),
     color: colors.eyeIcon,
-    fontWeight: 900,
+    fontWeight: '600',
   },
   countNumber: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: sf(13),
+    fontWeight: '600',
     color: colors.countText,
-    marginRight: '5%',
   },
   liveContainer: {
     backgroundColor: colors.liveBackground,
-    color: colors.text,
-    width: '45%',
-    // fontSize: 17,
-    fontWeight: '700',
-    textAlign: 'center',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 20, // more rounded
-    marginLeft: '3%',
-    paddingVertical: 4,
-    paddingHorizontal: 4,
+    borderRadius: 20,
+    paddingVertical: sh(4),
+    paddingHorizontal: sw(8),
   },
   live: {
-    // backgroundColor: 'red',
-    color: 'white',
-    // width: '35%',
-    fontSize: 16,
-    fontWeight: '700',
-    // textAlign: 'center',
-    // paddingHorizontal: 4,
-    // borderRadius: 90,
-    // marginLeft: '3%',
-    // height: "9%"
+    color: colors.liveText,
+    fontSize: sf(11),
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   liveLogo: {
-    // width: '40%',
-    // height: '45%',
-    // borderRadius: 2,
-    // resizeMode: 'center',
-    // position: 'static',
-    // marginTop: "50%",
-    // zIndex: 4,
-  },
-  close: {
-    fontSize: 23,
-    color: colors.closeIcon,
-    fontWeight: '800',
-  },
-
-  followContainer: {
-    backgroundColor: colors.followBackground,
-    borderRadius: 50,
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-    marginLeft: '1%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    // placeholder styles
   },
   followText: {
     color: colors.followText,
-    fontSize: 14,
+    fontSize: sf(14),
     fontWeight: '600',
   },
   modalContent: {
@@ -477,29 +552,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: sh(12),
   },
   modalMessage: {
-    fontSize: 16,
+    fontSize: sf(16),
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: sh(24),
     opacity: 0.8,
   },
   modalButton: {
     backgroundColor: colors.followBackground,
-    paddingHorizontal: 32,
-    paddingVertical: 12,
+    paddingHorizontal: sw(32),
+    paddingVertical: sh(12),
     borderRadius: 25,
-    minWidth: 100,
+    minWidth: sw(100),
     alignItems: 'center',
   },
   modalButtonText: {
     color: colors.followText,
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '600',
   },
 });

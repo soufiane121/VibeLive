@@ -12,6 +12,7 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useCastVoteMutation} from '../../../features/voting/VotingApi';
 import {premiumColors} from '../../styles/premuimColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const data = [
   {
@@ -115,6 +116,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: 'Venue',
 };
 const VenueSelectionScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const venues: VenueItem[] = route.params?.venues || data || [];
@@ -131,8 +133,8 @@ const VenueSelectionScreen = () => {
     async (voteType: 'hot' | 'dead') => {
       if (!selectedVenueId) {
         Alert.alert(
-          'Select a Venue',
-          'Please tap the venue you are at before voting.',
+          t('voting.selectVenue'),
+          t('voting.tapVenueBeforeVoting'),
         );
         return;
       }
@@ -149,21 +151,21 @@ const VenueSelectionScreen = () => {
         if (result.success) {
           const emoji = voteType === 'hot' ? '🔥' : '💀';
           const venueName =
-            venues.find(v => v.id === selectedVenueId)?.name || 'Venue';
+            venues.find(v => v.id === selectedVenueId)?.name || t('voting.venue');
           Alert.alert(
-            'Vote Recorded!',
-            `${emoji} You voted ${venueName} as ${voteType}!`,
-            [{text: 'Done', onPress: () => navigation.goBack()}],
+            t('voting.voteRecorded'),
+            t('voting.votedVenueAs', { emoji, venueName, voteType }),
+            [{text: t('common.done'), onPress: () => navigation.goBack()}],
           );
         } else if (result.reason === 'duplicate_vote') {
           Alert.alert(
-            'Already Voted',
-            "You've already voted for this venue tonight.",
-            [{text: 'OK', onPress: () => navigation.goBack()}],
+            t('voting.alreadyVoted'),
+            t('voting.alreadyVotedTonight'),
+            [{text: t('common.ok'), onPress: () => navigation.goBack()}],
           );
         }
       } catch (error: any) {
-        Alert.alert('Error', 'Failed to record vote. Please try again.');
+        Alert.alert(t('common.error'), t('voting.failedRecordVote'));
         console.log('[VenueSelection] Vote error:', error);
       } finally {
         setVotingVenueId(null);
@@ -174,21 +176,21 @@ const VenueSelectionScreen = () => {
 
 
   const getVibeLabel = (score: number) => {
-    if (score > 50) return '🔥 ON FIRE';
-    if (score > 30) return '🔥 Hot';
-    if (score > 0) return '😊 Warm';
-    if (score === 0) return '🤷 No votes yet';
-    if (score > -30) return '😐 Meh';
-    return '💀 Dead';
+    if (score > 50) return '🔥 ' + t('voting.onFire');
+    if (score > 30) return '🔥 ' + t('voting.hot');
+    if (score > 0) return '😊 ' + t('voting.warm');
+    if (score === 0) return '🤷 ' + t('voting.noVotesYet');
+    if (score > -30) return '😐 ' + t('voting.meh');
+    return '💀 ' + t('voting.dead');
   };
 
   const getInlineVibeLabel = (score: number) => {
-    if (score > 50) return 'On fire';
-    if (score > 30) return 'Hot';
-    if (score > 0) return 'Warm';
+    if (score > 50) return t('voting.onFire');
+    if (score > 30) return t('voting.hot');
+    if (score > 0) return t('voting.warm');
     if (score === 0) return null;
-    if (score > -30) return 'Meh';
-    return 'Dead';
+    if (score > -30) return t('voting.meh');
+    return t('voting.dead');
   };
 
   const getInlineVibeDotColor = (score: number) => {
@@ -284,7 +286,7 @@ const VenueSelectionScreen = () => {
                   {getVibeLabel(item.vibeScore)}
                 </Text>
               </View>
-              <Text style={styles.checkedInText}>Checked in ✓</Text>
+              <Text style={styles.checkedInText}>{t('voting.checkedIn')} ✓</Text>
             </View>
           )}
 
@@ -305,11 +307,11 @@ const VenueSelectionScreen = () => {
       <View style={styles.listFooter}>
         {!selectedVenueId && (
           <Text style={styles.listFooterText}>
-            That's all the venues near you!
+            {t('voting.allVenuesNearYou')}
           </Text>
         )}
         <Text style={styles.listFooterSubtext}>
-          Not seeing your venue? Walk closer and we'll detect it.
+          {t('voting.notSeeingVenue')}
         </Text>
       </View>
     );
@@ -329,9 +331,9 @@ const VenueSelectionScreen = () => {
             <Text style={styles.nearbyText}>{venues.length} nearby</Text>
           </View>
         </View>
-        <Text style={styles.headerTitle}>Which venue{'\n'}are you at?</Text>
+        <Text style={styles.headerTitle}>{t('voting.whichVenue')}</Text>
         <Text style={styles.headerSubtitle}>
-          Tap to check in · Your vote counts live
+          {t('voting.tapToCheckIn')}
         </Text>
       </View>
 
@@ -344,7 +346,7 @@ const VenueSelectionScreen = () => {
         showsVerticalScrollIndicator={false}
       />
       <View style={styles.voteContainer}>
-        <Text style={styles.rateTheVibeLabel}>RATE THE VIBE</Text>
+        <Text style={styles.rateTheVibeLabel}>{t('voting.rateTheVibe')}</Text>
         <View style={styles.voteButtons}>
           <TouchableOpacity
             style={[
@@ -355,7 +357,7 @@ const VenueSelectionScreen = () => {
             onPress={() => handleVote('dead')}
             disabled={!selectedVenueId || isLoading}>
             <Text style={styles.voteButtonEmoji}></Text>
-            <Text style={styles.voteButtonText}>Dead</Text>
+            <Text style={styles.voteButtonText}>{t('voting.dead')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -367,7 +369,7 @@ const VenueSelectionScreen = () => {
             onPress={() => handleVote('hot')}
             disabled={!selectedVenueId || isLoading}>
             <Text style={styles.voteButtonEmoji}>🔥</Text>
-            <Text style={styles.voteButtonText}>Hot!</Text>
+            <Text style={styles.voteButtonText}>{t('voting.hotExclamation')}</Text>
           </TouchableOpacity>
         </View>
       </View>

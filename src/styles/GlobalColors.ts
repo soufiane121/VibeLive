@@ -75,9 +75,9 @@ baseColors.deepBlack = baseColors.newBackGroundColor;
 
 
 if (isDarkMode) {
-  premiumDark = premiumColors.light;
-} else {
   premiumDark = premiumColors.dark;
+} else {
+  premiumDark = premiumColors.light;
 }
 
 
@@ -116,6 +116,16 @@ export interface ColorScheme {
 export const GlobalColors = {
   VenueSelectionScreen: {
     background: 'red',
+  },
+  // Map Heatmap Colors
+  Heatmap: {
+    coldest: premiumDark.heatmap.coldest,
+    cold: premiumDark.heatmap.cold,
+    neutral: premiumDark.heatmap.neutral,
+    warm: premiumDark.heatmap.warm,
+    hot: premiumDark.heatmap.hot,
+    boostBorder: premiumDark.hotPrimary,
+    ring: premiumDark.heatmap.ring,
   },
   // Events List Screen
   EventsListScreen: {
@@ -305,48 +315,52 @@ export const GlobalColors = {
     selectedIconBG: premiumDark.accentSurface,
     iconColor: premiumDark.secondaryText,
     selectedIconColor: premiumDark.accentPrimary,
-    surface: baseColors.dark_grey,
-    overlay: baseColors.blackOverlay,
+    tonightOnlyBadge: premiumDark.hotPrimary,
+    tonightOnlyBadgeBG: premiumDark.hotSurface,
+    tonightOnlyBadgeBorder: premiumDark.hotBorder,
+    surface: premiumDark.secondarySurface,
+    overlay: premiumDark.primaryBackground,
+    continueBtnBG: premiumDark.primarySurface,
     text: premiumDark.primaryText,
     inputBG: premiumDark.secondaryBackground,
     inputText: premiumDark.primaryText,
     inputBorder: premiumDark.secondaryBorder,
     textSecondary: premiumDark.secondaryText,
-    textMuted: premiumDark.secondaryText,
-    selectedCard: premiumDark.secondaryBackground,
+    textMuted: premiumDark.tertiaryText,
+    selectedCard: premiumDark.accentSurface,
     selectedSubCategory: premiumDark.accentSurface,
     benchMark: premiumDark.accentPrimary,
     primary: premiumDark.primaryBorder,
     primaryBorder: premiumDark.secondaryBorder,
-    primaryHover: baseColors.dark_gold,
-    secondary: baseColors.gold_accent,
-    accent: baseColors.gold_accent,
-    warning: baseColors.gold_accent,
-    error: baseColors.error,
-    success: baseColors.success,
-    urgency: baseColors.gold_accent,
-    scarcity: baseColors.gold_accent,
-    socialProof: baseColors.gold_accent,
-    competition: baseColors.gold_accent,
-    tierBasic: baseColors.gold_accent,
-    tierPremium: baseColors.gold_accent,
-    tierUltimate: baseColors.gold_accent,
+    primaryHover: premiumDark.accentPrimary,
+    secondary: premiumDark.secondaryBackground,
+    accent: premiumDark.accentPrimary,
+    warning: premiumDark.hotPrimary,
+    error: premiumDark.hotPrimary,
+    success: premiumDark.successPrimary,
+    urgency: premiumDark.hotPrimary,
+    scarcity: premiumDark.hotPrimary,
+    socialProof: premiumDark.accentPrimary,
+    competition: premiumDark.accentPrimary,
+    tierBasic: premiumDark.accentPrimary,
+    tierPremium: premiumDark.accentPrimary,
+    tierUltimate: premiumDark.successPrimary,
     tierBasicBackground: premiumDark.accentSurface,
-    tierPremiumBackground: baseColors.dark_grey,
-    tierUltimateBackground: baseColors.dark_grey,
-    // Gradient colors for boost tiers
-    tierBasicGradientStart: baseColors.gold_accent,
-    tierBasicGradientEnd: baseColors.dark_gold,
-    tierPremiumGradientStart: baseColors.gold_accent,
-    tierPremiumGradientEnd: baseColors.dark_gold,
-    tierUltimateGradientStart: baseColors.gold_accent,
-    tierUltimateGradientEnd: baseColors.dark_gold,
-    buttonPrimary: baseColors.gold_accent,
+    tierPremiumBackground: premiumDark.secondaryBackground,
+    tierUltimateBackground: premiumDark.secondaryBackground,
+    tierBasicGradientStart: premiumDark.accentPrimary,
+    tierBasicGradientEnd: premiumDark.accentPrimary,
+    tierPremiumGradientStart: premiumDark.accentPrimary,
+    tierPremiumGradientEnd: premiumDark.accentPrimary,
+    tierUltimateGradientStart: premiumDark.successPrimary,
+    tierUltimateGradientEnd: premiumDark.successPrimary,
+    buttonPrimary: premiumDark.accentPrimary,
     buttonSecondary: premiumDark.secondaryBackground,
     buttonGhost: 'transparent',
-    buttonDisabled: baseColors.mutedGray,
+    buttonDisabled: premiumDark.secondaryBackground,
     border: premiumDark.primaryBorder,
     borderActive: premiumDark.accentBorder,
+    cntBtnBorder: premiumDark.accentBorder,
     pulse: 'rgba(212, 175, 55, 0.3)',
     glow: 'rgba(212, 175, 55, 0.2)',
     flash: 'rgba(212, 175, 55, 0.6)',
@@ -403,21 +417,26 @@ export const GlobalColors = {
   // Chat List
   ChatList: {
     background: 'transparent',
-    messageBackground: 'rgba(30, 30, 30, 0.8)',
-    messageText: baseColors.mutedWhite,
-    messageTime: baseColors.mutedWhite,
-    userName: baseColors.white,
-    usernameModerator: baseColors.gold,
-    usernameVIP: baseColors.deepPink,
-    usernameRegular: baseColors.cyan,
-    inputBackground: 'rgba(30, 30, 30, 0.9)',
-    inputText: baseColors.white,
-    inputPlaceholder: baseColors.mutedWhite,
-    sendIcon: baseColors.mutedGray,
-    reactionBackground: 'rgba(95,103,111, 0.5)',
-    reactionIcon: baseColors.offWhite,
+    messageBackground: 'rgba(0, 0, 0, 0.5)', // Match screenshot pill style
+    messageText: premiumDark.primaryText,
+    messageTime: premiumDark.secondaryText,
+    userName: premiumDark.primaryText,
+    inputBackground: 'rgba(0, 0, 0, 0.5)',
+    inputText: premiumDark.primaryText,
+    inputPlaceholder: premiumDark.secondaryText,
+    sendIcon: premiumDark.primaryText,
+    reactionBackground: 'rgba(0, 0, 0, 0.5)',
+    reactionIcon: premiumDark.primaryText,
     emojiReaction: baseColors.warning,
-    border: baseColors.mediumGray,
+    border: premiumDark.primaryBorder,
+    userColors: [
+      premiumDark.hotPrimary, // Orange/Red
+      baseColors.warning, // Yellow
+      premiumDark.accentPrimary, // Blue
+      premiumDark.successPrimary, // Green
+      baseColors.deepPink,
+      baseColors.purple
+    ],
   },
 
   // Bottom Navigation
@@ -453,8 +472,8 @@ export const GlobalColors = {
     stepIndicatorActive: premiumDark.accentSurface,
     stepIndicatorInactive: premiumDark.secondarySurface,
     stepIndicatorInactiveBox: premiumDark.secondaryBackground,
-    nextButtonText: premiumDark.primaryText, 
-    nextButton: premiumDark.secondaryBackground, 
+    nextButtonText: premiumDark.primaryText,
+    nextButton: premiumDark.secondaryBackground,
     backButton: premiumDark.secondarySurface,
     createButton: premiumDark.secondaryBackground,
     error: premiumDark.hotPrimary,
@@ -481,6 +500,11 @@ export const GlobalColors = {
     successSurface: premiumDark.successSurface,
     successBorder: premiumDark.successBorder,
     error: premiumDark.hotPrimary,
+    errorSurface: premiumDark.hotSurface,
+    errorBorder: premiumDark.hotBorder,
+    warningSurface: premiumDark.hotSurface,
+    warningBorder: premiumDark.hotBorder,
+    warningText: premiumDark.hotPrimary,
     rsvpButton: 'transparent',
     shareButton: premiumDark.primarySurface,
     ticketButton: premiumDark.accentPrimary,
@@ -492,26 +516,84 @@ export const GlobalColors = {
     headerIconBackground: 'rgba(0,0,0,0.3)',
     headerIconText: baseColors.white,
     accentPrimary: premiumDark.accentPrimary,
-    
+  },
+
+  // Premium Venue Card (Map Callout)
+  PremiumVenueCard: {
+    background: premiumDark.secondarySurface,
+    border: premiumDark.secondaryBorder,
+    primaryText: premiumDark.primaryText,
+    secondaryText: premiumDark.secondaryText,
+    tertiaryText: premiumDark.tertiaryText,
+    pillBackground: premiumDark.primarySurface,
+    pillBorder: premiumDark.primaryBorder,
+    pillText: premiumDark.accentPrimary,
+    openPillBackground:
+      premiumDark.successSurface ||
+      premiumDark.lightGreenBG ||
+      'rgba(76, 175, 80, 0.12)',
+    openPillBorder: premiumDark.successBorder || 'rgba(76, 175, 80, 0.18)',
+    openPillDot: premiumDark.successPrimary || '#4CAF50',
+    openPillText: premiumDark.successPrimary || '#4CAF50',
+    iconContainerBg: premiumDark.primarySurface,
+    iconContainerBorder: premiumDark.primaryBorder,
+    closeButtonBg: premiumDark.primarySurface,
+    closeButtonBorder: premiumDark.primaryBorder,
+    closeIcon: premiumDark.secondaryText,
+    directionsButtonBg: premiumDark.primarySurface,
+    directionsButtonBorder: premiumDark.primaryBorder,
+    directionsText: premiumDark.accentPrimary,
+    viewVenueButtonBg: premiumDark.accentPrimary,
+    viewVenueText: '#FFF',
+    pointerBorderTop: premiumDark.secondarySurface,
+  },
+
+  // Venue Details Screen
+  VenueDetailsScreen: {
+    background: premiumDark.primaryBackground,
+    headerBackground: premiumDark.secondarySurface,
+    headerBorder: premiumDark.secondaryBorder,
+    primaryText: premiumDark.primaryText,
+    secondaryText: premiumDark.secondaryText,
+    cardBackground: premiumDark.secondarySurface,
+    cardBorder: premiumDark.secondaryBorder,
+    iconContainerBg: premiumDark.primarySurface,
+    iconContainerBorder: premiumDark.primaryBorder,
+    statsBorder: premiumDark.primaryBorder,
+    backButtonBg: premiumDark.primarySurface,
+    backButtonBorder: premiumDark.primaryBorder,
+    backButtonCenterBg: premiumDark.accentPrimary,
+    accentPrimary: premiumDark.accentPrimary,
+    openPillBackground: premiumDark.successSurface,
+    openPillBorder: premiumDark.successBorder,
+    openPillDot: premiumDark.successPrimary,
+    openPillText: premiumDark.successPrimary,
+    starRating: '#FFB800',
+    pillBackground: premiumDark.primarySurface,
+    pillBorder: premiumDark.primaryBorder,
+    pillText: premiumDark.accentPrimary,
+    actionButtonBg: premiumDark.accentPrimary,
+    actionButtonText: premiumDark.primaryText,
+    linkText: premiumDark.accentPrimary,
   },
 
   // Stream Player
   StreamPlayer: {
     background: 'transparent',
     headerBackground: 'transparent',
-    userInfoBackground: 'rgba(136, 48, 78, 0.3)',
-    liveInfoBackground: 'rgba(95,103,111, 0.2)',
-    followBackground: 'rgba(136, 48, 78, 0.8)',
-    liveBackground: baseColors.error, // Red for live indicator
-    text: baseColors.white_ivory, // #CFD6DF
-    titleText: baseColors.offWhite,
-    userName: baseColors.offWhite,
-    countText: baseColors.offWhite,
-    followText: baseColors.offWhite,
-    liveText: baseColors.white,
-    closeIcon: baseColors.white,
-    eyeIcon: baseColors.offWhite,
-    border: 'transparent',
+    userInfoBackground: 'rgba(0,0,0,0.4)',
+    liveInfoBackground: 'rgba(0,0,0,0.4)',
+    followBackground: premiumDark.accentPrimary,
+    liveBackground: premiumDark.hotPrimary,
+    text: premiumDark.primaryText,
+    titleText: premiumDark.secondaryText,
+    userName: premiumDark.primaryText,
+    countText: premiumDark.primaryText,
+    followText: '#FFFFFF',
+    liveText: '#FFFFFF',
+    closeIcon: premiumDark.primaryText,
+    eyeIcon: premiumDark.primaryText,
+    border: premiumDark.primaryBorder,
   },
   ModalBottom: {
     // Background and surfaces
@@ -557,6 +639,20 @@ export const GlobalColors = {
     chartLine: baseColors.cyan,
     chartBar: baseColors.deepPink,
     chartArea: baseColors.cyanOverlay,
+  },
+
+  // Empty Map State
+  EmptyMapState: {
+    background: premiumDark.secondarySurface,
+    textPrimary: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textTertiary: premiumDark.tertiaryText,
+    accentOrange: premiumDark.hotPrimary,
+    accentBlue: premiumDark.accentPrimary,
+    circleBorder: premiumDark.accentPrimary,
+    pulseBackground: premiumDark.accentSurface,
+    blinkDot: premiumDark.hotPrimary,
+    border: premiumDark.primaryBorder
   },
 
   // Squad Mode
@@ -779,6 +875,149 @@ export const GlobalColors = {
     // Dividers
     divider: baseColors.whiteOverlay,
     dividerThick: baseColors.mediumGray,
+  },
+
+  // Account Screen (Hub, Edit Profile, My Interests, Buy Minutes, Transactions)
+  Account: {
+    background: premiumDark.primaryBackground,
+    secondaryBackground: premiumDark.secondaryBackground,
+    surface: premiumDark.primarySurface,
+    secondarySurface: premiumDark.secondarySurface,
+    tertiarySurface: premiumDark.tertiarySurface,
+
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.tertiaryText,
+
+    accent: premiumDark.accentPrimary,
+    accentSurface: premiumDark.accentSurface,
+    accentBorder: premiumDark.accentBorder,
+    accentSubtle: premiumDark.accentSubtle,
+
+    border: premiumDark.primaryBorder,
+    borderLight: premiumDark.secondaryBorder,
+    separator: premiumDark.separator,
+
+    success: premiumDark.successPrimary,
+    successSurface: premiumDark.successSurface,
+    successBorder: premiumDark.successBorder,
+
+    hot: premiumDark.hotPrimary,
+    hotSurface: premiumDark.hotSurface,
+    hotBorder: premiumDark.hotBorder,
+
+    // Gauge (minutes circle)
+    gaugeTrack: premiumDark.secondarySurface,
+    gaugeActive: '#D4952B', // amber/orange for gauge arc
+    gaugeText: premiumDark.primaryText,
+
+    // Badge colors
+    badgeBackground: premiumDark.hotSurface,
+    badgeBorder: premiumDark.hotBorder,
+    badgeText: premiumDark.hotPrimary,
+
+    // Input fields
+    inputBackground: premiumDark.secondaryBackground,
+    inputBorder: premiumDark.primaryBorder,
+    inputFocusBorder: premiumDark.accentBorder,
+    inputText: premiumDark.primaryText,
+    inputLabel: premiumDark.tertiaryText,
+
+    // Buttons
+    primaryButton: premiumDark.accentPrimary,
+    primaryButtonText: premiumDark.primaryText,
+    secondaryButton: premiumDark.secondaryBackground,
+    secondaryButtonBorder: premiumDark.primaryBorder,
+    secondaryButtonText: premiumDark.primaryText,
+    destructiveText: premiumDark.hotPrimary,
+
+    // Interest chips
+    chipSelected: premiumDark.accentSurface,
+    chipSelectedBorder: premiumDark.accentBorder,
+    chipSelectedText: premiumDark.accentPrimary,
+    chipUnselected: premiumDark.secondaryBackground,
+    chipUnselectedBorder: premiumDark.primaryBorder,
+    chipUnselectedText: premiumDark.secondaryText,
+
+    // Section labels
+    sectionLabel: premiumDark.accentPrimary,
+
+    // Online indicator
+    onlineGreen: premiumDark.successPrimary,
+  },
+
+  // Location Permission Wall
+  LocationPermissionWall: {
+    background: premiumDark.primaryBackground,
+    surface: premiumDark.primarySurface,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    accent: premiumDark.accentPrimary,
+    accentSurface: premiumDark.accentSurface,
+    accentBorder: premiumDark.accentBorder,
+    buttonBackground: premiumDark.accentPrimary,
+    buttonText: premiumDark.primaryText,
+    iconColor: premiumDark.accentPrimary,
+    hotIcon: premiumDark.hotPrimary,
+    hotSurface: premiumDark.hotSurface,
+    hotBorder: premiumDark.hotBorder,
+    goldIcon: baseColors.gold_accent,
+    goldSurface: 'rgba(212, 175, 55, 0.12)',
+    border: premiumDark.primaryBorder,
+    separator: premiumDark.separator,
+  },
+
+  // Forgot Password Flow
+  ForgotPassword: {
+    background: premiumDark.primaryBackground,
+    surface: premiumDark.primarySurface,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.tertiaryText,
+    accent: premiumDark.accentPrimary,
+    accentSurface: premiumDark.accentSurface,
+    accentBorder: premiumDark.accentBorder,
+    border: premiumDark.primaryBorder,
+    inputBackground: premiumDark.secondaryBackground,
+    inputBorder: premiumDark.primaryBorder,
+    error: premiumDark.hotPrimary,
+    success: premiumDark.successPrimary,
+    successSurface: premiumDark.successSurface,
+    successBorder: premiumDark.successBorder,
+    strengthWeak: '#EF4444',
+    strengthFair: '#F59E0B',
+    strengthStrong: '#10B981',
+    buttonBackground: premiumDark.accentPrimary,
+    buttonText: premiumDark.primaryText,
+    buttonDisabled: premiumDark.secondarySurface,
+    timerActive: premiumDark.accentPrimary,
+    timerExpired: premiumDark.hotPrimary,
+  },
+
+  // Onboarding Screens
+  Onboarding: {
+    background: premiumDark.primaryBackground,
+    surface: premiumDark.primarySurface,
+    surfaceSecondary: premiumDark.secondarySurface,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.tertiaryText,
+    accent: premiumDark.accentPrimary,
+    accentSurface: premiumDark.accentSurface,
+    accentBorder: premiumDark.accentBorder,
+    border: premiumDark.primaryBorder,
+    borderSecondary: premiumDark.secondaryBorder,
+    inputBackground: premiumDark.secondaryBackground,
+    inputBorder: premiumDark.primaryBorder,
+    buttonBackground: premiumDark.secondaryBackground,
+    buttonText: premiumDark.primaryText,
+    buttonDisabled: premiumDark.secondarySurface,
+    buttonDisabledText: premiumDark.tertiaryText,
+    infoIconBg: premiumDark.accentSurface,
+    infoIcon: premiumDark.accentPrimary,
+    success: premiumDark.successPrimary,
+    error: premiumDark.hotPrimary,
+    separator: premiumDark.separator,
   },
 };
 

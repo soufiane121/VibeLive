@@ -6,8 +6,10 @@ import {
   requestPermission as fcmRequestPermission,
   AuthorizationStatus,
 } from '@react-native-firebase/messaging';
+import useTranslation from '../Hooks/useTranslation';
 
 export const useDoubleNotificationPermission = () => {
+  const { t } = useTranslation();
   const [permissionAsked, setPermissionAsked] = useState(false);
   const [granted, setGranted] = useState(false);
 
@@ -31,11 +33,11 @@ export const useDoubleNotificationPermission = () => {
     if (!permissionAsked) {
       setPermissionAsked(true);
       Alert.alert(
-        'Notification Permission',
-        'We need notification permission to keep you updated. Please allow notifications.',
+        t('notifications.permissionTitle'),
+        t('notifications.permissionMessage'),
         [
           {
-            text: 'Ask Again',
+            text: t('notifications.askAgain'),
             onPress: async () => {
               await requestPermission();
             },
@@ -55,9 +57,9 @@ export const useDoubleNotificationPermission = () => {
         return true;
       } else {
         Alert.alert(
-          'Permission Required',
-          'You need to allow notifications to continue.',
-          [{text: 'OK'}],
+          t('notifications.permissionRequired'),
+          t('notifications.permissionRequiredMessage'),
+          [{text: t('common.ok')}],
         );
         return false;
       }

@@ -8,6 +8,9 @@ import App from './App';
 import {name as appName} from './app.json';
 import {handleBackgroundMessage} from './src/Services/FCMNotificationService';
 
+// Import BackgroundLocationService early to ensure TaskManager.defineTask is called
+import './src/Services/BackgroundLocationService';
+
 // Register FCM background message handler — must be outside React components
 setBackgroundMessageHandler(getMessaging(), handleBackgroundMessage);
 

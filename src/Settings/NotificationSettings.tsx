@@ -18,6 +18,7 @@ import { setCurrentUser } from '../../features/registrations/CurrentUser';
 import { ChevronBackIcon, NotificationsIcon, MailIcon, RadioIcon, PersonAddIcon, ChatbubbleIcon, InformationCircleIcon } from '../UIComponents/Icons';
 // import Ionicons from 'react-native-vector-icons/Ionicons';
 import useAnalytics from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import {
   useGetUserSettingsQuery,
   useUpdateNotificationSettingsMutation,
@@ -84,6 +85,7 @@ const NotificationSettings = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: RootState) => state.currentUser);
 
   const { data: userSettings, isLoading: settingsLoading } = useGetUserSettingsQuery();
@@ -150,14 +152,14 @@ const NotificationSettings = () => {
         };
         dispatch(setCurrentUser(updatedUser));
 
-        Alert.alert('Success', 'Notification settings updated successfully');
+        Alert.alert(t('common.success'), t('notifications.updateSuccess'));
         navigation.goBack();
       } else {
-        Alert.alert('Error', response.message || 'Failed to update settings');
+        Alert.alert(t('common.error'), response.message || t('notifications.updateFailed'));
       }
     } catch (error) {
       console.error('Error updating notification settings:', error);
-      Alert.alert('Error', 'Failed to update notification settings');
+      Alert.alert(t('common.error'), t('notifications.updateFailed'));
     }
   };
 
@@ -172,7 +174,7 @@ const NotificationSettings = () => {
           onPress={() => navigation.goBack()}>
           <ChevronBackIcon size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <Text style={styles.headerTitle}>{t('settings.sections.notifications.title')}</Text>
         <TouchableOpacity
           style={[
             styles.saveButton,
@@ -183,7 +185,7 @@ const NotificationSettings = () => {
           {updateLoading || settingsLoading ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text style={styles.saveButtonText}>Save</Text>
+            <Text style={styles.saveButtonText}>{t('common.save')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -192,16 +194,16 @@ const NotificationSettings = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Push Notifications</Text>
+          <Text style={styles.sectionTitle}>{t('notifications.pushNotifications')}</Text>
           <Text style={styles.sectionDescription}>
-            Manage how you receive notifications on your device
+            {t('notifications.pushDescription')}
           </Text>
         </View>
 
         <SettingToggle
           icon="notifications-outline"
-          title="Push Notifications"
-          subtitle="Receive notifications on your device"
+          title={t('notifications.pushTitle')}
+          subtitle={t('notifications.pushSubtitle')}
           value={settings.pushNotifications}
           onToggle={value => handleToggle('pushNotifications', value)}
           loading={updateLoading || settingsLoading}
@@ -209,8 +211,8 @@ const NotificationSettings = () => {
 
         <SettingToggle
           icon="radio-outline"
-          title="Live Stream Alerts"
-          subtitle="Get notified when streamers you follow go live"
+          title={t('notifications.liveStreamAlerts')}
+          subtitle={t('notifications.liveStreamSubtitle')}
           value={settings.liveStreamAlerts}
           onToggle={value => handleToggle('liveStreamAlerts', value)}
           loading={updateLoading || settingsLoading}
@@ -218,8 +220,8 @@ const NotificationSettings = () => {
 
         <SettingToggle
           icon="person-add-outline"
-          title="Follow Notifications"
-          subtitle="Get notified when someone follows you"
+          title={t('notifications.followNotifications')}
+          subtitle={t('notifications.followSubtitle')}
           value={settings.followNotifications}
           onToggle={value => handleToggle('followNotifications', value)}
           loading={updateLoading || settingsLoading}
@@ -227,24 +229,24 @@ const NotificationSettings = () => {
 
         <SettingToggle
           icon="chatbubble-outline"
-          title="Comment Notifications"
-          subtitle="Get notified about comments on your streams"
+          title={t('notifications.commentNotifications')}
+          subtitle={t('notifications.commentSubtitle')}
           value={settings.commentNotifications}
           onToggle={value => handleToggle('commentNotifications', value)}
           loading={updateLoading || settingsLoading}
         />
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Email Notifications</Text>
+          <Text style={styles.sectionTitle}>{t('notifications.emailNotifications')}</Text>
           <Text style={styles.sectionDescription}>
-            Receive important updates via email
+            {t('notifications.emailDescription')}
           </Text>
         </View>
 
         <SettingToggle
           icon="mail-outline"
-          title="Email Notifications"
-          subtitle="Receive notifications via email"
+          title={t('notifications.emailTitle')}
+          subtitle={t('notifications.emailSubtitle')}
           value={settings.emailNotifications}
           onToggle={value => handleToggle('emailNotifications', value)}
           loading={updateLoading || settingsLoading}
@@ -253,8 +255,7 @@ const NotificationSettings = () => {
         <View style={styles.infoSection}>
           <InformationCircleIcon size={20} color="#8b5cf6" />
           <Text style={styles.infoText}>
-            You can always change these settings later. Some notifications may
-            still be sent for security and account-related updates.
+            {t('notifications.infoMessage')}
           </Text>
         </View>
       </ScrollView>

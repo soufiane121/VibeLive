@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { ChevronBackIcon, CommonMaterialCommunityIcons } from '../../UIComponents/Icons';
 import EventBasicDetails from './components/EventBasicDetails';
 import EventDateTime from './components/EventDateTime';
@@ -19,9 +19,10 @@ import EventTicketing from './components/EventTicketing';
 import EventPromotion from './components/EventPromotion';
 import StepIndicator from './components/StepIndicator';
 import { useCreateEventMutation } from '../../../features/Events/EventsApi';
+import { useSelector } from 'react-redux';
 import { useAnalytics } from '../../Hooks/useAnalytics';
 import { GlobalColors } from '../../styles/GlobalColors';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import { KeyboardAvoidingView } from 'react-native';
 import { Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -31,7 +32,11 @@ const colors = GlobalColors.EventCreationFlow;
 const EventCreationFlow: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [createEvent, { isLoading }] = useCreateEventMutation();
-  const {coordinates} = useGetLocation();
+  const coordinates = useCoordinates();
+  const currentUser = useSelector((state: any) => state.currentUser.currentUser);
+  const myVenue = currentUser?.operatorVenue ?? null;
+  const isOperator = !!myVenue;
+  const totalSteps = isOperator ? 5 : 3;
   
   const [currentStep, setCurrentStep] = useState(1);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -42,11 +47,15 @@ const EventCreationFlow: React.FC = () => {
     description: '',
     startDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
     endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+    venueId: '',
     location: {
       coordinates: coordinates as [number, number],
       address: '',
+      address1: '',
+      city: '',
+      zip: '',
     },
-    eventType: '',
+    eventType: isOperator ? '' : 'happyhour',
     ticketing: {
       isFree: true,
       price: 0,
@@ -60,9 +69,17 @@ const EventCreationFlow: React.FC = () => {
       duration: 1,
       totalCost: 0,
     },
+    coverImageUrl: null as string | null,
+    coverImageUploadState: 'idle' as 'idle' | 'uploading' | 'success' | 'error',
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    if (myVenue) {
+      setFormData(prev => ({ ...prev, venueId: myVenue._id }));
+    }
+  }, [myVenue]);
 
   const validateStep = (step: number): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -78,10 +95,11 @@ const EventCreationFlow: React.FC = () => {
         if (formData.endDate <= formData.startDate) newErrors.endDate = 'End date must be after start date';
         break;
       case 3:
-        if (!formData.location.address.trim()) newErrors.address = 'Event location is required';
+        if (!formData.location.address1.trim()) newErrors.address1 = 'Address is required';
+        if (!formData.location.city.trim()) newErrors.city = 'City is required';
         break;
       case 4:
-        if (!formData.ticketing.isFree && formData.ticketing.price <= 0) {
+        if (isOperator && !formData.ticketing.isFree && formData.ticketing.price <= 0) {
           newErrors.price = 'Price must be greater than 0 for paid events';
         }
         break;
@@ -96,7 +114,7 @@ const EventCreationFlow: React.FC = () => {
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      if (currentStep < 5) {
+      if (currentStep < totalSteps) {
         setCurrentStep(currentStep + 1);
       } else {
         handleSubmit();
@@ -206,28 +224,35 @@ const EventCreationFlow: React.FC = () => {
 
   const createEventWithPromotion = async (transactionId?: string) => {
     try {
+      const { coverImageUploadState, coverImageUrl, promotion, ...formDataWithoutImageState } = formData;
       const eventData = {
-        ...formData,
+        ...formDataWithoutImageState,
         startDate: formData.startDate.toISOString(),
         endDate: formData.endDate.toISOString(),
         source: 'app',
-        promotionStatus: formData.promotion.isPromoted ? formData.promotion.type : 'normal',
-        promotionExpiry: formData.promotion.isPromoted 
-          ? new Date(Date.now() + formData.promotion.duration * 24 * 60 * 60 * 1000).toISOString()
+        promotionStatus: promotion.isPromoted ? promotion.type : 'normal',
+        promotionExpiry: promotion.isPromoted 
+          ? new Date(Date.now() + promotion.duration * 24 * 60 * 60 * 1000).toISOString()
           : null,
-        // Include transaction ID if payment was processed
+        ...(coverImageUrl && { coverImageUrl }),
         ...(transactionId && { promotionTransactionId: transactionId })
       };
 
       const result = await createEvent(eventData).unwrap();
+
+      const successMessage = isOperator
+        ? 'Your event has been created successfully.'
+        : 'Your Happy Hour event has been submitted for review. You will see it in your event list with a pending status.';
       
-      Alert.alert('Success!', 'Your event has been created successfully.', [
+      Alert.alert('Success!', successMessage, [
         {
-          text: 'View Event',
-          onPress: () => navigation.navigate('EventDetails', { 
-            eventId: result.data._id,
-            fromEventCreation: true 
-          }),
+          text: 'OK',
+          onPress: () => navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Bottom', params: { screen: 'Events' } }],
+            }),
+          ),
         },
       ]);
     } catch (error: any) {
@@ -250,11 +275,11 @@ const EventCreationFlow: React.FC = () => {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <CommonMaterialCommunityIcons name="chevron-left" size={24} color={colors.textSecondary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Event</Text>
+        <Text style={styles.headerTitle}>{isOperator ? 'Create Event' : 'Create Happy Hour'}</Text>
         <View style={styles.headerRight} />
       </View>
 
-      <StepIndicator currentStep={currentStep} totalSteps={5} />
+      <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
 
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.stepWrapper}>
@@ -263,6 +288,7 @@ const EventCreationFlow: React.FC = () => {
               formData={formData}
               errors={errors}
               onUpdateFormData={updateFormData}
+              isOperator={isOperator}
             />
           )}
           {currentStep === 2 && (
@@ -279,16 +305,17 @@ const EventCreationFlow: React.FC = () => {
               formData={formData}
               errors={errors}
               onUpdateFormData={updateFormData}
+              venue={myVenue}
             />
           )}
-          {currentStep === 4 && (
+          {isOperator && currentStep === 4 && (
             <EventTicketing
               formData={formData}
               errors={errors}
               onUpdateFormData={updateFormData}
             />
           )}
-          {currentStep === 5 && (
+          {isOperator && currentStep === 5 && (
             <EventPromotion
               formData={formData}
               onPromotionChange={handlePromotionChange}
@@ -299,26 +326,26 @@ const EventCreationFlow: React.FC = () => {
 
         <View style={styles.footer}>
           <View style={styles.progressBarContainer}>
-            <Text style={styles.progressText}>Step {currentStep} of 5</Text>
+            <Text style={styles.progressText}>Step {currentStep} of {totalSteps}</Text>
             <View style={styles.progressBarBackground}>
-              <View style={[styles.progressBarFill, { width: `${(currentStep / 5) * 100}%` }]} />
+              <View style={[styles.progressBarFill, { width: `${(currentStep / totalSteps) * 100}%` }]} />
             </View>
-            <Text style={styles.progressText}>{Math.round((currentStep / 5) * 100)}%</Text>
+            <Text style={styles.progressText}>{Math.round((currentStep / totalSteps) * 100)}%</Text>
           </View>
 
           <TouchableOpacity 
-            style={[styles.button, styles.nextButton, currentStep === 5 && styles.createSubmitButton]} 
+            style={[styles.button, styles.nextButton, currentStep === totalSteps && styles.createSubmitButton, (isLoading || formData.coverImageUploadState === 'uploading') && styles.buttonDisabled]} 
             onPress={handleNext} 
-            disabled={isLoading}
+            disabled={isLoading || formData.coverImageUploadState === 'uploading'}
           >
             {isLoading ? (
-              <ActivityIndicator color={currentStep === 5 ? '#FFF' : colors.nextButtonText} />
+              <ActivityIndicator color={currentStep === totalSteps ? '#FFF' : colors.nextButtonText} />
             ) : (
               <View style={styles.nextButtonContent}>
-                <Text style={[styles.nextButtonText, currentStep === 5 && styles.createSubmitButtonText]}>
-                  {currentStep === 5 ? 'Create Event' : 'Next'}
+                <Text style={[styles.nextButtonText, currentStep === totalSteps && styles.createSubmitButtonText]}>
+                  {currentStep === totalSteps ? (isOperator ? 'Create Event' : 'Submit for Review') : 'Next'}
                 </Text>
-                {currentStep < 5 && (
+                {currentStep < totalSteps && (
                   <CommonMaterialCommunityIcons 
                     name="arrow-right" 
                     size={20} 
@@ -414,6 +441,9 @@ const styles = StyleSheet.create({
     fontSize: 18, 
     fontWeight: '800', 
     color: colors.nextButtonText, 
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
 });
 

@@ -1,40 +1,24 @@
-import { useEffect } from 'react';
-import {
-  useTrackSessionStartMutation,
-  useTrackSessionEndMutation,
-  useTrackEventMutation,
-  useTrackEventsBatchMutation,
-} from '../Services/AnalyticsApi';
+import { useRef } from 'react';
 import RTKAnalyticsService from '../Services/RTKAnalyticsService';
 
-// Hook to configure and use RTK Analytics
+/**
+ * Lightweight hook — returns the analytics singleton.
+ *
+ * Previously this hook instantiated 4 useMutation hooks and injected
+ * their triggers into RTKAnalyticsService via configureMutations().
+ * That design coupled every analytics flush to the render-cycle of
+ * whichever component happened to host the hook, causing spurious
+ * re-renders (2 per mutation: loading → success).
+ *
+ * RTKAnalyticsService now dispatches directly to the Redux store
+ * via store.dispatch(analyticsApi.endpoints.*.initiate()), so no
+ * mutation hooks are needed inside any component.
+ */
 export const useRTKAnalytics = () => {
-  // RTK Query mutation hooks
-  const [trackSessionStart] = useTrackSessionStartMutation();
-  const [trackSessionEnd] = useTrackSessionEndMutation();
-  const [trackEvent] = useTrackEventMutation();
-  const [trackEventsBatch] = useTrackEventsBatchMutation();
-
-  // Get analytics service instance
-  const analytics = RTKAnalyticsService.getInstance();
-
-  // Configure the service with RTK mutations on mount
-  useEffect(() => {
-    analytics.configureMutations({
-      trackSessionStart,
-      trackSessionEnd,
-      trackEvent,
-      trackEventsBatch,
-    });
-  }, [trackSessionStart, trackSessionEnd, trackEvent, trackEventsBatch]);
+  const analyticsRef = useRef(RTKAnalyticsService.getInstance());
 
   return {
-    analytics,
-    // Expose individual mutation hooks if needed
-    trackSessionStartMutation: trackSessionStart,
-    trackSessionEndMutation: trackSessionEnd,
-    trackEventMutation: trackEvent,
-    trackEventsBatchMutation: trackEventsBatch,
+    analytics: analyticsRef.current,
   };
 };
 

@@ -5,13 +5,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  FlatList,
   Alert,
 } from 'react-native';
 import {GlobalColors} from '../../../styles/GlobalColors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-// import Button from '../../UIComponents/Button';
 import {tags} from '../../../../tags';
+import useTranslation from '../../../Hooks/useTranslation';
 
 interface OnboardingInterestsProps {
   navigation: any;
@@ -27,6 +26,7 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
   navigation,
   route,
 }) => {
+  const { t } = useTranslation();
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -57,10 +57,10 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
     // Validation: Ensure at least one interest is selected
     if (selectedTags.length === 0) {
       Alert.alert(
-        'Select Your Interests',
-        'Please select at least one interest to personalize your VibeLive experience.',
+        t('onboarding.selectInterests'),
+        t('onboarding.interestsDesc'),
         [
-          {text: 'OK', style: 'default'}
+          {text: t('common.ok'), style: 'default'}
         ]
       );
       return;
@@ -69,11 +69,11 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
     // Validation: Recommend selecting more interests for better experience
     if (selectedTags.length < 3) {
       Alert.alert(
-        'Enhance Your Experience',
-        `You've selected ${selectedTags.length} interest${selectedTags.length === 1 ? '' : 's'}. We recommend selecting at least 3 interests for the best personalized content. Continue anyway?`,
+        t('onboarding.enhanceExperience'),
+        t('onboarding.interestsRecommend', { count: selectedTags.length }),
         [
-          {text: 'Add More', style: 'cancel'},
-          {text: 'Continue', onPress: proceedToNext, style: 'default'},
+          {text: t('onboarding.addMore'), style: 'cancel'},
+          {text: t('common.continue'), onPress: proceedToNext, style: 'default'},
         ]
       );
       return;
@@ -93,24 +93,19 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
     });
   };
 
-  const renderParentTag = (tag: Tag) => {
+    const renderParentTag = (tag: Tag) => {
     const isExpanded = expandedCategories.includes(tag.parent);
-    const selectedChildrenCount = tag.children.filter(child => 
+    const selectedChildrenCount = tag.children.filter(child =>
       selectedTags.includes(child)
     ).length;
 
     return (
       <View key={tag.parent} style={styles.categoryContainer}>
         <TouchableOpacity
-          style={[
-            styles.parentTagButton,
-            selectedChildrenCount > 0 && styles.parentTagButtonActive
-          ]}
-          onPress={() => toggleCategory(tag.parent)}>
-          <Text style={[
-            styles.parentTagText,
-            selectedChildrenCount > 0 && styles.parentTagTextActive
-          ]}>
+          style={styles.parentTagButton}
+          onPress={() => toggleCategory(tag.parent)}
+          activeOpacity={0.8}>
+          <Text style={styles.parentTagText}>
             {tag.parent}
           </Text>
           <View style={styles.parentTagRight}>
@@ -121,36 +116,44 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
             )}
             <Icon
               name={isExpanded ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color={selectedChildrenCount > 0 ? GlobalColors.Settings.background : GlobalColors.Settings.textMuted}
+              size={18}
+              color={GlobalColors.Onboarding.textMuted}
             />
           </View>
         </TouchableOpacity>
 
         {isExpanded && (
           <View style={styles.childTagsContainer}>
-            <FlatList
-              data={tag.children}
-              numColumns={2}
-              scrollEnabled={false}
-              keyExtractor={(item, index) => `${tag.parent}-${index}`}
-              renderItem={({item}) => (
-                <TouchableOpacity
-                  style={[
-                    styles.childTagButton,
-                    selectedTags.includes(item) && styles.childTagButtonActive
-                  ]}
-                  onPress={() => toggleTag(item)}>
-                  <Text style={[
-                    styles.childTagText,
-                    selectedTags.includes(item) && styles.childTagTextActive
-                  ]}>
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              columnWrapperStyle={styles.childTagRow}
-            />
+            <View style={styles.childTagsRow}>
+              {tag.children.map(child => {
+                const isSelected = selectedTags.includes(child);
+                return (
+                  <TouchableOpacity
+                    key={child}
+                    style={[
+                      styles.childTagButton,
+                      isSelected && styles.childTagButtonActive,
+                    ]}
+                    onPress={() => toggleTag(child)}
+                    activeOpacity={0.8}>
+                    {isSelected && (
+                      <Icon
+                        name="check"
+                        size={14}
+                        color={GlobalColors.Onboarding.background}
+                        style={styles.childTagCheck}
+                      />
+                    )}
+                    <Text style={[
+                      styles.childTagText,
+                      isSelected && styles.childTagTextActive,
+                    ]}>
+                      {child}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         )}
       </View>
@@ -159,68 +162,77 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color={GlobalColors.Settings.text} />
-        </TouchableOpacity>
-      </View>
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.8}>
+        <Icon name="arrow-left" size={20} color={GlobalColors.Onboarding.textSecondary} />
+      </TouchableOpacity>
 
       {/* Progress Indicator */}
       <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, {width: '75%'}]} />
+        <View style={styles.progressBarsRow}>
+          <View style={[styles.progressBar, styles.progressBarFilled]} />
+          <View style={[styles.progressBar, styles.progressBarFilled]} />
+          <View style={[styles.progressBar, styles.progressBarActive]} />
+          <View style={styles.progressBar} />
         </View>
-        <Text style={styles.progressText}>Step 3 of 4</Text>
+        <Text style={styles.progressText}>{t('onboarding.step3Of4')}</Text>
       </View>
 
-      {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.title}>What gets you excited?</Text>
+      {/* Title */}
+      <View style={styles.titleSection}>
+        <Text style={styles.title}>{t('onboarding.whatExcitesYou')}</Text>
         <Text style={styles.subtitle}>
-          Select your interests so we can show you the most relevant events and streams
+          {t('onboarding.selectInterestsSubtitle')}
         </Text>
-
-        {/* Selection Counter */}
-        <View style={styles.selectionCounter}>
-          <Text style={styles.selectionText}>
-            {selectedTags.length} interests selected
-          </Text>
-          {selectedTags.length >= 3 && (
-            <View style={styles.recommendedBadge}>
-              <Icon name="check-circle" size={16} color={GlobalColors.Common.successIcon} />
-              <Text style={styles.recommendedText}>Great selection!</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Tags List */}
-        <ScrollView 
-          style={styles.tagsScrollView}
-          showsVerticalScrollIndicator={false}>
-          {tags.map(renderParentTag)}
-        </ScrollView>
       </View>
+
+      {/* Selection Counter Badge */}
+      <View style={[
+        styles.counterBadge,
+        selectedTags.length > 0 && styles.counterBadgeActive,
+      ]}>
+        <Text style={[
+          styles.counterBadgeText,
+          selectedTags.length > 0 && styles.counterBadgeTextActive,
+        ]}>
+          {t('onboarding.interestsSelected', { count: selectedTags.length })}
+        </Text>
+      </View>
+
+      {/* Tags List */}
+      <ScrollView
+        style={styles.tagsScrollView}
+        showsVerticalScrollIndicator={false}>
+        {tags.map(renderParentTag)}
+      </ScrollView>
 
       {/* Continue Button */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[
             styles.continueButton,
-            selectedTags.length === 0 && styles.continueButtonDisabled
+            selectedTags.length === 0 && styles.continueButtonDisabled,
           ]}
           onPress={validateAndContinue}
-          disabled={selectedTags.length === 0}>
-          <Text style={styles.continueButtonText}>
-            {`Continue${selectedTags.length > 0 ? ` (${selectedTags.length} selected)` : ''}`}
+          disabled={selectedTags.length === 0}
+          activeOpacity={0.9}>
+          <Text style={[
+            styles.continueButtonText,
+            selectedTags.length === 0 && styles.continueButtonTextDisabled,
+          ]}>
+            {t('common.continue')}
           </Text>
+          {selectedTags.length > 0 && (
+            <Icon name="arrow-right" size={18} color={GlobalColors.Onboarding.background} style={styles.buttonArrow} />
+          )}
         </TouchableOpacity>
-        
+
         {selectedTags.length === 0 && (
           <Text style={styles.helpText}>
-            Select at least one interest to continue
+            {t('onboarding.selectOneInterest')}
           </Text>
         )}
       </View>
@@ -231,178 +243,196 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: GlobalColors.Settings.background,
+    backgroundColor: GlobalColors.Onboarding.background,
     paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-  header: {
-    marginBottom: 20,
+    paddingTop: 24,
+    paddingBottom: 32,
   },
   backButton: {
-    padding: 8,
-    alignSelf: 'flex-start',
-  },
-  progressContainer: {
-    marginBottom: 32,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: GlobalColors.Settings.border,
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: GlobalColors.Settings.accent,
-    borderRadius: 2,
-  },
-  progressText: {
-    fontSize: 14,
-    color: GlobalColors.Settings.textMuted,
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: GlobalColors.Settings.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.border,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
   },
-  selectionCounter: {
-    flexDirection: 'row',
+  progressContainer: {
+    marginBottom: 24,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    paddingHorizontal: 4,
   },
-  selectionText: {
-    fontSize: 16,
-    color: GlobalColors.Settings.text,
-    fontWeight: '600',
-  },
-  recommendedBadge: {
+  progressBarsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: GlobalColors.Settings.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    gap: 8,
+    marginBottom: 12,
+    width: '100%',
   },
-  recommendedText: {
+  progressBar: {
+    flex: 1,
+    height: 3,
+    backgroundColor: GlobalColors.Onboarding.surfaceSecondary,
+    borderRadius: 2,
+  },
+  progressBarFilled: {
+    backgroundColor: GlobalColors.Onboarding.accent,
+    opacity: 0.5,
+  },
+  progressBarActive: {
+    backgroundColor: GlobalColors.Onboarding.accent,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: GlobalColors.Onboarding.accent,
+    letterSpacing: 0.5,
+  },
+  titleSection: {
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: GlobalColors.Onboarding.text,
+    marginBottom: 8,
+    lineHeight: 32,
+  },
+  subtitle: {
     fontSize: 14,
-    color: GlobalColors.Common.successText,
-    marginLeft: 6,
+    color: GlobalColors.Onboarding.textSecondary,
+    lineHeight: 20,
+  },
+  counterBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.border,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginBottom: 20,
+  },
+  counterBadgeActive: {
+    backgroundColor: GlobalColors.Onboarding.accent,
+    borderColor: GlobalColors.Onboarding.accent,
+  },
+  counterBadgeText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: GlobalColors.Onboarding.textMuted,
+  },
+  counterBadgeTextActive: {
+    color: GlobalColors.Onboarding.background,
     fontWeight: '600',
   },
   tagsScrollView: {
     flex: 1,
+    marginBottom: 8,
   },
   categoryContainer: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   parentTagButton: {
-    backgroundColor: GlobalColors.Settings.surface,
+    backgroundColor: GlobalColors.Onboarding.surface,
     borderWidth: 1,
-    borderColor: GlobalColors.Settings.border,
-    borderRadius: 12,
-    padding: 16,
+    borderColor: GlobalColors.Onboarding.border,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  parentTagButtonActive: {
-    backgroundColor: GlobalColors.Settings.accent + '20',
-    borderColor: GlobalColors.Settings.accent,
-  },
   parentTagText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: GlobalColors.Settings.text,
+    color: GlobalColors.Onboarding.text,
     flex: 1,
-  },
-  parentTagTextActive: {
-    color: GlobalColors.Settings.accent,
   },
   parentTagRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   selectedBadge: {
-    backgroundColor: GlobalColors.Settings.accent,
+    backgroundColor: GlobalColors.Onboarding.accent,
     borderRadius: 12,
-    minWidth: 24,
-    height: 24,
+    minWidth: 22,
+    height: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    paddingHorizontal: 6,
   },
   selectedBadgeText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.background,
+    fontWeight: '700',
+    color: GlobalColors.Onboarding.background,
   },
   childTagsContainer: {
-    marginTop: 12,
-    paddingHorizontal: 8,
+    marginTop: 10,
+    paddingHorizontal: 4,
   },
-  childTagRow: {
-    justifyContent: 'space-between',
+  childTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   childTagButton: {
-    backgroundColor: GlobalColors.Settings.surface,
+    backgroundColor: GlobalColors.Onboarding.surface,
     borderWidth: 1,
-    borderColor: GlobalColors.Settings.border,
+    borderColor: GlobalColors.Onboarding.border,
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginBottom: 8,
-    flex: 0.48,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    flexDirection: 'row',
     alignItems: 'center',
   },
   childTagButtonActive: {
-    backgroundColor: GlobalColors.Settings.accent,
-    borderColor: GlobalColors.Settings.accent,
+    backgroundColor: GlobalColors.Onboarding.accent,
+    borderColor: GlobalColors.Onboarding.accent,
+  },
+  childTagCheck: {
+    marginRight: 6,
   },
   childTagText: {
-    fontSize: 14,
-    color: GlobalColors.Settings.text,
-    textAlign: 'center',
+    fontSize: 13,
+    color: GlobalColors.Onboarding.textSecondary,
   },
   childTagTextActive: {
-    color: GlobalColors.Settings.background,
+    color: GlobalColors.Onboarding.background,
     fontWeight: '600',
   },
   buttonContainer: {
-    paddingTop: 20,
+    marginTop: 8,
   },
   continueButton: {
-    backgroundColor: GlobalColors.Settings.accent,
-    padding: 16,
+    backgroundColor: GlobalColors.Onboarding.accent,
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   continueButtonDisabled: {
-    backgroundColor: GlobalColors.Settings.border,
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.border,
   },
   continueButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.background,
+    fontSize: 15,
+    fontWeight: '600',
+    color: GlobalColors.Onboarding.background,
+  },
+  continueButtonTextDisabled: {
+    color: GlobalColors.Onboarding.textMuted,
+  },
+  buttonArrow: {
+    marginLeft: 6,
   },
   helpText: {
-    fontSize: 14,
-    color: GlobalColors.Settings.textMuted,
+    fontSize: 12,
+    color: GlobalColors.Onboarding.accent,
     textAlign: 'center',
     marginTop: 12,
   },

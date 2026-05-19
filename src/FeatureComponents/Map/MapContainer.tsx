@@ -19,12 +19,12 @@ import {
   LocationPuck,
   MarkerView,
 } from '@rnmapbox/maps';
-import {View, StyleSheet, Animated, Easing, Text} from 'react-native';
+import {View, StyleSheet, Animated, Easing, Text, Linking, Platform, useColorScheme} from 'react-native';
 import {point} from '@turf/helpers';
 import Supercluster from 'supercluster';
 import {debounce, throttle} from 'lodash';
 import {PUB_MAPBOX_KEY} from '@env';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import {
   createRadarBeam,
   createStaticCircle,
@@ -34,7 +34,7 @@ import ResetLocationButton from './ResetLocationButton';
 import {useGetAllMapPointsMutation} from '../../../features/LiveStream/LiveStream';
 import {useDispatch, useSelector} from 'react-redux';
 import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
-import {PartialState, useNavigation} from '@react-navigation/native';
+import {PartialState, useNavigation, useIsFocused} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
 import {
@@ -46,12 +46,14 @@ import {
 import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
 import {useAnalytics} from '../../Hooks/useAnalytics';
-import {GlobalColors} from '../../styles/GlobalColors';
 import {
   useGetHeatmapQuery,
   VenueData,
 } from '../../../features/voting/VotingApi';
-import HeatMapComponentStyles from './helperMap';
+import { useAppState } from '../../Hooks/useAppState';
+import MapHeatmapLayer from './MapHeatmapLayer';
+import PremiumVenueCard from '../Voting/PremiumVenueCard';
+import EmptyMapState from './EmptyMapState';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -239,10 +241,14 @@ interface EmojisState {
   [key: string]: [{emoji: string; id: string}];
 }
 const MapContainer = () => {
-  const {coordinates} = useGetLocation();
+  const {navigate} = useNavigation<any>();
+  const { isActive } = useAppState();
+  const isFocused = useIsFocused();
+  const coordinates = useCoordinates();
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
-  const [featuresPointsData, setFeaturesPointsData] = useState([]);
+  const [featuresPointsData, setFeaturesPointsData] = useState<any[]>([]);
+  const isDarkMode = useColorScheme() === 'dark';
 
   // Fetch events for map
   const {data: eventsData} = useGetMapEventsQuery({
@@ -250,57 +256,89 @@ const MapContainer = () => {
     useDB: true, // Use database for testing
   });
 
-  const [mapEvents, setMapEvents] = useState<Event[]>([]);
+  const {data: heatmapData} = useGetHeatmapQuery<any>(
+      {
+        latitude: coordinates[1],
+        longitude: coordinates[0],
+        radius: 20,
+      },
+      {
+        skip: coordinates.length < 2,
+        pollingInterval: isActive && isFocused ? 45000 : 0,
+      },
+    );
 
-  // Voting heatmap data
-  const {data: heatmapData, error: heatmapError, isLoading: heatmapLoading} = useGetHeatmapQuery(
-    {
-      latitude: coordinates[1],
-      longitude: coordinates[0],
-      radius: 20,
-    },
-    {
-      skip: coordinates.length < 2,
-      pollingInterval: 45000,
-    },
-  );
+  const mapEvents: Event[] = eventsData?.success && eventsData.data ? eventsData.data : [];
+
+
+  const [selectedHeatmapVenue, setSelectedHeatmapVenue] = useState<VenueData | null>(null);
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    console.log('[Heatmap Debug] coordinates:', coordinates);
-    console.log('[Heatmap Debug] query params:', {latitude: coordinates[1], longitude: coordinates[0], radius: 20});
-    console.log('[Heatmap Debug] skip:', coordinates.length < 2);
-    console.log('[Heatmap Debug] loading:', heatmapLoading);
-    console.log('[Heatmap Debug] error:', heatmapError);
-    console.log('[Heatmap Debug] data:', heatmapData ? `${heatmapData.heatmap?.length || 0} venues` : 'null');
-  }, [coordinates, heatmapData, heatmapError, heatmapLoading]);
+    if (selectedHeatmapVenue) {
+      Animated.spring(slideAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 80,
+        friction: 12,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+    return(()=>(
+      slideAnim.stopAnimation()
+    ))
+  }, [selectedHeatmapVenue, slideAnim]);
 
-  const heatmapGeoJSON = useMemo(() => {
-    const venues = heatmapData?.heatmap || [];
-    if (venues.length === 0) return null;
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [300, 0],
+  });
 
-    return {
-      type: 'FeatureCollection' as const,
-      features: venues.map((v: VenueData) => ({
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: v.coordinates,
-        },
-        properties: {
-          id: v.id,
-          name: v.name,
-          vibeScore: v.vibeScore,
-          hotVotes: v.hotVotes,
-          deadVotes: v.deadVotes,
-          totalVotes: v.totalVotes,
-          isBoosted: v.isBoosted ? 1 : 0,
-          intensity: Math.min(Math.abs(v.vibeScore) / 100, 1),
-        },
-      })),
-    };
-  }, [heatmapData]);
+  const handleHeatmapVenuePress = useCallback((venue: VenueData) => {
+    setSelectedHeatmapVenue(venue);
+  }, []);
 
-  const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
+  const handleViewVenue = useCallback((venueId: string) => {
+    // Navigate to VenueDetails screen (new screen)
+    navigate('VenueDetails', { venueId, venue: selectedHeatmapVenue });
+  }, [navigate, selectedHeatmapVenue]);
+
+  const handleDirections = useCallback(async (venueId: string) => {
+    if (!selectedHeatmapVenue) return;
+
+    const [longitude, latitude] = selectedHeatmapVenue.coordinates;
+    const label = encodeURIComponent(selectedHeatmapVenue.name);
+    
+    // Construct the URL based on the platform
+    const url = Platform.select({
+      ios: `maps://app?daddr=${latitude},${longitude}&q=${label}`,
+      android: `geo:${latitude},${longitude}?q=${latitude},${longitude}(${label})`,
+    });
+
+    if (url) {
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          // Fallback to Google Maps in browser if native app fails
+          const browserUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+          await Linking.openURL(browserUrl);
+        }
+      } catch (error) {
+        console.log('Error opening map:', error);
+      }
+    }
+  }, [selectedHeatmapVenue]);
+
+
+
+  const center = coordinates; // Stable reference from LocationStore — no spread needed
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
   const angleRef = useRef(0); // Ref to track current angle
@@ -333,40 +371,70 @@ const MapContainer = () => {
   }, [socket]);
 
   useEffect(() => {
-    // socket?.emit('get-updated-user', {}, (resp)=>{
-    //   console.log({resp: resp.data.streamsDetails});
-    //   dispatch(setCurrentUser(resp.data))
-    // });
+    if (!socket) return;
 
-    // add new marker to map
-    socket?.on('add-to-map', data => {
-      console.log({data}, 'add-to-map---------------------');
-      setFeaturesPointsData(prevState => [...prevState, data?.data?.mapItem]);
-    });
-    socket?.on('update-current-user', data => {
+    const handleAddToMap = (data: any) => {
+      console.log({data}, 'add-to-map');
+      setFeaturesPointsData(prevState => {
+        // Remove any existing feature with the same ID to prevent duplicates
+        const filtered = prevState.filter(
+          feature => feature.properties?.id !== data?.data?.mapItem?.properties?.id
+        );
+        return [...filtered, data?.data?.mapItem];
+      });
+    };
+    const handleUpdateUser = (data: any) => {
       console.log('socket new user', {data});
-    });
-    socket?.on('add-reaction-to-map', data => {
+    };
+    const handleReactionToMap = (data: any) => {
       const {id, reactEmogi} = data?.data;
+      console.log('add-reaction-to-map', {id, reactEmogi});
       setEmojis(prevState => ({
         ...prevState,
         [id]: [...(prevState[id] || []), {id: Date.now(), emoji: reactEmogi}],
       }));
-    });
-    socket?.on('stream-stopped', data => {
-      console.log(data, 'stream-stopped---------------------');
-      handleRemoveStoppedStreamFromMap({
-        streamId: data?.playbackId,
-      });
-    });
+    };
+    const handleStreamStopped = (data: any) => {
+      console.log(data, 'stream-stopped');
+      handleRemoveStoppedStreamFromMap({streamId: data?.streamId});
+    };
+
+    socket.on('add-to-map', handleAddToMap);
+    socket.on('update-current-user', handleUpdateUser);
+    socket.on('add-reaction-to-map', handleReactionToMap);
+    socket.on('stream-stopped', handleStreamStopped);
+
+    // CRITICAL: remove listeners on cleanup to prevent accumulation
+    // Without this, each effect run (on socket reconnect) stacks a new listener
+    return () => {
+      socket.off('add-to-map', handleAddToMap);
+      socket.off('update-current-user', handleUpdateUser);
+      socket.off('add-reaction-to-map', handleReactionToMap);
+      socket.off('stream-stopped', handleStreamStopped);
+    };
   }, [socket]);
 
-  const handleRemoveStoppedStreamFromMap = ({streamId}: {streamId: string}) => {
-    const updatedFeaturesPointsData = featuresPointsData.filter(
-      feature => feature?.properties?.liveDetails?.streamId !== streamId,
+  const handleRemoveStoppedStreamFromMap = useCallback(({streamId}: {streamId: string}) => {
+    setFeaturesPointsData(prevFeatures => 
+      prevFeatures
+        .map(feature => {
+          // Clean up nested streams if it's a grouped feature
+          if (feature?.groupedFeatures) {
+            feature.groupedFeatures = feature.groupedFeatures.filter(
+              (f: any) => f?.properties?.liveDetails?.streamId !== streamId
+            );
+          }
+          return feature;
+        })
+        .filter(feature => {
+          // Remove if it's the main feature
+          if (feature?.properties?.liveDetails?.streamId === streamId) {
+            return false;
+          }
+          return true;
+        })
     );
-    setFeaturesPointsData(updatedFeaturesPointsData);
-  };
+  }, []);
 
   // Calculate dynamic bounds based on user location
   const calculateDynamicBounds = useCallback(
@@ -397,12 +465,6 @@ const MapContainer = () => {
     }
   }, [coordinates.length, calculateDynamicBounds]);
 
-  // Update map events when data changes
-  useEffect(() => {
-    if (eventsData?.success && eventsData.data) {
-      setMapEvents(eventsData.data);
-    }
-  }, [eventsData]);
 
   // Register dynamic images using URLs
   const images = useMemo(() => {
@@ -452,6 +514,8 @@ const MapContainer = () => {
         const newClusters = supercluster.getClusters(bounds, zoomLevel);
 
         setClusters(newClusters);
+      } else {
+        setClusters([]);
       }
     }, 300);
 
@@ -461,6 +525,17 @@ const MapContainer = () => {
       debouncedFetchClusters.cancel();
     };
   }, [bounds, zoomLevel, supercluster, featuresPointsData.length]);
+
+  // check if map is empty, no live no heatmap, show empty screen
+  const isMapEmpty = React.useMemo(() => {
+    const hasLiveFeatures = featuresPointsData.length > 0;
+    const hasHeatmap = (heatmapData?.heatmap?.length ?? 0) > 0;
+    const hasEvents = mapEvents.length > 0;
+    
+    return !(hasLiveFeatures || hasHeatmap || hasEvents);
+  }, [featuresPointsData, heatmapData, mapEvents]);
+
+  
 
   // Pulse animation for live markers without using listeners
   useEffect(() => {
@@ -497,6 +572,7 @@ const MapContainer = () => {
 
     return () => {
       pulseAnimation.stopAnimation();
+      pulseAnimation.removeAllListeners(); // Prevent memory leak
     };
   }, [pulseAnimation]);
 
@@ -586,7 +662,7 @@ const MapContainer = () => {
             ref={mapRef}
             style={styles.map}
             onCameraChanged={handleRegionChange}
-            styleURL="mapbox://styles/test-121/cmmi3vwu8000901qp6q0554cd" // original dark mode map"mapbox://styles/mapbox/dark-v11"
+            styleURL={isDarkMode ? "mapbox://styles/test-121/cmmi3vwu8000901qp6q0554cd" :  "mapbox://styles/test-121/cmpa0v9sb007r01s8djrbawri"} // original dark mode map"mapbox://styles/mapbox/dark-v11"
             scaleBarEnabled={false}
             logoEnabled={false}>
             <Camera
@@ -623,8 +699,11 @@ const MapContainer = () => {
             />
 
             {/* Voting heatmap layer */}
-            {heatmapGeoJSON && heatmapGeoJSON.features.length > 0 && (
-              <HeatMapComponentStyles heatmapGeoJSON={heatmapGeoJSON} />
+            {heatmapData?.heatmap?.length > 0 && (
+              <MapHeatmapLayer
+                heatmapData={heatmapData}
+                onVenuePress={handleHeatmapVenuePress}
+              />
             )}
 
             {/* Render event markers */}
@@ -638,7 +717,7 @@ const MapContainer = () => {
               ))}
             {/* Render live stream markers */}
             {shouldRenderMarkers &&
-              clusters.map(cluster => {
+              clusters.map((cluster: any) => {
                 const isCluster = cluster.properties.cluster;
                 const imageUrl = cluster?.properties?.imageUrl || 'in';
                 const coordinates = cluster.geometry.coordinates;
@@ -686,33 +765,37 @@ const MapContainer = () => {
                       trackMapInteraction={trackMapInteraction}
                     />
 
-                    {emojis[cluster?.properties?.streamId] && (
+                    {/* Look up emojis by playbackId (stored in liveDetails.playbackId) */}
+                    {emojis[cluster?.properties?.liveDetails?.playbackId] && (
                       <MarkerView coordinate={cluster?.properties?.coordinates}>
-                        <>
-                          {emojis[cluster?.properties?.streamId]?.map(
-                            (emoji, idx) => {
+                        {/* Fixed anchor: all emojis start from the same point, don't push each other */}
+                        <View style={{width: 1, height: 1}}>
+                          {emojis[cluster?.properties?.liveDetails?.playbackId]?.map(
+                            (emoji) => {
+                              const emojiLookupKey = cluster?.properties?.liveDetails?.playbackId;
                               return (
-                                <FloatingEmoji
-                                  key={idx}
-                                  coordinates={cluster?.properties?.coordinates} // Ensure correct coordinates are passed here
-                                  mapRef={mapRef} // Ensure mapRef is passed here correctly
-                                  emoji={
-                                    EMOJIS[emoji.emoji.toLocaleLowerCase()]
-                                  }
-                                  onComplete={() => {
-                                    setEmojis(prevState => ({
-                                      ...prevState,
-                                      [cluster?.properties?.streamId]:
-                                        prevState[
-                                          cluster?.properties?.streamId
-                                        ]?.filter(e => e.id !== emoji.id),
-                                    }));
-                                  }}
-                                />
+                                <View
+                                  key={emoji.id}
+                                  style={{position: 'absolute', bottom: 0, left: -10}}>
+                                  <FloatingEmoji
+                                    coordinates={cluster?.properties?.coordinates}
+                                    mapRef={mapRef}
+                                    emoji={
+                                      EMOJIS[emoji.emoji.toLocaleLowerCase()]
+                                    }
+                                    onComplete={() => {
+                                      setEmojis(prevState => ({
+                                        ...prevState,
+                                        [emojiLookupKey]:
+                                          prevState[emojiLookupKey]?.filter(e => e.id !== emoji.id),
+                                      }));
+                                    }}
+                                  />
+                                </View>
                               );
                             },
                           )}
-                        </>
+                        </View>
                       </MarkerView>
                     )}
                   </>
@@ -744,6 +827,18 @@ const MapContainer = () => {
               width: 40,
             }}
           />
+          {/* Selected Venue Card Overlay */}
+          {selectedHeatmapVenue && (
+            <PremiumVenueCard
+              venue={selectedHeatmapVenue}
+              onClose={() => setSelectedHeatmapVenue(null)}
+              onViewVenue={handleViewVenue}
+              onDirections={handleDirections}
+              translateY={translateY}
+            />
+          )}
+
+          <EmptyMapState isVisible={isMapEmpty} />
         </>
       )}
     </View>

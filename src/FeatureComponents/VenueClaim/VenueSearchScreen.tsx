@@ -12,6 +12,7 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {useLazySearchVenuesQuery, VenueSearchResult} from '../../../features/venueClaim/VenueClaimApi';
 import GlobalColors from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const C = GlobalColors.VenueClaim;
 
@@ -19,6 +20,7 @@ const DEBOUNCE_MS = 400;
 
 export default function VenueSearchScreen() {
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [trigger, {data, isFetching}] = useLazySearchVenuesQuery();
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
@@ -42,9 +44,9 @@ export default function VenueSearchScreen() {
 
   const getStatusLabel = (status?: string): string | null => {
     if (!status || status === 'unclaimed') return null;
-    if (status === 'approved') return 'Already claimed';
-    if (status === 'pending_verification' || status === 'manual_review') return 'Claim in progress';
-    if (status === 'suspended') return 'Suspended';
+    if (status === 'approved') return t('venueClaim.alreadyClaimed');
+    if (status === 'pending_verification' || status === 'manual_review') return t('venueClaim.claimInProgress');
+    if (status === 'suspended') return t('venueClaim.suspended');
     return null;
   };
 
@@ -65,7 +67,7 @@ export default function VenueSearchScreen() {
           <Text style={styles.resultAddr}>
             {[item.address?.street, item.address?.city, item.address?.state]
               .filter(Boolean)
-              .join(', ') || 'No address'}
+              .join(', ') || t('venueClaim.noAddress')}
           </Text>
           {item.category && (
             <Text style={styles.resultCategory}>
@@ -86,19 +88,19 @@ export default function VenueSearchScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={styles.backText}>{t('common.backArrow')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Claim Your Venue</Text>
+        <Text style={styles.title}>{t('venueClaim.claimYourVenue')}</Text>
       </View>
 
       <Text style={styles.subtitle}>
-        Search for your venue to begin the claiming process.
+        {t('venueClaim.searchForYourVenue')}
       </Text>
 
       <View style={styles.searchRow}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search venue name..."
+          placeholder={t('venueClaim.searchVenueName')}
           placeholderTextColor={C.mutedGray}
           value={query}
           onChangeText={handleSearch}
@@ -109,7 +111,7 @@ export default function VenueSearchScreen() {
       </View>
 
       {query.length > 0 && query.length < 2 && (
-        <Text style={styles.hint}>Type at least 2 characters to search.</Text>
+        <Text style={styles.hint}>{t('venueClaim.typeAtLeastTwoChars')}</Text>
       )}
 
       <FlatList
@@ -119,7 +121,7 @@ export default function VenueSearchScreen() {
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           query.length >= 2 && !isFetching ? (
-            <Text style={styles.emptyText}>No venues found for "{query}"</Text>
+            <Text style={styles.emptyText}>{t('venueClaim.noVenuesFound')} "{query}"</Text>
           ) : null
         }
         keyboardShouldPersistTaps="handled"

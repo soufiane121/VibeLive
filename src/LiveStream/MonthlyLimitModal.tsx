@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   boostButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cancelButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: colors.tierBasicBackground,
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,

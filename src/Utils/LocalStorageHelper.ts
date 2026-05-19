@@ -35,4 +35,12 @@ const getLocalData = async ({
   }
 };
 
-export {setLocalData, getLocalData};
+const removeLocalData = async ({ key }: PropsLocalData): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch (error) {
+    console.error('[LocalStorage] removeItem error:', error);
+  }
+};
+
+export {setLocalData, getLocalData, removeLocalData};

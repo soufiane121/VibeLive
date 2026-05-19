@@ -10,6 +10,7 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {VenueSearchResult, VerificationPath, SubscriptionTier} from '../../../features/venueClaim/VenueClaimApi';
 import GlobalColors from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const C = GlobalColors.VenueClaim;
 
@@ -22,53 +23,54 @@ type TierOption = {
   highlighted?: boolean;
 };
 
-const TIERS: TierOption[] = [
-  {
-    key: 'analytics',
-    name: 'Analytics',
-    price: 'Free Trial',
-    description: 'See how your venue performs on VibeLive.',
-    features: [
-      'View count & engagement metrics',
-      'Busyness & vibe score tracking',
-      'Weekly email reports',
-    ],
-  },
-  {
-    key: 'notifications',
-    name: 'Notifications',
-    price: '$9.99/mo',
-    description: 'Engage your audience in real time.',
-    features: [
-      'Everything in Analytics',
-      'Push notifications to nearby users',
-      'Event promotion tools',
-      'Custom notification scheduling',
-    ],
-    highlighted: true,
-  },
-  {
-    key: 'premium',
-    name: 'Premium',
-    price: '$29.99/mo',
-    description: 'Full venue management suite.',
-    features: [
-      'Everything in Notifications',
-      'Featured placement on map',
-      'Priority support',
-      'Advanced analytics & insights',
-      'Multi-operator access',
-    ],
-  },
-];
-
 export default function VenueClaimTierSelectionScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { t } = useTranslation();
   const venue: VenueSearchResult = route.params?.venue;
   const path: VerificationPath = route.params?.path;
   const verificationData = route.params?.verificationData;
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('analytics');
+
+  const TIERS: TierOption[] = [
+    {
+      key: 'analytics',
+      name: t('venueClaim.tierAnalytics'),
+      price: t('venueClaim.freeTrial'),
+      description: t('venueClaim.analyticsDesc'),
+      features: [
+        t('venueClaim.analyticsFeature1'),
+        t('venueClaim.analyticsFeature2'),
+        t('venueClaim.analyticsFeature3'),
+      ],
+    },
+    {
+      key: 'notifications',
+      name: t('venueClaim.tierNotifications'),
+      price: t('venueClaim.notificationsPrice'),
+      description: t('venueClaim.notificationsDesc'),
+      features: [
+        t('venueClaim.notificationsFeature1'),
+        t('venueClaim.notificationsFeature2'),
+        t('venueClaim.notificationsFeature3'),
+        t('venueClaim.notificationsFeature4'),
+      ],
+      highlighted: true,
+    },
+    {
+      key: 'premium',
+      name: t('venueClaim.tierPremium'),
+      price: t('venueClaim.premiumPrice'),
+      description: t('venueClaim.premiumDesc'),
+      features: [
+        t('venueClaim.premiumFeature1'),
+        t('venueClaim.premiumFeature2'),
+        t('venueClaim.premiumFeature3'),
+        t('venueClaim.premiumFeature4'),
+        t('venueClaim.premiumFeature5'),
+      ],
+    },
+  ];
 
   const handleContinue = () => {
     navigation.navigate('VenueClaimReview', {
@@ -83,15 +85,15 @@ export default function VenueClaimTierSelectionScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={styles.backText}>{t('common.backArrow')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Choose Your Plan</Text>
+        <Text style={styles.title}>{t('venueClaim.chooseYourPlan')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.subtitle}>
-          All plans start with a <Text style={styles.goldText}>30-day free trial</Text>.
-          You can upgrade or cancel anytime.
+          {t('venueClaim.allPlansStartWith')} <Text style={styles.goldText}>30-day free trial</Text>.
+          {t('venueClaim.upgradeOrCancelAnytime')}
         </Text>
 
         {TIERS.map(tier => (
@@ -106,7 +108,7 @@ export default function VenueClaimTierSelectionScreen() {
             activeOpacity={0.7}>
             {tier.highlighted && (
               <View style={styles.popularBadge}>
-                <Text style={styles.popularText}>Most Popular</Text>
+                <Text style={styles.popularText}>{t('venueClaim.mostPopular')}</Text>
               </View>
             )}
             <View style={styles.tierHeader}>
@@ -116,7 +118,7 @@ export default function VenueClaimTierSelectionScreen() {
             <Text style={styles.tierDesc}>{tier.description}</Text>
             {tier.features.map((feat, i) => (
               <View key={i} style={styles.featureRow}>
-                <Text style={styles.featureCheck}>✓</Text>
+                <Text style={styles.featureCheck}>{t('common.verifiedCheck')}</Text>
                 <Text style={styles.featureText}>{feat}</Text>
               </View>
             ))}
@@ -125,7 +127,7 @@ export default function VenueClaimTierSelectionScreen() {
                 {selectedTier === tier.key && <View style={styles.radioInner} />}
               </View>
               <Text style={styles.radioLabel}>
-                {selectedTier === tier.key ? 'Selected' : 'Select'}
+                {selectedTier === tier.key ? t('venueClaim.selected') : t('venueClaim.select')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -135,7 +137,7 @@ export default function VenueClaimTierSelectionScreen() {
           style={styles.primaryBtn}
           onPress={handleContinue}
           activeOpacity={0.8}>
-          <Text style={styles.primaryBtnText}>Review & Submit</Text>
+          <Text style={styles.primaryBtnText}>{t('venueClaim.reviewAndSubmit')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

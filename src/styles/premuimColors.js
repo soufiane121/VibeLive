@@ -28,6 +28,24 @@ export const premiumColors = {
     lightGreenBG: 'rgba(74, 99, 76, 0.22)',
 
     separator: 'rgba(255, 255, 255, 0.05)',
+
+//     •	Ghost — #1E8CC8 at 6% opacity
+// 	•	Low — #1E8CC8 at 14% opacity
+// 	•	Warm — #1E8CC8 at 28% opacity
+// 	•	Busy — #1E8CC8 at 50% opacity
+// 	•	Fire — #1E8CC8 at 72% opacity
+// Markers
+// 	•	Fill — #1E8CC8
+// 	•	Ring — #A8E0F8
+// 	•	Glow — #1E8CC8 at 50% opacity
+    heatmap: {
+      coldest: '#1E8CC8', // Deep navy
+      cold: '#1E8CC8',    // Dark blue
+      neutral: '#1E8CC8', // Mid blue
+      warm: '#1E8CC8',    // accentPrimary
+      hot: '#1E8CC8',     // Light bright blue
+      ring: '#A8E0F8',
+    },
   },
 
   light: {
@@ -60,5 +78,14 @@ export const premiumColors = {
     separator: 'rgba(0, 0, 0, 0.05)',
 
     lightGreenBG: 'rgba(208, 241, 210, 0.22)',
+
+    heatmap: {
+      coldest: '#E6EBF5', // Very light blue
+      cold: '#C0D1EE',    // Light blue
+      neutral: '#8CAAE0', // Mid blue
+      warm: '#5E88D6',    // Darker mid blue
+      hot: '#5985ed',     // accentPrimary
+      ring: '#cbd0e0ff',
+    },
   },
 };

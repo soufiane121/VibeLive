@@ -108,7 +108,7 @@ const VotingInitializer = () => {
     );
 
     return () => {
-      geofenceMonitor.stopMonitoring();
+      geofenceMonitor.stopMonitoring().catch(console.error);
       offlineVoteQueue.cleanup();
       initialized.current = false;
     };

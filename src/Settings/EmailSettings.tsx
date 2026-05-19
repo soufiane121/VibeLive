@@ -14,6 +14,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon, ChevronForwardIcon, MailIcon, MailOutlineIcon, NotificationsIcon, ShieldCheckmarkIcon, CheckmarkIcon } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import {
   useChangeEmailMutation,
   useVerifyEmailMutation,
@@ -24,6 +25,7 @@ const EmailSettings = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   
   const [newEmail, setNewEmail] = useState('');
@@ -51,7 +53,7 @@ const EmailSettings = () => {
 
   const handleSendVerification = async () => {
     if (!validateEmail(currentUser.email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert(t('common.error'), t('errors.invalidEmail'));
       return;
     }
 
@@ -67,12 +69,12 @@ const EmailSettings = () => {
       });
 
       Alert.alert(
-        'Verification Sent',
-        'A verification code has been sent to your email address. Please check your inbox and enter the code below.'
+        t('email.verificationSent'),
+        t('email.verificationSentDesc')
       );
     } catch (error: any) {
       console.error('Error sending verification:', error);
-      Alert.alert('Error', 'Failed to send verification email. Please try again.');
+      Alert.alert(t('common.error'), t('email.verificationFailed'));
     }
   };
 
@@ -98,29 +100,29 @@ const EmailSettings = () => {
         };
         dispatch(setCurrentUser(updatedUser));
         
-        Alert.alert('Success', 'Email verified successfully');
+        Alert.alert(t('common.success'), t('email.verifySuccess'));
         setVerificationCode('');
         
         trackEvent('email_verified', {
           user_id: currentUser?._id,
         });
       } else {
-        Alert.alert('Error', response.message || 'Failed to verify email');
+        Alert.alert(t('common.error'), response.message || t('email.verifyFailed'));
       }
     } catch (error) {
       console.error('Error verifying email:', error);
-      Alert.alert('Error', 'Failed to verify email');
+      Alert.alert(t('common.error'), t('email.verifyFailed'));
     }
   };
 
   const handleChangeEmail = async () => {
     if (!newEmail || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(t('common.error'), t('errors.fillAllFields'));
       return;
     }
 
     if (!isValidEmail(newEmail)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert(t('common.error'), t('errors.invalidEmail'));
       return;
     }
 
@@ -131,7 +133,7 @@ const EmailSettings = () => {
       }).unwrap();
       
       if (response.success) {
-        Alert.alert('Success', 'Email change request sent. Please check your new email for verification.');
+        Alert.alert(t('common.success'), t('email.changeSuccess'));
         setNewEmail('');
         setPassword('');
         
@@ -140,11 +142,11 @@ const EmailSettings = () => {
           new_email: newEmail,
         });
       } else {
-        Alert.alert('Error', response.message || 'Failed to change email');
+        Alert.alert(t('common.error'), response.message || t('email.changeFailed'));
       }
     } catch (error) {
       console.error('Error changing email:', error);
-      Alert.alert('Error', 'Failed to change email');
+      Alert.alert(t('common.error'), t('email.changeFailed'));
     }
   };
 
@@ -162,16 +164,16 @@ const EmailSettings = () => {
         >
           <ChevronBackIcon size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Email Settings</Text>
+        <Text style={styles.headerTitle}>{t('settings.sections.email.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Current Email */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Current Email</Text>
+          <Text style={styles.sectionTitle}>{t('email.currentEmail')}</Text>
           <Text style={styles.sectionDescription}>
-            Your email address is used for account recovery and important notifications
+            {t('email.currentEmailDesc')}
           </Text>
         </View>
 
@@ -189,7 +191,7 @@ const EmailSettings = () => {
                   styles.verificationText,
                   { color: isEmailVerified ? '#059669' : '#dc2626' }
                 ]}>
-                  {isEmailVerified ? 'Verified' : 'Not Verified'}
+                  {isEmailVerified ? t('common.verified') : t('common.notVerified')}
                 </Text>
               </View>
             </View>
@@ -200,9 +202,9 @@ const EmailSettings = () => {
         {!isEmailVerified && (
           <>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Email Verification</Text>
+              <Text style={styles.sectionTitle}>{t('email.verification')}</Text>
               <Text style={styles.sectionDescription}>
-                Verify your email to secure your account and receive important updates
+                {t('email.verificationDesc')}
               </Text>
             </View>
 
@@ -214,17 +216,17 @@ const EmailSettings = () => {
               >
                 <MailOutlineIcon size={20} color="#fff" />
                 <Text style={styles.verifyButtonText}>
-                  {'Send Verification Email'}
+                  {t('email.sendVerification')}
                 </Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.verificationContainer}>
-                <Text style={styles.inputLabel}>Verification Code</Text>
+                <Text style={styles.inputLabel}>{t('email.verificationCode')}</Text>
                 <TextInput
                   style={styles.codeInput}
                   value={verificationCode}
                   onChangeText={setVerificationCode}
-                  placeholder="Enter 6-digit code"
+                  placeholder={t('email.codePlaceholder')}
                   placeholderTextColor="#6b7280"
                   keyboardType="number-pad"
                   maxLength={6}
@@ -238,7 +240,7 @@ const EmailSettings = () => {
                   disabled={verifyEmailLoading || !verificationCode || verificationCode.length < 6}
                 >
                   <Text style={styles.submitButtonText}>
-                    {verifyEmailLoading ? 'Verifying...' : 'Verify Email'}
+                    {verifyEmailLoading ? t('email.verifying') : t('email.verifyEmail')}
                   </Text>
                 </TouchableOpacity>
                 
@@ -249,7 +251,7 @@ const EmailSettings = () => {
                     setVerificationCode('');
                   }}
                 >
-                  <Text style={styles.resendText}>Send New Code</Text>
+                  <Text style={styles.resendText}>{t('email.sendNewCode')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -258,30 +260,30 @@ const EmailSettings = () => {
 
         {/* Change Email */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Change Email Address</Text>
+          <Text style={styles.sectionTitle}>{t('email.changeEmail')}</Text>
           <Text style={styles.sectionDescription}>
-            Update your email address. You'll need to verify the new address.
+            {t('email.changeEmailDesc')}
           </Text>
         </View>
 
         <View style={styles.changeEmailContainer}>
-          <Text style={styles.inputLabel}>New Email Address</Text>
+          <Text style={styles.inputLabel}>{t('email.newEmail')}</Text>
           <TextInput
             style={styles.emailInput}
             value={newEmail}
             onChangeText={setNewEmail}
-            placeholder="Enter new email address"
+            placeholder={t('email.newEmailPlaceholder')}
             placeholderTextColor="#6b7280"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
           />
-          <Text style={styles.inputLabel}>Password</Text>
+          <Text style={styles.inputLabel}>{t('common.password')}</Text>
           <TextInput
             style={styles.emailInput}
             value={password}
             onChangeText={setPassword}
-            placeholder="Enter password"
+            placeholder={t('email.passwordPlaceholder')}
             placeholderTextColor="#6b7280"
             secureTextEntry={true}
           />
@@ -294,16 +296,16 @@ const EmailSettings = () => {
             disabled={changeEmailLoading || !newEmail || !password || !isValidEmail(newEmail)}
           >
             <Text style={styles.changeEmailButtonText}>
-              {changeEmailLoading ? 'Changing...' : 'Change Email'}
+              {changeEmailLoading ? t('email.changing') : t('email.changeEmailButton')}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Email Preferences */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Email Preferences</Text>
+          <Text style={styles.sectionTitle}>{t('email.preferences')}</Text>
           <Text style={styles.sectionDescription}>
-            Manage what types of emails you receive
+            {t('email.preferencesDesc')}
           </Text>
         </View>
 
@@ -315,7 +317,7 @@ const EmailSettings = () => {
             <View style={styles.iconContainer}>
               <NotificationsIcon size={20} color="#fff" />
             </View>
-            <Text style={styles.preferencesText}>Email Notifications</Text>
+            <Text style={styles.preferencesText}>{t('email.notifications')}</Text>
           </View>
           <ChevronForwardIcon size={20} color="#6b7280" />
         </TouchableOpacity>
@@ -324,13 +326,13 @@ const EmailSettings = () => {
         <View style={styles.securitySection}>
           <View style={styles.securityHeader}>
             <ShieldCheckmarkIcon size={24} color="#8b5cf6" />
-            <Text style={styles.securityTitle}>Email Security</Text>
+            <Text style={styles.securityTitle}>{t('email.securityTitle')}</Text>
           </View>
           <Text style={styles.securityText}>
-            • Keep your email address up to date for account recovery{'\n'}
-            • Verify your email to enable all security features{'\n'}
-            • We'll never share your email with third parties{'\n'}
-            • Check your spam folder if you don't receive verification emails
+            • {t('email.tips.recovery')}{'\n'}
+            • {t('email.tips.verify')}{'\n'}
+            • {t('email.tips.privacy')}{'\n'}
+            • {t('email.tips.spam')}
           </Text>
         </View>
       </ScrollView>

@@ -15,6 +15,7 @@ import {
   useGetVotingPreferencesQuery,
   useUpdateVotingPreferencesMutation,
 } from '../../../features/voting/VotingApi';
+import useTranslation from '../../Hooks/useTranslation';
 
 const RADIUS_OPTIONS = [3, 5, 10, 15, 25, 50];
 const FREQUENCY_OPTIONS = [1, 2, 3, 5, 10];
@@ -22,6 +23,7 @@ const COOLDOWN_OPTIONS = [10, 15, 30, 45, 60, 120];
 
 const VotingPreferences = () => {
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
   const {data, isLoading} = useGetVotingPreferencesQuery();
   const [updatePrefs, {isLoading: isUpdating}] =
     useUpdateVotingPreferencesMutation();
@@ -59,21 +61,21 @@ const VotingPreferences = () => {
         permanentOptOut: optOut,
       }).unwrap();
 
-      Alert.alert('Saved', 'Your voting preferences have been updated.');
+      Alert.alert(t('common.saved'), t('voting.preferencesUpdated'));
     } catch (err) {
-      Alert.alert('Error', 'Failed to update preferences.');
+      Alert.alert(t('common.error'), t('voting.failedUpdatePreferences'));
     }
   }, [enabled, radius, maxPerNight, cooldown, quietStart, quietEnd, optOut, updatePrefs]);
 
   const handleOptOut = useCallback(() => {
     if (!optOut) {
       Alert.alert(
-        'Permanent Opt-Out',
-        'You will no longer receive venue voting notifications. You can re-enable this later.',
+        t('voting.permanentOptOut'),
+        t('voting.permanentOptOutDesc'),
         [
-          {text: 'Cancel', style: 'cancel'},
+          {text: t('common.cancel'), style: 'cancel'},
           {
-            text: 'Opt Out',
+            text: t('voting.optOut'),
             style: 'destructive',
             onPress: () => {
               setOptOut(true);
@@ -102,7 +104,7 @@ const VotingPreferences = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Voting Preferences</Text>
+        <Text style={styles.headerTitle}>{t('voting.votingPreferences')}</Text>
         <TouchableOpacity
           onPress={handleSave}
           disabled={isUpdating}
@@ -110,7 +112,7 @@ const VotingPreferences = () => {
           {isUpdating ? (
             <ActivityIndicator color="#00FFFF" size="small" />
           ) : (
-            <Text style={styles.saveText}>Save</Text>
+            <Text style={styles.saveText}>{t('common.save')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -119,8 +121,8 @@ const VotingPreferences = () => {
         {/* Enable/Disable */}
         <View style={styles.row}>
           <View style={{flex: 1}}>
-            <Text style={styles.rowTitle}>Venue Notifications</Text>
-            <Text style={styles.rowSub}>Get notified when you're near a venue</Text>
+            <Text style={styles.rowTitle}>{t('voting.venueNotifications')}</Text>
+            <Text style={styles.rowSub}>{t('voting.venueNotificationsDesc')}</Text>
           </View>
           <Switch
             value={enabled && !optOut}
@@ -135,9 +137,9 @@ const VotingPreferences = () => {
 
         {/* Radius */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detection Radius</Text>
+          <Text style={styles.sectionTitle}>{t('voting.detectionRadius')}</Text>
           <Text style={styles.sectionSub}>
-            How close you need to be to a venue ({radius}m)
+            {t('voting.detectionRadiusDesc', { radius })}
           </Text>
           <View style={styles.optionRow}>
             {RADIUS_OPTIONS.map(r => (
@@ -159,9 +161,9 @@ const VotingPreferences = () => {
 
         {/* Max per night */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Max Notifications Per Night</Text>
+          <Text style={styles.sectionTitle}>{t('voting.maxNotifications')}</Text>
           <Text style={styles.sectionSub}>
-            Maximum {maxPerNight} notification{maxPerNight > 1 ? 's' : ''} per night
+            {t('voting.maxNotificationsDesc', { count: maxPerNight })}
           </Text>
           <View style={styles.optionRow}>
             {FREQUENCY_OPTIONS.map(f => (
@@ -183,9 +185,9 @@ const VotingPreferences = () => {
 
         {/* Cooldown */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Cooldown Between Notifications</Text>
+          <Text style={styles.sectionTitle}>{t('voting.cooldown')}</Text>
           <Text style={styles.sectionSub}>
-            Wait at least {cooldown} minutes between notifications
+            {t('voting.cooldownDesc', { minutes: cooldown })}
           </Text>
           <View style={styles.optionRow}>
             {COOLDOWN_OPTIONS.map(c => (
@@ -207,13 +209,13 @@ const VotingPreferences = () => {
 
         {/* Quiet Hours */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quiet Hours</Text>
+          <Text style={styles.sectionTitle}>{t('voting.quietHours')}</Text>
           <Text style={styles.sectionSub}>
-            No notifications between {quietStart} and {quietEnd}
+            {t('voting.quietHoursDesc', { start: quietStart, end: quietEnd })}
           </Text>
           <View style={styles.quietRow}>
             <View style={styles.quietInput}>
-              <Text style={styles.quietLabel}>Start</Text>
+              <Text style={styles.quietLabel}>{t('voting.start')}</Text>
               <TouchableOpacity
                 style={styles.quietBtn}
                 onPress={() => {
@@ -227,7 +229,7 @@ const VotingPreferences = () => {
             </View>
             <Text style={styles.quietDash}>—</Text>
             <View style={styles.quietInput}>
-              <Text style={styles.quietLabel}>End</Text>
+              <Text style={styles.quietLabel}>{t('voting.end')}</Text>
               <TouchableOpacity
                 style={styles.quietBtn}
                 onPress={() => {
@@ -246,13 +248,13 @@ const VotingPreferences = () => {
         <View style={styles.section}>
           <TouchableOpacity style={styles.optOutBtn} onPress={handleOptOut}>
             <Text style={[styles.optOutText, optOut && {color: '#FF4500'}]}>
-              {optOut ? '🔴 Opted Out — Tap to Re-enable' : '⚠️ Permanently Opt Out'}
+              {optOut ? t('voting.optedOut') : t('voting.permanentlyOptOut')}
             </Text>
           </TouchableOpacity>
           <Text style={styles.optOutSub}>
             {optOut
-              ? 'You will not receive any venue voting notifications.'
-              : 'Disable all venue voting notifications permanently.'}
+              ? t('voting.optedOutDesc')
+              : t('voting.permanentlyOptOutDesc')}
           </Text>
         </View>
 

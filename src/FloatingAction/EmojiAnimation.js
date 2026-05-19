@@ -1,33 +1,30 @@
 import React, {useRef, useEffect} from 'react';
 import {Animated, StyleSheet, View} from 'react-native';
 import {emojis as EMOJIS} from '../Utils/emojis';
-import {useDispatch, useSelector} from 'react-redux';
-import { clearReactions } from '../../features/LiveStream/LiveStreamSlice';
+import {useSelector} from 'react-redux';
 
-export const FloatingEmoji = ({emoji, onComplete}) => {   
+export const FloatingEmoji = ({emoji, onComplete}) => {
   const positionY = useRef(new Animated.Value(0)).current;
-  const positionX = useRef(new Animated.Value(0)).current; // For horizontal movement
+  const positionX = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    const randomStartX = Math.random() * 80 + 10; // Random start position
-    const randomEndX = Math.random() * 80 + 10; // Random end position
-
-    positionX.setValue(randomStartX); // Set the initial horizontal position
+    const drift = (Math.random() - 0.5) * 60;
+    positionX.setValue(0);
 
     Animated.parallel([
       Animated.timing(positionY, {
-        toValue: -350, // Moves the emoji up
+        toValue: -350,
         duration: 3000,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
-        toValue: 0, // Fades out the emoji
+        toValue: 0,
         duration: 3000,
         useNativeDriver: true,
       }),
       Animated.timing(positionX, {
-        toValue: randomEndX, // Animates the emoji horizontally
+        toValue: drift,
         duration: 3000,
         useNativeDriver: true,
       }),
@@ -40,10 +37,7 @@ export const FloatingEmoji = ({emoji, onComplete}) => {
       style={[
         styles.emoji,
         {
-          transform: [
-            {translateY: positionY},
-            {translateX: positionX}, // Apply the horizontal movement
-          ],
+          transform: [{translateY: positionY}, {translateX: positionX}],
           opacity,
         },
       ]}
@@ -53,55 +47,57 @@ export const FloatingEmoji = ({emoji, onComplete}) => {
 
 const FloatingEmojiReactions = () => {
   const [emojis, setEmojis] = React.useState([]);
-  const {liveStreamData: {emoji: emojiSelected, id}} = useSelector(state => state?.liveStreamSlice);
-  const dispatch = useDispatch();
+  // Read reaction data from Redux — ChatList dispatches addReaction() on every get-reaction event.
+  // We DON'T use useSocketInstance() here because each hook call creates a SEPARATE socket connection.
+  // ChatList's socket joins the room and receives events; a second socket here would not.
+  const {liveStreamData} = useSelector(state => state?.liveStreamSlice);
 
   useEffect(() => {
-    if (EMOJIS[emojiSelected?.toLowerCase()]) {
+    // _ts is a unique timestamp added on every addReaction dispatch.
+    // This ensures even consecutive identical emojis (e.g. "Like" twice) trigger this effect.
+    if (!liveStreamData?.emoji || !liveStreamData?._ts) return;
+
+    const emojiImage = EMOJIS[liveStreamData.emoji.toLowerCase()];
+    if (emojiImage) {
       setEmojis(prev => [
         ...prev,
-        {id: Date.now(), emoji: EMOJIS[emojiSelected?.toLowerCase()]},
+        {uid: `${liveStreamData._ts}-${Math.random()}`, emoji: emojiImage},
       ]);
-      dispatch(clearReactions(''));
     }
-  }, [emojiSelected]);
+  }, [liveStreamData?._ts]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.emojiContainer}>
-        {emojis.map(({id, emoji}) => (
+    <View style={styles.overlay} pointerEvents="none">
+      {emojis.map(({uid, emoji}) => (
+        <View key={uid} style={styles.emojiAnchor}>
           <FloatingEmoji
-            key={id}
             emoji={emoji}
-            onComplete={() => setEmojis(prev => prev.filter(e => e.id !== id))}
+            onComplete={() => setEmojis(prev => prev.filter(e => e.uid !== uid))}
           />
-        ))}
-      </View>
+        </View>
+      ))}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    // flex: 1,
-    backgroundColor: 'black',
-    // justifyContent: 'flex-end',
-    alignItems: 'start',
-    paddingBottom: 50,
-    // position: "absolute",
-    borderWidth: 2,
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 999,
   },
-  emojiContainer: {
-    // position: 'absolute',
-    bottom: 100,
-    width: '70%',
-    height: '10%',
-    // borderWidth: 5,
-    display: 'flex',
-    flexDirection: 'row-reverse',
+  emojiAnchor: {
+    // Fixed anchor point — all emojis start from the same spot
+    position: 'absolute',
+    bottom: 110,
+    right: 70,
+    width: 40,
+    height: 40,
   },
   emoji: {
-    position: 'absolute',
     width: 40,
     height: 40,
   },

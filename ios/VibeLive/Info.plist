@@ -36,11 +36,13 @@
 	<key>NSCameraUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs access to your Camera.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>please allow </string>
+	<string>$(PRODUCT_NAME) needs access to your location even when the app is in the background to discover nearby venues and send you notifications about hot spots in your area.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Please allow VibeLive to use location</string>
+	<string>$(PRODUCT_NAME) needs access to your location to discover nearby venues, show you live streams in your area, and provide personalized nightlife recommendations.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs access to your Microphone.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>$(PRODUCT_NAME) needs access to your photo library.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>AntDesign.ttf</string>
@@ -67,6 +69,7 @@
 	<array>
 		<string>remote-notification</string>
 		<string>fetch</string>
+		<string>location</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

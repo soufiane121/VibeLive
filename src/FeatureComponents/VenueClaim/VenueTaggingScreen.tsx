@@ -11,12 +11,14 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useGetNearbyOnboardedVenuesQuery, NearbyVenue} from '../../../features/venueClaim/VenueClaimApi';
 import GlobalColors from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const C = GlobalColors.VenueClaim;
 
 export default function VenueTaggingScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { t } = useTranslation();
   const lat: number = route.params?.lat;
   const lng: number = route.params?.lng;
   const onSelect: ((venue: NearbyVenue | null) => void) | undefined = route.params?.onSelect;
@@ -48,8 +50,8 @@ export default function VenueTaggingScreen() {
   };
 
   const formatDistance = (meters: number): string => {
-    if (meters < 1000) return `${Math.round(meters)}m away`;
-    return `${(meters / 1000).toFixed(1)}km away`;
+    if (meters < 1000) return t('venueClaim.metersAway', {meters: Math.round(meters)});
+    return t('venueClaim.kilometersAway', {km: (meters / 1000).toFixed(1)});
   };
 
   const renderItem = ({item}: {item: NearbyVenue}) => (
@@ -80,25 +82,25 @@ export default function VenueTaggingScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleSkip} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={styles.backText}>{t('common.backArrow')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Tag a Venue</Text>
+        <Text style={styles.title}>{t('venueClaim.tagAVenue')}</Text>
       </View>
 
       <Text style={styles.subtitle}>
-        Are you streaming from a claimed venue? Tag it so viewers can discover the spot.
+        {t('venueClaim.areYouStreamingFromVenue')}
       </Text>
 
       {isLoading && (
         <View style={styles.center}>
           <ActivityIndicator color={C.primary} size="large" />
-          <Text style={styles.loadingText}>Finding nearby venues...</Text>
+          <Text style={styles.loadingText}>{t('venueClaim.findingNearbyVenues')}</Text>
         </View>
       )}
 
       {error && (
         <View style={styles.center}>
-          <Text style={styles.errorText}>Could not load nearby venues.</Text>
+          <Text style={styles.errorText}>{t('venueClaim.couldNotLoadNearby')}</Text>
         </View>
       )}
 
@@ -110,7 +112,7 @@ export default function VenueTaggingScreen() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.center}>
-              <Text style={styles.emptyText}>No onboarded venues nearby.</Text>
+              <Text style={styles.emptyText}>{t('venueClaim.noOnboardedVenuesNearby')}</Text>
             </View>
           }
         />
@@ -118,14 +120,14 @@ export default function VenueTaggingScreen() {
 
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.skipBtn} onPress={handleSkip} activeOpacity={0.7}>
-          <Text style={styles.skipBtnText}>Skip</Text>
+          <Text style={styles.skipBtnText}>{t('common.skip')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.confirmBtn, !selectedId && styles.btnDisabled]}
           onPress={handleConfirm}
           disabled={!selectedId}
           activeOpacity={0.8}>
-          <Text style={styles.confirmBtnText}>Tag Venue</Text>
+          <Text style={styles.confirmBtnText}>{t('venueClaim.tagVenue')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

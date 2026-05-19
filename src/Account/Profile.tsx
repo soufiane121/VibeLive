@@ -4,188 +4,381 @@ import {
   Text,
   View,
   ScrollView,
-  Image,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
+  Linking,
+  Alert,
 } from 'react-native';
-import { useSelector } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
-import { ChevronBackIcon } from '../UIComponents/Icons';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigation, CommonActions } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
 import { useAnalytics } from '../Hooks/useAnalytics';
-import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import { GlobalColors } from '../styles/GlobalColors';
+import { useGetAccountProfileQuery } from '../../features/settings/SettingsSliceApi';
+import { useSingOutMutation } from '../../features/registrations/LoginSliceApi';
+import { setCurrentUser } from '../../features/registrations/CurrentUser';
+import { setLocalData } from '../Utils/LocalStorageHelper';
 
-interface ActivityItem {
-  id: string;
+const colors = GlobalColors.Account;
+
+// ---------- Minutes Gauge Component (View-based) ----------
+const MinutesGauge = ({ minutes, size = 72 }: { minutes: number; size?: number }) => {
+  return (
+    <View style={{
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      borderWidth: 4,
+      borderColor: colors.gaugeActive,
+      backgroundColor: colors.gaugeTrack,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <Text style={[styles.gaugeNumber, { fontSize: size * 0.3 }]}>{minutes}</Text>
+      <Text style={[styles.gaugeLabel, { fontSize: size * 0.12 }]}>MINS</Text>
+    </View>
+  );
+};
+
+// ---------- Section Header ----------
+const SectionHeader = ({ label }: { label: string }) => (
+  <Text style={styles.sectionLabel}>{label}</Text>
+);
+
+// ---------- Menu Row ----------
+interface MenuRowProps {
+  icon: string;
+  iconFamily?: 'ionicons' | 'material' | 'feather';
   title: string;
-  subtitle: string;
-  timeAgo: string;
-  thumbnail?: string;
-  type: 'live' | 'highlight' | 'activity';
+  subtitle?: string;
+  badge?: string;
+  badgeColor?: string;
+  onPress: () => void;
+  showChevron?: boolean;
+  isDestructive?: boolean;
+  iconBgColor?: string;
+  iconColor?: string;
 }
 
+const MenuRow = ({
+  icon,
+  iconFamily = 'ionicons',
+  title,
+  subtitle,
+  badge,
+  badgeColor,
+  onPress,
+  showChevron = true,
+  isDestructive = false,
+  iconBgColor,
+  iconColor,
+}: MenuRowProps) => {
+  const IconComponent = iconFamily === 'material' ? MaterialCommunityIcons :
+    iconFamily === 'feather' ? Feather : Ionicons;
+
+  return (
+    <TouchableOpacity style={styles.menuRow} onPress={onPress} activeOpacity={0.6}>
+      <View style={[styles.menuIconBox, iconBgColor ? { backgroundColor: iconBgColor } : null]}>
+        <IconComponent
+          name={icon}
+          size={20}
+          color={isDestructive ? colors.destructiveText : (iconColor || colors.textSecondary)}
+        />
+      </View>
+      <View style={styles.menuTextContainer}>
+        <Text style={[styles.menuTitle, isDestructive && { color: colors.destructiveText }]}>
+          {title}
+        </Text>
+        {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
+      </View>
+      {badge && (
+        <View style={[styles.badge, badgeColor ? { backgroundColor: badgeColor + '20', borderColor: badgeColor + '40' } : null]}>
+          <Text style={[styles.badgeText, badgeColor ? { color: badgeColor } : null]}>{badge}</Text>
+        </View>
+      )}
+      {showChevron && !isDestructive && (
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      )}
+    </TouchableOpacity>
+  );
+};
+
+// ---------- Main Account Hub ----------
 const Profile = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const dispatch = useDispatch();
   const { trackEvent } = useAnalytics();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
-  console.log("from profile",{currentUser});
-  
-  
-  // --- DATA INTEGRATION COMMENTS ---
-  // Followers/Following: Uses currentUser.followers/following arrays. If these are not set by backend, will default to 0.
-  // Highlights: Uses currentUser.highlights array. If not present, will default to 0 and empty activity feed.
-  // To fully integrate, ensure backend and Redux state provide these arrays on user object.
-  // If you want richer activity, update backend to include highlights/streams/history for the user.
-  // ----------------------------------
-  const userStats = {
-    followers: Array.isArray(currentUser?.followers) ? currentUser.followers.length : 0,
-    following: Array.isArray(currentUser?.following) ? currentUser.following.length : 0,
-    highlights: Array.isArray(currentUser?.highlights) ? currentUser.highlights.length : 0, // <-- Needs backend support
-  };
+  const userId = currentUser?._id;
 
-  // --- ACTIVITY FEED MOCK/INTEGRATION ---
-  // This maps currentUser.highlights to activity items. If highlights is not set by backend, feed will be empty.
-  // To integrate real activity, backend must populate highlights (or replace with a real activity/streams array).
-  // If you want to show streams or other events, update this mapping and backend accordingly.
-  const activityData: ActivityItem[] = Array.isArray(currentUser?.highlights)
-    ? currentUser.highlights.map((h: any, idx: number) => ({
-        id: h.id || idx.toString(),
-        title: h.title || 'Untitled Highlight', // <-- Needs real data from backend
-        subtitle: h.subtitle || '', // <-- Needs real data from backend
-        timeAgo: h.timeAgo || '', // <-- Needs real data from backend
-        thumbnail: h.thumbnail || undefined, // <-- Needs real data from backend
-        type: h.type || 'highlight', // <-- Needs real data from backend
-      }))
-    : []; // <-- Will be empty if backend does not provide highlights
+  const { data: profileData, isLoading } = useGetAccountProfileQuery(userId, {
+    skip: !userId,
+  });
+  const [signOut] = useSingOutMutation();
 
-  const [activeTab, setActiveTab] = React.useState<'Activity' | 'Lives' | 'Highlights'>('Activity');
+  const profile = profileData?.data;
+
+  // Derived data
+  const displayName = profile
+    ? `${profile.firstName} ${profile.lastName}`
+    : `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || 'User';
+  const username = profile?.userName || currentUser?.userName || 'user';
+  const initials = (displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()).slice(0, 2);
+  const joinDate = profile?.createdAt || currentUser?.createdAt;
+  const joinLabel = joinDate
+    ? `Joined ${new Date(joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
+    : '';
+  const minutes = profile?.streamingMinutes?.balance || 0;
+  const interests = profile?.interests || [];
+
+  // Stats
+  const streamsCount = profile?.freeStreamingLimits?.weeklyStreamsUsed || 0;
+  const hoursCount = Math.round((profile?.streamingMinutes?.totalUsed || 0) / 60);
+  const referredCount = 0; // No referral system yet
 
   React.useEffect(() => {
-    trackEvent(AnalyticsEventType.PROFILE_VIEWED, {
-      screen_name: 'Profile',
-      user_id: currentUser?._id,
+    trackEvent('app_opened', {
+      screen_name: 'AccountHub',
+      user_id: userId,
     });
   }, []);
 
-  const handleGoLive = () => {
-    trackEvent(AnalyticsEventType.PROFILE_GO_LIVE_PRESSED, {
-      user_id: currentUser?._id,
-      username: currentUser?.userName,
-    });
-    // Navigate to go live screen
-    navigation.navigate('Live' as never);
+  const handleSignOut = async () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await signOut({}).unwrap();
+          } catch {}
+          await setLocalData({ key: 'isAuthenticated', value: 'false' });
+          await setLocalData({ key: 'token', value: '' });
+          dispatch(setCurrentUser({
+            _id: '', firstName: '', lastName: '', email: '', userName: '', password: '', createdAt: '',
+            location: { type: 'Point', coordinates: [] },
+          } as any));
+          const targetNav = navigation.getParent() ?? navigation;
+          targetNav.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            }),
+          );
+        },
+      },
+    ]);
   };
 
-  const handleTabPress = (tab: 'Activity' | 'Lives' | 'Highlights') => {
-    setActiveTab(tab);
-    trackEvent(AnalyticsEventType.PROFILE_TAB_CHANGED, {
-      tab_name: tab,
-      user_id: currentUser?._id,
-    });
+  const handleHelpCenter = () => {
+    Alert.alert(
+      'Help Center',
+      'Coming soon! For now, reach us by email.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Email Support',
+          onPress: () => Linking.openURL('mailto:support@vibelive.app'),
+        },
+      ],
+    );
   };
 
-  const renderActivityItem = (item: ActivityItem) => (
-    <TouchableOpacity key={item.id} style={styles.activityItem}>
-      {item.thumbnail && (
-        <Image source={{ uri: item.thumbnail }} style={styles.activityThumbnail} />
-      )}
-      <View style={styles.activityContent}>
-        <Text style={styles.activityTitle}>{item.title}</Text>
-        <Text style={styles.activitySubtitle}>{item.subtitle}</Text>
-      </View>
-      <Text style={styles.activityTime}>{item.timeAgo}</Text>
-    </TouchableOpacity>
-  );
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.accent} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
-      
+      <StatusBar barStyle="light-content" />
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ChevronBackIcon size={24} color="#fff" />
-        </TouchableOpacity>
+        <View>
+          <Text style={styles.headerLabel}>MY ACCOUNT</Text>
+          <Text style={styles.headerTitle}>Profile</Text>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Profile Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={{
-                uri: currentUser?.profileImage || 'https://via.placeholder.com/120x120/374151/ffffff?text=' + (currentUser?.firstName?.[0] || 'U'),
-              }}
-              style={styles.avatar}
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* Profile Card */}
+        <View style={styles.profileCard}>
+          <View style={styles.profileCardRow}>
+            {/* Avatar */}
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{initials}</Text>
+              </View>
+              <View style={styles.onlineDot} />
+            </View>
+
+            {/* User Info */}
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{displayName}</Text>
+              <Text style={styles.profileUsername}>@{username}</Text>
+              <Text style={styles.profileJoined}>{joinLabel}</Text>
+            </View>
+
+            {/* Minutes Gauge */}
+            <MinutesGauge minutes={minutes} />
+          </View>
+
+          {/* Top Up Button */}
+          <TouchableOpacity
+            style={styles.topUpBtn}
+            onPress={() => navigation.navigate('BuyMinutes')}
+          >
+            <Text style={styles.topUpText}>+ Top Up</Text>
+          </TouchableOpacity>
+
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+              <Feather name="tv" size={14} color={colors.textSecondary} style={{ marginBottom: 4 }} />
+              <Text style={styles.statNumber}>{streamsCount}</Text>
+              <Text style={styles.statLabel}>Streams</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Feather name="clock" size={14} color={colors.textSecondary} style={{ marginBottom: 4 }} />
+              <Text style={styles.statNumber}>{hoursCount}</Text>
+              <Text style={styles.statLabel}>Hours</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Feather name="users" size={14} color={colors.textSecondary} style={{ marginBottom: 4 }} />
+              <Text style={styles.statNumber}>{referredCount}</Text>
+              <Text style={styles.statLabel}>Referred</Text>
+            </View>
+          </View>
+
+          {/* Edit Profile Button */}
+          <TouchableOpacity
+            style={styles.editProfileBtn}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Feather name="edit-2" size={16} color={colors.accent} style={{ marginRight: 8 }} />
+            <Text style={styles.editProfileText}>Edit Profile</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* My Interests */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <SectionHeader label="MY INTERESTS" />
+            <TouchableOpacity onPress={() => navigation.navigate('MyInterests')}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.editLink}>Edit</Text>
+                <Feather name="external-link" size={12} color={colors.accent} style={{ marginLeft: 4 }} />
+              </View>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.chipRow}>
+            {interests.length > 0 ? (
+              interests.slice(0, 5).map((interest: string) => (
+                <View key={interest} style={styles.interestChip}>
+                  <Text style={styles.interestChipText}>{interest}</Text>
+                </View>
+              ))
+            ) : (
+              <TouchableOpacity
+                style={styles.addChip}
+                onPress={() => navigation.navigate('MyInterests')}
+              >
+                <Text style={styles.addChipText}>+ Add</Text>
+              </TouchableOpacity>
+            )}
+            {interests.length > 0 && (
+              <TouchableOpacity
+                style={styles.addChip}
+                onPress={() => navigation.navigate('MyInterests')}
+              >
+                <Text style={styles.addChipText}>+ Add</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Minutes & Billing Section */}
+        <View style={styles.section}>
+          <SectionHeader label="MINUTES & BILLING" />
+          <View style={styles.menuCard}>
+            <MenuRow
+              icon="time-outline"
+              title="Buy Minutes"
+              subtitle={`${minutes} minutes remaining`}
+              badge="Top Up"
+              badgeColor={colors.gaugeActive}
+              onPress={() => navigation.navigate('BuyMinutes')}
+            />
+            <View style={styles.menuDivider} />
+            <MenuRow
+              icon="receipt-outline"
+              title="Transaction History"
+              subtitle="Purchases and stream usage"
+              onPress={() => navigation.navigate('TransactionHistory')}
             />
           </View>
-          
-          <Text style={styles.username}>
-            {currentUser?.userName || 'username'}
-          </Text>
-          
-          <TouchableOpacity style={styles.goLiveButton} onPress={handleGoLive}>
-            <Text style={styles.goLiveText}>Go Live</Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Stats Section */}
-        <View style={styles.statsSection}>
-          <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statNumber}>{userStats.followers}</Text>
-            <Text style={styles.statLabel}>Followers</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statNumber}>{userStats.following}</Text>
-            <Text style={styles.statLabel}>Following</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statNumber}>{userStats.highlights}</Text>
-            <Text style={styles.statLabel}>Highlights</Text>
-          </TouchableOpacity>
+        {/* Account Section */}
+        <View style={styles.section}>
+          <SectionHeader label="ACCOUNT" />
+          <View style={styles.menuCard}>
+            <MenuRow
+              icon="notifications-outline"
+              title="Notifications"
+              subtitle="Push and email alerts"
+              onPress={() => navigation.navigate('NotificationSettings')}
+            />
+            <View style={styles.menuDivider} />
+            <MenuRow
+              icon="gift-outline"
+              title="Refer a Friend"
+              subtitle="Earn 10 free minutes per invite"
+              badge="+10 min"
+              badgeColor={colors.success}
+              onPress={() => Alert.alert('Refer a Friend', 'Coming soon!')}
+            />
+          </View>
         </View>
 
-        {/* Live Notification */}
-        <View style={styles.liveNotification}>
-          <Text style={styles.liveIcon}>🔥</Text>
-          <Text style={styles.liveText}>Your followers are live now</Text>
-        </View>
-
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          {(['Activity', 'Lives', 'Highlights'] as const).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[
-                styles.tab,
-                activeTab === tab && styles.activeTab,
-              ]}
-              onPress={() => handleTabPress(tab)}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === tab && styles.activeTabText,
-                ]}
-              >
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Activity Feed */}
-        <View style={styles.activitySection}>
-          {activityData.length === 0 ? (
-            <Text style={{ color: '#9ca3af', textAlign: 'center', marginTop: 20 }}>
-              No highlights or activity yet.
-            </Text>
-          ) : (
-            activityData.map(renderActivityItem)
-          )}
+        {/* Support Section */}
+        <View style={styles.section}>
+          <SectionHeader label="SUPPORT" />
+          <View style={styles.menuCard}>
+            <MenuRow
+              icon="help-circle-outline"
+              title="Help Center"
+              subtitle="FAQs and email support"
+              onPress={handleHelpCenter}
+            />
+            <View style={styles.menuDivider} />
+            <MenuRow
+              icon="log-out-outline"
+              title="Sign Out"
+              onPress={handleSignOut}
+              showChevron={false}
+              isDestructive
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -194,240 +387,299 @@ const Profile = () => {
 
 export default Profile;
 
-const colors = GlobalColors.Profile;
-
+// ---------- Styles ----------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Header
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
     paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
-  backButton: {
-    padding: 5,
+  headerLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.sectionLabel,
+    letterSpacing: 1.2,
+    marginBottom: 2,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: '800',
     color: colors.text,
   },
-  placeholder: {
-    width: 34,
+  headerActions: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingTop: 6,
+  },
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.secondaryBackground,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   scrollView: {
     flex: 1,
   },
-  avatarContainer: {
+
+  // Profile Card
+  profileCard: {
+    marginHorizontal: 16,
+    backgroundColor: colors.secondaryBackground,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  profileCardRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 14,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  username: {
-    fontSize: 18,
-    fontWeight: '600',
+  avatarText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: -2,
+    left: -2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.onlineGreen,
+    borderWidth: 2.5,
+    borderColor: colors.secondaryBackground,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 17,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 20,
   },
-  goLiveText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+  profileUsername: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 1,
   },
-  statsSection: {
+  profileJoined: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 3,
+  },
+  topUpBtn: {
+    alignSelf: 'flex-end',
+    backgroundColor: colors.accentSurface,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginTop: -20,
+    marginBottom: 16,
+  },
+  topUpText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.accent,
+  },
+
+  // Gauge
+  gaugeNumber: {
+    fontWeight: '800',
+    color: colors.gaugeActive,
+  },
+  gaugeLabel: {
+    fontWeight: '700',
+    color: colors.textMuted,
+    marginTop: -2,
+  },
+
+  // Stats
+  statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    marginBottom: 16,
   },
-  profileSection: {
+  statBox: {
+    flex: 1,
     alignItems: 'center',
-    paddingVertical: 30,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingVertical: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 15,
+  statNumber: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
   },
-  profileImagePlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+
+  // Edit Profile
+  editProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+    backgroundColor: colors.accentSubtle,
+  },
+  editProfileText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.accent,
+  },
+
+  // Sections
+  section: {
+    marginTop: 28,
+    paddingHorizontal: 16,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 1.2,
+  },
+  editLink: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+
+  // Interest Chips
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  interestChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.chipUnselectedBorder,
+    backgroundColor: colors.chipUnselected,
+  },
+  interestChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.chipUnselectedText,
+  },
+  addChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderStyle: 'dashed',
+  },
+  addChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+
+  // Menu Card
+  menuCard: {
+    backgroundColor: colors.secondaryBackground,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    overflow: 'hidden',
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  menuIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 15,
+    marginRight: 12,
   },
-  profileImageText: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  profileName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 5,
-  },
-  profileUsername: {
-    fontSize: 16,
-    color: colors.textMuted,
-    marginBottom: 15,
-  },
-  profileBio: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: 40,
-    lineHeight: 20,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    gap: 15,
-  },
-  goLiveButton: {
+  menuTextContainer: {
     flex: 1,
-    backgroundColor: colors.goLiveButton,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
   },
-  goLiveButtonText: {
+  menuTitle: {
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
   },
-  promoteButton: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  promoteButtonText: {
-    color: colors.promoteButton,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.statsText,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
+  menuSubtitle: {
+    fontSize: 12,
     color: colors.textMuted,
-    fontWeight: '500',
+    marginTop: 2,
   },
-  liveNotification: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    marginHorizontal: 20,
-    marginVertical: 15,
-    backgroundColor: colors.surface,
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 12,
+    backgroundColor: colors.badgeBackground,
+    borderWidth: 1,
+    borderColor: colors.badgeBorder,
+    marginRight: 8,
   },
-  liveIcon: {
-    fontSize: 16,
-    marginRight: 10,
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.badgeText,
   },
-  liveText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  activeTab: {
-    borderBottomColor: colors.tabActive,
-  },
-  tabText: {
-    fontSize: 16,
-    color: colors.tabInactive,
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: colors.text,
-    fontWeight: '600',
-  },
-  activitySection: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  activityThumbnail: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: 15,
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  activitySubtitle: {
-    fontSize: 14,
-    color: colors.textMuted,
-  },
-  activityTime: {
-    fontSize: 14,
-    color: colors.textMuted,
-    fontWeight: '500',
+  menuDivider: {
+    height: 1,
+    backgroundColor: colors.separator,
+    marginLeft: 64,
   },
 });

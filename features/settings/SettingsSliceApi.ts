@@ -95,18 +95,18 @@ export const settingsApi = createApi({
   }),
   endpoints: (builder) => ({
     // Get user settings
-    getUserSettings: builder.query<UserSettings, void>({
-      query: () => ({
-        url: '',
+    getUserSettings: builder.query<UserSettings, string>({
+      query: (userId) => ({
+        url: `/${userId}`,
         method: 'GET',
       }),
       providesTags: ['Settings'],
     }),
 
     // Update notification settings
-    updateNotificationSettings: builder.mutation<{success: boolean; message: string}, NotificationSettings>({
-      query: (settings) => ({
-        url: '/notifications',
+    updateNotificationSettings: builder.mutation<{success: boolean; message: string}, {userId: string; settings: NotificationSettings}>({
+      query: ({userId, settings}) => ({
+        url: `/${userId}/notifications`,
         method: 'PUT',
         body: settings,
       }),
@@ -114,9 +114,9 @@ export const settingsApi = createApi({
     }),
 
     // Update privacy settings
-    updatePrivacySettings: builder.mutation<{success: boolean; message: string}, PrivacySettings>({
-      query: (settings) => ({
-        url: '/privacy',
+    updatePrivacySettings: builder.mutation<{success: boolean; message: string}, {userId: string; settings: PrivacySettings}>({
+      query: ({userId, settings}) => ({
+        url: `/${userId}/privacy`,
         method: 'PUT',
         body: settings,
       }),
@@ -124,9 +124,9 @@ export const settingsApi = createApi({
     }),
 
     // Update streaming preferences
-    updateStreamingPreferences: builder.mutation<{success: boolean; message: string}, StreamingPreferences>({
-      query: (preferences) => ({
-        url: '/streaming',
+    updateStreamingPreferences: builder.mutation<{success: boolean; message: string}, {userId: string; preferences: StreamingPreferences}>({
+      query: ({userId, preferences}) => ({
+        url: `/${userId}/streaming`,
         method: 'PUT',
         body: preferences,
       }),
@@ -134,9 +134,9 @@ export const settingsApi = createApi({
     }),
 
     // Update user profile
-    updateProfile: builder.mutation<{success: boolean; message: string; user: any}, UpdateProfileRequest>({
-      query: (profile) => ({
-        url: '/profile',
+    updateProfile: builder.mutation<{success: boolean; message: string; user: any}, {userId: string; profile: UpdateProfileRequest}>({
+      query: ({userId, profile}) => ({
+        url: `/${userId}/profile`,
         method: 'PUT',
         body: profile,
       }),
@@ -192,9 +192,9 @@ export const settingsApi = createApi({
     }),
 
     // Request data download
-    requestDataDownload: builder.mutation<{success: boolean; message: string}, void>({
-      query: () => ({
-        url: '/data-download',
+    requestDataDownload: builder.mutation<{success: boolean; message: string}, {userId: string}>({
+      query: ({userId}) => ({
+        url: `/${userId}/data-download`,
         method: 'POST',
       }),
       invalidatesTags: ['Settings'],
@@ -219,8 +219,82 @@ export const settingsApi = createApi({
       }),
       invalidatesTags: ['Settings'],
     }),
+
+    // Get account profile (consolidated data for Account Hub)
+    getAccountProfile: builder.query<{success: boolean; data: AccountProfileData}, string>({
+      query: (userId) => ({
+        url: `/${userId}/account-profile`,
+        method: 'GET',
+      }),
+      providesTags: ['UserProfile'],
+    }),
+
+    // Update user interests
+    updateInterests: builder.mutation<{success: boolean; message: string; data: {interests: string[]}}, {userId: string; interests: string[]}>({
+      query: ({userId, interests}) => ({
+        url: `/${userId}/interests`,
+        method: 'PUT',
+        body: {interests},
+      }),
+      invalidatesTags: ['UserProfile'],
+    }),
+
+    // Get transaction history
+    getTransactionHistory: builder.query<{success: boolean; data: TransactionItem[]}, string>({
+      query: (userId) => ({
+        url: `/${userId}/transactions`,
+        method: 'GET',
+      }),
+      providesTags: ['Settings'],
+    }),
+
+    // Get profile image upload URL (Cloudflare direct upload)
+    getProfileImageUploadUrl: builder.mutation<{success: boolean; data: {uploadUrl: string; imageId: string}}, string>({
+      query: (userId) => ({
+        url: `/${userId}/image-upload-url`,
+        method: 'POST',
+      }),
+    }),
   }),
 });
+
+// Interfaces for new endpoints
+export interface AccountProfileData {
+  firstName: string;
+  lastName: string;
+  userName: string;
+  email: string;
+  profilePicture: string | null;
+  bio: string;
+  createdAt: string;
+  interests: string[];
+  followersCount: number;
+  followingCount: number;
+  streamingMinutes: {
+    balance: number;
+    totalAllowed: number;
+    totalUsed: number;
+    isBoosted: boolean;
+    boostedUntil: string | null;
+  };
+  freeStreamingLimits: {
+    weeklyStreamsUsed: number;
+    totalFreeMinutesUsed: number;
+  };
+}
+
+export interface TransactionItem {
+  id: string;
+  type: 'purchase' | 'usage';
+  title: string;
+  description: string;
+  amount: number;
+  currency: string;
+  date: string;
+  status: string;
+  minutesAllowed?: number;
+  minutesUsed?: number;
+}
 
 // Export hooks for usage in functional components
 export const {
@@ -237,4 +311,9 @@ export const {
   useRequestDataDownloadMutation,
   useChangeEmailMutation,
   useVerifyEmailMutation,
+  useGetAccountProfileQuery,
+  useUpdateInterestsMutation,
+  useGetTransactionHistoryQuery,
+  useGetProfileImageUploadUrlMutation,
 } = settingsApi;
+

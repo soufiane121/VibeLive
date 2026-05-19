@@ -1,0 +1,7 @@
+REMOVE THE FOLLOWING ONLY FOR TESTING:
+- playTestDwell() method
+- playTestDwellRealistic() method  
+- playGpxTrack() method
+- stopGpxTrack() method
+- isPlayingGpx() method
+- gpxTimer references

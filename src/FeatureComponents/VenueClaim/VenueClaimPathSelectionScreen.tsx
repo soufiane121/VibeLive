@@ -10,6 +10,7 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {VenueSearchResult, VerificationPath} from '../../../features/venueClaim/VenueClaimApi';
 import GlobalColors from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const C = GlobalColors.VenueClaim;
 
@@ -21,33 +22,34 @@ type PathOption = {
   recommended?: boolean;
 };
 
-const PATH_OPTIONS: PathOption[] = [
-  {
-    key: 'google_business',
-    title: 'Google Business Profile',
-    description: 'Fastest method. Paste your Google Business Profile URL and we\'ll match it to the venue.',
-    icon: '🔍',
-    recommended: true,
-  },
-  {
-    key: 'social_media',
-    title: 'Social Media Verification',
-    description: 'Add a unique code to your Instagram or TikTok bio. We\'ll check it automatically.',
-    icon: '📱',
-  },
-  {
-    key: 'business_license',
-    title: 'Business License Upload',
-    description: 'Upload an official document like a business license, liquor license, or food service permit.',
-    icon: '📄',
-  },
-];
-
 export default function VenueClaimPathSelectionScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { t } = useTranslation();
   const venue: VenueSearchResult = route.params?.venue;
   const [selectedPath, setSelectedPath] = useState<VerificationPath | null>(null);
+
+  const PATH_OPTIONS: PathOption[] = [
+    {
+      key: 'google_business',
+      title: t('venueClaim.googleBusinessProfile'),
+      description: t('venueClaim.googleBusinessDesc'),
+      icon: t('common.searchIcon', {defaultValue: '🔍'}),
+      recommended: true,
+    },
+    {
+      key: 'social_media',
+      title: t('venueClaim.socialMediaVerification'),
+      description: t('venueClaim.socialMediaDesc'),
+      icon: t('common.phoneIcon', {defaultValue: '📱'}),
+    },
+    {
+      key: 'business_license',
+      title: t('venueClaim.businessLicenseUpload'),
+      description: t('venueClaim.businessLicenseDesc'),
+      icon: t('common.documentIcon', {defaultValue: '📄'}),
+    },
+  ];
 
   const handleContinue = () => {
     if (!selectedPath) return;
@@ -58,14 +60,14 @@ export default function VenueClaimPathSelectionScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={styles.backText}>{t('common.backArrow')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Verification Method</Text>
+        <Text style={styles.title}>{t('venueClaim.verificationMethod')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.subtitle}>
-          How would you like to prove you represent{' '}
+          {t('venueClaim.howWouldYouLikeToProve')}{' '}
           <Text style={styles.venueName}>{venue?.name}</Text>?
         </Text>
 
@@ -85,7 +87,7 @@ export default function VenueClaimPathSelectionScreen() {
                   <Text style={styles.pathTitle}>{opt.title}</Text>
                   {opt.recommended && (
                     <View style={styles.recommendedBadge}>
-                      <Text style={styles.recommendedText}>Recommended</Text>
+                      <Text style={styles.recommendedText}>{t('venueClaim.recommended')}</Text>
                     </View>
                   )}
                 </View>
@@ -103,7 +105,7 @@ export default function VenueClaimPathSelectionScreen() {
           onPress={handleContinue}
           disabled={!selectedPath}
           activeOpacity={0.8}>
-          <Text style={styles.continueBtnText}>Continue</Text>
+          <Text style={styles.continueBtnText}>{t('common.continue')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

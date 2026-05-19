@@ -17,6 +17,7 @@ import {
 } from '../../../features/squad/SquadApi';
 import type {SquadMember, SquadState} from '../../../features/squad/SquadApi';
 import {baseUrl} from '../../../baseUrl';
+import useTranslation from '../../Hooks/useTranslation';
 
 const colors = GlobalColors.SquadMode;
 
@@ -39,6 +40,7 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
   webJoinUrl: webJoinUrlProp,
   onReset,
 }) => {
+  const { t } = useTranslation();
   const [triggerRecommendation, {isLoading: isGenerating}] =
     useTriggerRecommendationMutation();
   const [cancelSquad, {isLoading: isCancelling}] = useCancelSquadMutation();
@@ -49,10 +51,10 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
   // ── Share Invite ────────────────────────────────────────────────────
   const handleShareInvite = useCallback(async () => {
     try {
-      const creatorName = squadData?.creator_display_name || 'Your friend';
+      const creatorName = squadData?.creator_display_name || t('squad.yourFriend');
       await Share.share({
-        message: `${creatorName} is planning tonight — join the squad!\n\n${webJoinUrl}\n\nNo app needed. Just pick your vibe.`,
-        title: 'Join my Squad',
+        message: t('squad.shareMessage', { creatorName, webJoinUrl }),
+        title: t('squad.shareTitle'),
       });
     } catch (err) {
       // User cancelled share — no action needed
@@ -63,8 +65,8 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
   const handleFindSpot = useCallback(async () => {
     if (members.length < 1) {
       Alert.alert(
-        'Need preferences',
-        'At least one member should have picked their vibe before generating a recommendation.',
+        t('squad.needPreferences'),
+        t('squad.needPreferencesDesc'),
       );
       return;
     }
@@ -73,8 +75,8 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
       await triggerRecommendation(squadCode).unwrap();
     } catch (err: any) {
       Alert.alert(
-        'Error',
-        err?.data?.error || 'Failed to generate recommendation',
+        t('common.error'),
+        err?.data?.error || t('squad.failedRecommendation'),
       );
     }
   }, [squadCode, members, triggerRecommendation]);
@@ -82,19 +84,19 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
   // ── Cancel ──────────────────────────────────────────────────────────
   const handleCancel = useCallback(() => {
     Alert.alert(
-      'Cancel Squad',
-      'Are you sure? This will end the squad for everyone.',
+      t('squad.cancelSquad'),
+      t('squad.cancelSquadDesc'),
       [
-        {text: 'Keep Going', style: 'cancel'},
+        {text: t('squad.keepGoing'), style: 'cancel'},
         {
-          text: 'Cancel Squad',
+          text: t('squad.cancelSquad'),
           style: 'destructive',
           onPress: async () => {
             try {
               await cancelSquad(squadCode).unwrap();
               onReset();
             } catch (err: any) {
-              Alert.alert('Error', err?.data?.error || 'Failed to cancel');
+              Alert.alert(t('common.error'), err?.data?.error || t('squad.failedCancel'));
             }
           },
         },
@@ -111,7 +113,7 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Your Squad</Text>
+          <Text style={styles.title}>{t('squad.yourSquad')}</Text>
           {isCreator && (
             <TouchableOpacity
               onPress={handleCancel}
@@ -149,38 +151,38 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
               style={
                 isConnected ? styles.statusLiveText : {color: colors.connecting, fontWeight: '700'}
               }>
-              {isConnected ? 'Live' : 'Connecting'}
+              {isConnected ? t('squad.live') : t('squad.connecting')}
             </Text>
           </View>
           <Text style={styles.statusSubText}>
-            {isConnected ? '· Waiting for friends' : '· Hang tight'}
+            {isConnected ? t('squad.waitingForFriends') : t('squad.hangTight')}
           </Text>
         </View>
       </View>
 
       {/* Squad Code Card */}
       <View style={styles.codeCard}>
-        <Text style={styles.codeLabel}>SQUAD CODE</Text>
+        <Text style={styles.codeLabel}>{t('squad.squadCode')}</Text>
         <Text style={styles.codeText}>{squadCode}</Text>
         <TouchableOpacity
           style={styles.shareButton}
           onPress={handleShareInvite}
           activeOpacity={0.85}>
           <ShareIcon size={18} color={colors.formingShareButtonText} />
-          <Text style={styles.shareButtonText}>Share Invite</Text>
+          <Text style={styles.shareButtonText}>{t('squad.shareInvite')}</Text>
         </TouchableOpacity>
         <Text style={styles.codeHint}>
-          Friends don't need the app — just share the link
+          {t('squad.shareHint')}
         </Text>
       </View>
 
       {/* Members List */}
       <View style={styles.membersSection}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Squad</Text>
+          <Text style={styles.sectionTitle}>{t('squad.squad')}</Text>
           <View style={styles.sectionCountPill}>
             <Text style={styles.sectionCountPillText}>
-              {members.length === 1 ? '1 MEMBER' : `${members.length} MEMBERS`}
+              {members.length === 1 ? t('squad.oneMember') : t('squad.membersCount', { count: members.length })}
             </Text>
           </View>
         </View>
@@ -198,7 +200,7 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
               <PersonIcon size={22} color={colors.textMuted} />
             </View>
             <Text style={styles.waitingText}>
-              Waiting for your +1 to join...
+              {t('squad.waitingForPlusOne')}
             </Text>
           </View>
         )}
@@ -218,21 +220,21 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
             {isGenerating ? (
               <View style={styles.generatingRow}>
                 <ActivityIndicator color={colors.background} size="small" />
-                <Text style={styles.findButtonText}> Finding your spot...</Text>
+                <Text style={styles.findButtonText}>{t('squad.findingYourSpot')}</Text>
               </View>
             ) : (
               <View style={styles.findButtonContent}>
-                <Text style={styles.findButtonText}>Find our spot</Text>
+                <Text style={styles.findButtonText}>{t('squad.findOurSpot')}</Text>
                 <Text style={styles.findButtonArrow}>→</Text>
               </View>
             )}
           </TouchableOpacity>
           <Text style={styles.findHint}>
             {members.length === 1
-              ? 'You can start now or wait for someone to join'
+              ? t('squad.startNowOrWait')
               : members.length === 2
-              ? 'Perfect duo — find a spot you both love'
-              : `Based on ${members.length} people's preferences`}
+              ? t('squad.perfectDuo')
+              : t('squad.basedOnPreferences', { count: members.length })}
           </Text>
         </View>
       )}
@@ -301,18 +303,18 @@ const MemberRow: React.FC<{member: SquadMember; isCreator: boolean}> = ({
             </View>
             {isCreator && (
               <View style={styles.creatorBadge}>
-                <Text style={styles.creatorBadgeText}>Creator</Text>
+                <Text style={styles.creatorBadgeText}>{t('squad.creator')}</Text>
               </View>
             )}
           </View>
           {!member.has_app && (
             <View style={styles.guestBadge}>
-              <Text style={styles.guestBadgeText}>Guest</Text>
+              <Text style={styles.guestBadgeText}>{t('squad.guest')}</Text>
             </View>
           )}
           {member.is_default_profile && (
             <View style={styles.guestBadge}>
-              <Text style={styles.guestBadgeText}>Auto</Text>
+              <Text style={styles.guestBadgeText}>{t('squad.auto')}</Text>
             </View>
           )}
         </View>
