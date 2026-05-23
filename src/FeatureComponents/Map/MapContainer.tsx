@@ -54,6 +54,7 @@ import { useAppState } from '../../Hooks/useAppState';
 import MapHeatmapLayer from './MapHeatmapLayer';
 import PremiumVenueCard from '../Voting/PremiumVenueCard';
 import EmptyMapState from './EmptyMapState';
+import { TouchableOpacity } from 'react-native';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
@@ -251,12 +252,12 @@ const MapContainer = () => {
   const isDarkMode = useColorScheme() === 'dark';
 
   // Fetch events for map
-  const {data: eventsData} = useGetMapEventsQuery({
+  const {data: eventsData, isLoading: eventsLoading} = useGetMapEventsQuery({
     coordinates: `${coordinates[1]},${coordinates[0]}`,
     useDB: true, // Use database for testing
   });
 
-  const {data: heatmapData} = useGetHeatmapQuery<any>(
+  const {data: heatmapData, isLoading: heatmapLoading} = useGetHeatmapQuery<any>(
       {
         latitude: coordinates[1],
         longitude: coordinates[0],
@@ -531,9 +532,11 @@ const MapContainer = () => {
     const hasLiveFeatures = featuresPointsData.length > 0;
     const hasHeatmap = (heatmapData?.heatmap?.length ?? 0) > 0;
     const hasEvents = mapEvents.length > 0;
-    
+
     return !(hasLiveFeatures || hasHeatmap || hasEvents);
   }, [featuresPointsData, heatmapData, mapEvents]);
+
+  const isAnyLoading = isLoading || eventsLoading || heatmapLoading;
 
   
 
@@ -662,9 +665,15 @@ const MapContainer = () => {
             ref={mapRef}
             style={styles.map}
             onCameraChanged={handleRegionChange}
-            styleURL={isDarkMode ? "mapbox://styles/test-121/cmmi3vwu8000901qp6q0554cd" :  "mapbox://styles/test-121/cmpa0v9sb007r01s8djrbawri"} // original dark mode map"mapbox://styles/mapbox/dark-v11"
+            styleURL={
+              isDarkMode
+                ? 'mapbox://styles/test-121/cmmi3vwu8000901qp6q0554cd'
+                : 'mapbox://styles/test-121/cmpa0v9sb007r01s8djrbawri'
+            } // original dark mode map"mapbox://styles/mapbox/dark-v11"
             scaleBarEnabled={false}
-            logoEnabled={false}>
+            logoEnabled={true}
+            // logoPosition={{bottom:730, right: 300}}
+            attributionPosition={{top: -33, right: 1}}>
             <Camera
               zoomLevel={zoomLevel}
               centerCoordinate={coordinates}
@@ -676,6 +685,20 @@ const MapContainer = () => {
             {/* still need to copy radar animation to here
              */}
             <LocationPuck puckBearingEnabled puckBearing="course" />
+            {/* <View
+              pointerEvents= "none"
+              style={{
+                // position: 'absolute',
+                top: 50, // match your previous top: -30 offset
+                right: 1,
+                backgroundColor: '#00C853',
+                opacity: 0.3,
+                borderRadius: 4,
+                paddingHorizontal: 6,
+                paddingVertical: 3,
+              }}>
+              <Text style={{color: '#fff', fontSize: 10}}>© Mapbox</Text>
+            </View> */}
             {radarBeam && (
               <ShapeSource
                 id="radarSource"
@@ -770,31 +793,37 @@ const MapContainer = () => {
                       <MarkerView coordinate={cluster?.properties?.coordinates}>
                         {/* Fixed anchor: all emojis start from the same point, don't push each other */}
                         <View style={{width: 1, height: 1}}>
-                          {emojis[cluster?.properties?.liveDetails?.playbackId]?.map(
-                            (emoji) => {
-                              const emojiLookupKey = cluster?.properties?.liveDetails?.playbackId;
-                              return (
-                                <View
-                                  key={emoji.id}
-                                  style={{position: 'absolute', bottom: 0, left: -10}}>
-                                  <FloatingEmoji
-                                    coordinates={cluster?.properties?.coordinates}
-                                    mapRef={mapRef}
-                                    emoji={
-                                      EMOJIS[emoji.emoji.toLocaleLowerCase()]
-                                    }
-                                    onComplete={() => {
-                                      setEmojis(prevState => ({
-                                        ...prevState,
-                                        [emojiLookupKey]:
-                                          prevState[emojiLookupKey]?.filter(e => e.id !== emoji.id),
-                                      }));
-                                    }}
-                                  />
-                                </View>
-                              );
-                            },
-                          )}
+                          {emojis[
+                            cluster?.properties?.liveDetails?.playbackId
+                          ]?.map(emoji => {
+                            const emojiLookupKey =
+                              cluster?.properties?.liveDetails?.playbackId;
+                            return (
+                              <View
+                                key={emoji.id}
+                                style={{
+                                  position: 'absolute',
+                                  bottom: 0,
+                                  left: -10,
+                                }}>
+                                <FloatingEmoji
+                                  coordinates={cluster?.properties?.coordinates}
+                                  mapRef={mapRef}
+                                  emoji={
+                                    EMOJIS[emoji.emoji.toLocaleLowerCase()]
+                                  }
+                                  onComplete={() => {
+                                    setEmojis(prevState => ({
+                                      ...prevState,
+                                      [emojiLookupKey]: prevState[
+                                        emojiLookupKey
+                                      ]?.filter(e => e.id !== emoji.id),
+                                    }));
+                                  }}
+                                />
+                              </View>
+                            );
+                          })}
                         </View>
                       </MarkerView>
                     )}
@@ -808,7 +837,8 @@ const MapContainer = () => {
         flex
         z-10 
         absolute
-        bottom-0 
+        bottom-6 
+        mb-20
         right-3 
         justify-end 
         items-end 
@@ -838,7 +868,7 @@ const MapContainer = () => {
             />
           )}
 
-          <EmptyMapState isVisible={isMapEmpty} />
+          <EmptyMapState isVisible={!isAnyLoading && isMapEmpty} />
         </>
       )}
     </View>

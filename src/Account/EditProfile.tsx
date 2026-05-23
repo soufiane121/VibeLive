@@ -23,6 +23,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import * as ImagePicker from 'expo-image-picker';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import {
   useUpdateProfileMutation,
   useGetProfileImageUploadUrlMutation,
@@ -36,6 +37,7 @@ const EditProfile = () => {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
 
   const [displayName, setDisplayName] = useState(
@@ -71,7 +73,7 @@ const EditProfile = () => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ['Cancel', 'Choose from Library', 'Take Photo'],
+          options: [t('common.cancel'), t('account.chooseFromLibrary'), t('account.takePhoto')],
           cancelButtonIndex: 0,
         },
         idx => {
@@ -87,7 +89,7 @@ const EditProfile = () => {
   const pickImageFromLibrary = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Permission required', 'Please allow access to your photo library.');
+      Alert.alert(t('account.permissionRequired'), t('account.photoLibraryPermission'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -104,7 +106,7 @@ const EditProfile = () => {
   const takePhoto = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Permission required', 'Please allow camera access.');
+      Alert.alert(t('account.permissionRequired'), t('account.cameraPermission'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -143,7 +145,7 @@ const EditProfile = () => {
     } catch (err) {
       console.error('Image upload error:', err);
       setLocalImageUri(null);
-      Alert.alert('Upload Failed', 'Could not upload photo. Please try again.');
+      Alert.alert(t('account.uploadFailed'), t('account.uploadFailedMessage'));
     } finally {
       setIsUploading(false);
     }
@@ -156,7 +158,7 @@ const EditProfile = () => {
     const lastName = nameParts.slice(1).join(' ') || '';
 
     if (!firstName) {
-      Alert.alert('Validation', 'Display name is required.');
+      Alert.alert(t('account.validation'), t('account.displayNameRequired'));
       return;
     }
 
@@ -165,7 +167,7 @@ const EditProfile = () => {
       try {
         await validateFields({ userName }).unwrap();
       } catch (err: any) {
-        Alert.alert('Username Taken', err?.data?.message || 'That username is already in use.');
+        Alert.alert(t('account.usernameTaken'), err?.data?.message || t('account.usernameTakenDefault'));
         return;
       }
     }
@@ -192,15 +194,15 @@ const EditProfile = () => {
         navigation.goBack();
       }
     } catch (err) {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      Alert.alert(t('common.error'), t('account.updateError'));
     }
   };
 
   const handleDiscard = () => {
     if (hasChanges) {
-      Alert.alert('Discard Changes', 'Are you sure you want to discard your changes?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Discard', style: 'destructive', onPress: () => navigation.goBack() },
+      Alert.alert(t('account.discardChanges'), t('account.discardConfirm'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('account.discard'), style: 'destructive', onPress: () => navigation.goBack() },
       ]);
     } else {
       navigation.goBack();
@@ -224,7 +226,7 @@ const EditProfile = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={styles.headerTitle}>{t('account.editProfile')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -254,31 +256,31 @@ const EditProfile = () => {
               </View>
             </View>
           </TouchableOpacity>
-          <Text style={styles.changePhotoText}>Change Photo</Text>
+          <Text style={styles.changePhotoText}>{t('account.changePhoto')}</Text>
         </View>
 
         {/* Form Fields */}
         <View style={styles.formSection}>
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Display Name</Text>
+            <Text style={styles.inputLabel}>{t('account.displayName')}</Text>
             <TextInput
               style={styles.input}
               value={displayName}
               onChangeText={setDisplayName}
-              placeholder="Your full name"
+              placeholder={t('account.displayNamePlaceholder')}
               placeholderTextColor={colors.textMuted}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Username</Text>
+            <Text style={styles.inputLabel}>{t('account.username')}</Text>
             <View style={styles.usernameInputRow}>
               <Text style={styles.usernamePrefix}>@</Text>
               <TextInput
                 style={[styles.input, { flex: 1, paddingLeft: 0 }]}
                 value={userName}
                 onChangeText={setUserName}
-                placeholder="username"
+                placeholder={t('account.usernamePlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
               />
@@ -286,15 +288,15 @@ const EditProfile = () => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email</Text>
+            <Text style={styles.inputLabel}>{t('account.emailLabel')}</Text>
             <TextInput
               style={[styles.input, { color: colors.textMuted }]}
               value={email}
               editable={false}
-              placeholder="your@email.com"
+              placeholder={t('account.emailPlaceholder')}
               placeholderTextColor={colors.textMuted}
             />
-            <Text style={styles.inputHint}>Email cannot be changed here. Go to Settings → Email.</Text>
+            <Text style={styles.inputHint}>{t('account.emailHint')}</Text>
           </View>
         </View>
 
@@ -308,12 +310,12 @@ const EditProfile = () => {
             {isSaving ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.saveBtnText}>Save Changes</Text>
+              <Text style={styles.saveBtnText}>{t('account.saveChanges')}</Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.discardBtn} onPress={handleDiscard}>
-            <Text style={styles.discardBtnText}>Discard</Text>
+            <Text style={styles.discardBtnText}>{t('account.discard')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -335,7 +337,7 @@ const EditProfile = () => {
               }}
             >
               <MaterialCommunityIcons name="image" size={24} color={colors.text} />
-              <Text style={styles.actionSheetText}>Choose from Library</Text>
+              <Text style={styles.actionSheetText}>{t('account.chooseFromLibrary')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionSheetOption}
@@ -345,14 +347,14 @@ const EditProfile = () => {
               }}
             >
               <MaterialCommunityIcons name="camera" size={24} color={colors.text} />
-              <Text style={styles.actionSheetText}>Take Photo</Text>
+              <Text style={styles.actionSheetText}>{t('account.takePhoto')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionSheetOption, { borderTopWidth: 1, borderTopColor: colors.border }]}
               onPress={() => setShowAndroidSheet(false)}
             >
               <Text style={[styles.actionSheetText, { color: colors.textSecondary, textAlign: 'center' }]}>
-                Cancel
+                {t('common.cancel')}
               </Text>
             </TouchableOpacity>
           </View>

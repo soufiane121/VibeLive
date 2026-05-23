@@ -105,31 +105,52 @@ export function useSquadSocket(config: UseSquadSocketConfig) {
   const callbacksRef = useRef(config);
   callbacksRef.current = config;
 
-  const connect = useCallback(() => {
-    if (!squadId || !guestToken) return;
-
-
-    // Clean up existing connection
+  const disconnect = useCallback(() => {
     if (socketRef.current) {
+      socketRef.current.removeAllListeners();
       socketRef.current.disconnect();
+      socketRef.current = null;
+      setIsConnected(false);
+    }
+  }, []);
+
+  const requestUpdate = useCallback(() => {
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit('squad:request_update', {squad_id: squadId});
+    }
+  }, [squadId]);
+
+  // Auto-connect when squadId and guestToken are available
+  useEffect(() => {
+    if (!squadId || !guestToken) {
+      return;
     }
 
-    // Fix URL construction - ensure proper format
-    let socketUrl = baseUrl.replace('/api', '').replace(/\/$/, '');
-    console.log('[SquadSocket] Attempting connection to:', socketUrl);
-    
+    // Clean up any existing connection
+    if (socketRef.current) {
+      socketRef.current.removeAllListeners();
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+
+    const socketUrl = baseUrl.replace('/api', '').replace(/\/$/, '');
+    console.log('[SquadSocket] Connecting to:', socketUrl + '/squad', 'squadId:', squadId);
+
     const socket = io(`${socketUrl}/squad`, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
+      upgrade: true,
       reconnection: true,
-      reconnectionAttempts: 10,
+      reconnectionAttempts: 15,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
+      timeout: 20000,
+      forceNew: true,
     });
 
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('[SquadSocket] Connected');
+      console.log('[SquadSocket] Connected, joining room:', squadId);
       setIsConnected(true);
 
       // Join the squad room
@@ -147,6 +168,15 @@ export function useSquadSocket(config: UseSquadSocketConfig) {
     socket.on('connect_error', error => {
       console.error('[SquadSocket] Connection error:', error.message);
       setIsConnected(false);
+    });
+
+    socket.on('reconnect', () => {
+      console.log('[SquadSocket] Reconnected, re-joining room');
+      setIsConnected(true);
+      socket.emit('squad:join_room', {
+        squad_id: squadId,
+        guest_token: guestToken,
+      });
     });
 
     // ── Squad events ──────────────────────────────────────────────────
@@ -217,35 +247,18 @@ export function useSquadSocket(config: UseSquadSocketConfig) {
     socket.on('squad:error', (data: {message: string}) => {
       callbacksRef.current.onError?.(data);
     });
-  }, [squadId, guestToken]);
 
-  const disconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
+    return () => {
+      console.log('[SquadSocket] Cleaning up connection');
+      socket.removeAllListeners();
+      socket.disconnect();
       socketRef.current = null;
       setIsConnected(false);
-    }
-  }, []);
-
-  const requestUpdate = useCallback(() => {
-    if (socketRef.current && squadId) {
-      socketRef.current.emit('squad:request_update', {squad_id: squadId});
-    }
-  }, [squadId]);
-
-  // Auto-connect when squadId and guestToken are available
-  useEffect(() => {
-    if (squadId && guestToken) {
-      connect();
-    }
-    return () => {
-      disconnect();
     };
-  }, [squadId, guestToken, connect, disconnect]);
+  }, [squadId, guestToken]);
 
   return {
     isConnected,
-    connect,
     disconnect,
     requestUpdate,
     socket: socketRef.current,

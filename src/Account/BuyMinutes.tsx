@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import { useGetAccountProfileQuery } from '../../features/settings/SettingsSliceApi';
 import { useBoostStreamMutation } from '../../features/registrations/LoginSliceApi';
 
@@ -27,9 +28,9 @@ export interface MinutesTier {
   minutes: number;
   price: number;
   perMinute: string;
-  badge?: string;
+  badgeKey?: string;
   badgeColor?: string;
-  savingsLabel?: string;
+  savingsKey?: string;
 }
 
 export const MINUTES_TIERS: MinutesTier[] = [
@@ -44,7 +45,7 @@ export const MINUTES_TIERS: MinutesTier[] = [
     minutes: 60,
     price: 4.99,
     perMinute: '8.3¢',
-    badge: 'MOST POPULAR',
+    badgeKey: 'account.tierMostPopular',
     badgeColor: colors.gaugeActive,
   },
   {
@@ -52,26 +53,26 @@ export const MINUTES_TIERS: MinutesTier[] = [
     minutes: 120,
     price: 8.99,
     perMinute: '7.5¢',
-    badge: 'BEST VALUE',
+    badgeKey: 'account.tierBestValue',
     badgeColor: colors.success,
-    savingsLabel: 'Save 25%',
+    savingsKey: 'account.save25',
   },
   {
     id: 'power',
     minutes: 300,
     price: 19.99,
     perMinute: '6.7¢',
-    badge: 'POWER USER',
+    badgeKey: 'account.tierPowerUser',
     badgeColor: colors.accent,
-    savingsLabel: 'Save 40%',
+    savingsKey: 'account.save40',
   },
 ];
 
-const BENEFITS = [
-  'Minutes never expire',
-  'Use anytime, any category',
-  'HD quality streaming',
-  'Priority support included',
+const BENEFIT_KEYS = [
+  'account.benefitNeverExpire',
+  'account.benefitAnyCategory',
+  'account.benefitHdQuality',
+  'account.benefitPrioritySupport',
 ];
 
 // ---------- Props for reusability ----------
@@ -88,6 +89,7 @@ export interface BuyMinutesProps {
 const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: BuyMinutesProps) => {
   const navigation = useNavigation<any>();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   const userId = currentUser?._id;
 
@@ -98,11 +100,11 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
   const balanceHours = Math.floor(balance / 60);
   const balanceRemainder = balance % 60;
   const balanceLabel = balanceHours > 0
-    ? `${balanceHours}h ${balanceRemainder}m of streaming`
-    : `${balance}m of streaming`;
+    ? t('account.minutesOfStreaming', { hours: balanceHours, minutes: balanceRemainder })
+    : t('account.minutesOfStreamingShort', { count: balance });
 
   const [selectedTier, setSelectedTier] = useState<string>('premium');
-  const currentTier = MINUTES_TIERS.find(t => t.id === selectedTier)!;
+  const currentTier = MINUTES_TIERS.find(tier => tier.id === selectedTier)!;
 
   const handlePurchase = async () => {
     trackEvent('boost_tier_selected', {
@@ -119,7 +121,7 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
         duration: currentTier.minutes,
         price: currentTier.price,
         category: 'minutes_purchase',
-        title: `${currentTier.minutes} Minutes Pack`,
+        title: t('account.minutesPack', { minutes: currentTier.minutes }),
       }).unwrap();
 
       trackEvent('boost_purchased', {
@@ -130,12 +132,12 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
       });
 
       Alert.alert(
-        'Purchase Successful! 🎉',
-        `${currentTier.minutes} minutes have been added to your balance.`,
-        [{ text: 'OK', onPress: () => onPurchaseComplete?.() || navigation.goBack() }],
+        t('account.purchaseSuccessTitle'),
+        t('account.purchaseSuccessMessage', { minutes: currentTier.minutes }),
+        [{ text: t('common.ok'), onPress: () => onPurchaseComplete?.() || navigation.goBack() }],
       );
     } catch (err) {
-      Alert.alert('Purchase Failed', 'Something went wrong. Please try again.');
+      Alert.alert(t('account.purchaseFailed'), t('account.purchaseFailedMessage'));
     }
   };
 
@@ -144,8 +146,8 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
       {/* Title (only when not embedded) */}
       {!embedded && (
         <View style={styles.titleSection}>
-          <Text style={styles.titleLabel}>TOP UP YOUR BALANCE</Text>
-          <Text style={styles.titleText}>Buy Minutes</Text>
+          <Text style={styles.titleLabel}>{t('account.topUpYourBalance')}</Text>
+          <Text style={styles.titleText}>{t('account.buyMinutesTitle')}</Text>
         </View>
       )}
 
@@ -153,7 +155,7 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
       <View style={styles.balanceCard}>
         <Feather name="clock" size={20} color={colors.gaugeActive} />
         <View style={{ marginLeft: 12, flex: 1 }}>
-          <Text style={styles.balanceNumber}>{balance} minutes</Text>
+          <Text style={styles.balanceNumber}>{t('account.minutesLabel', { count: balance })}</Text>
           <Text style={styles.balanceSubtext}>{balanceLabel}</Text>
         </View>
       </View>
@@ -178,9 +180,9 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
               <View style={styles.tierContent}>
                 <View style={styles.tierRow}>
                   <Text style={[styles.tierMinutes, isSelected && styles.tierMinutesSelected]}>
-                    {tier.minutes} min
+                    {tier.minutes} {t('account.minAbbrev')}
                   </Text>
-                  {tier.badge && (
+                  {tier.badgeKey && (
                     <View
                       style={[
                         styles.tierBadge,
@@ -188,15 +190,15 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
                       ]}
                     >
                       <Text style={[styles.tierBadgeText, { color: tier.badgeColor }]}>
-                        {tier.badge}
+                        {t(tier.badgeKey)}
                       </Text>
                     </View>
                   )}
                 </View>
-                <Text style={styles.tierPerMinute}>{tier.perMinute} per min</Text>
-                {tier.savingsLabel && (
+                <Text style={styles.tierPerMinute}>{tier.perMinute} {t('account.perMin')}</Text>
+                {tier.savingsKey && (
                   <Text style={[styles.tierSavings, { color: tier.badgeColor }]}>
-                    {tier.savingsLabel}
+                    {t(tier.savingsKey)}
                   </Text>
                 )}
               </View>
@@ -212,11 +214,11 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
 
       {/* Benefits */}
       <View style={styles.benefitsSection}>
-        <Text style={styles.benefitsLabel}>INCLUDED WITH EVERY PACK</Text>
-        {BENEFITS.map((benefit, idx) => (
+        <Text style={styles.benefitsLabel}>{t('account.includedWithEveryPack')}</Text>
+        {BENEFIT_KEYS.map((key, idx) => (
           <View key={idx} style={styles.benefitRow}>
             <Ionicons name="checkmark-circle" size={18} color={colors.success} style={{ marginRight: 10 }} />
-            <Text style={styles.benefitText}>{benefit}</Text>
+            <Text style={styles.benefitText}>{t(key)}</Text>
           </View>
         ))}
       </View>
@@ -232,7 +234,7 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <Text style={styles.purchaseBtnText}>
-              Buy {currentTier.minutes} Minutes — ${currentTier.price.toFixed(2)}
+              {t('account.buyButtonLabel', { minutes: currentTier.minutes, price: currentTier.price.toFixed(2) })}
             </Text>
           )}
         </TouchableOpacity>

@@ -51,10 +51,10 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
   // ── Share Invite ────────────────────────────────────────────────────
   const handleShareInvite = useCallback(async () => {
     try {
-      const creatorName = squadData?.creator_display_name || t('squad.yourFriend');
+      const creatorName = squadData?.creator_display_name || t('onboarding.squad.yourFriend');
       await Share.share({
-        message: t('squad.shareMessage', { creatorName, webJoinUrl }),
-        title: t('squad.shareTitle'),
+        message: t('onboarding.squad.shareMessage', { creatorName, webJoinUrl }),
+        title: t('onboarding.squad.shareTitle'),
       });
     } catch (err) {
       // User cancelled share — no action needed
@@ -65,8 +65,8 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
   const handleFindSpot = useCallback(async () => {
     if (members.length < 1) {
       Alert.alert(
-        t('squad.needPreferences'),
-        t('squad.needPreferencesDesc'),
+        t('onboarding.squad.needPreferences'),
+        t('onboarding.squad.needPreferencesDesc'),
       );
       return;
     }
@@ -76,7 +76,7 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
     } catch (err: any) {
       Alert.alert(
         t('common.error'),
-        err?.data?.error || t('squad.failedRecommendation'),
+        err?.data?.error || t('onboarding.squad.failedRecommendation'),
       );
     }
   }, [squadCode, members, triggerRecommendation]);
@@ -84,19 +84,19 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
   // ── Cancel ──────────────────────────────────────────────────────────
   const handleCancel = useCallback(() => {
     Alert.alert(
-      t('squad.cancelSquad'),
-      t('squad.cancelSquadDesc'),
+      t('onboarding.squad.cancelSquad'),
+      t('onboarding.squad.cancelSquadDesc'),
       [
-        {text: t('squad.keepGoing'), style: 'cancel'},
+        {text: t('onboarding.squad.keepGoing'), style: 'cancel'},
         {
-          text: t('squad.cancelSquad'),
+          text: t('onboarding.squad.cancelSquad'),
           style: 'destructive',
           onPress: async () => {
             try {
               await cancelSquad(squadCode).unwrap();
               onReset();
             } catch (err: any) {
-              Alert.alert(t('common.error'), err?.data?.error || t('squad.failedCancel'));
+              Alert.alert(t('common.error'), err?.data?.error || t('onboarding.squad.failedCancel'));
             }
           },
         },
@@ -113,7 +113,7 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>{t('squad.yourSquad')}</Text>
+          <Text style={styles.title}>{t('onboarding.squad.yourSquad')}</Text>
           {isCreator && (
             <TouchableOpacity
               onPress={handleCancel}
@@ -151,38 +151,38 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
               style={
                 isConnected ? styles.statusLiveText : {color: colors.connecting, fontWeight: '700'}
               }>
-              {isConnected ? t('squad.live') : t('squad.connecting')}
+              {isConnected ? t('onboarding.squad.live') : t('onboarding.squad.connecting')}
             </Text>
           </View>
           <Text style={styles.statusSubText}>
-            {isConnected ? t('squad.waitingForFriends') : t('squad.hangTight')}
+            {isConnected ? t('onboarding.squad.waitingForFriends') : t('onboarding.squad.hangTight')}
           </Text>
         </View>
       </View>
 
       {/* Squad Code Card */}
       <View style={styles.codeCard}>
-        <Text style={styles.codeLabel}>{t('squad.squadCode')}</Text>
+        <Text style={styles.codeLabel}>{t('onboarding.squad.squadCode')}</Text>
         <Text style={styles.codeText}>{squadCode}</Text>
         <TouchableOpacity
           style={styles.shareButton}
           onPress={handleShareInvite}
           activeOpacity={0.85}>
           <ShareIcon size={18} color={colors.formingShareButtonText} />
-          <Text style={styles.shareButtonText}>{t('squad.shareInvite')}</Text>
+          <Text style={styles.shareButtonText}>{t('onboarding.squad.shareInvite')}</Text>
         </TouchableOpacity>
         <Text style={styles.codeHint}>
-          {t('squad.shareHint')}
+          {t('onboarding.squad.shareHint')}
         </Text>
       </View>
 
       {/* Members List */}
       <View style={styles.membersSection}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('squad.squad')}</Text>
+          <Text style={styles.sectionTitle}>{t('onboarding.squad.squad')}</Text>
           <View style={styles.sectionCountPill}>
             <Text style={styles.sectionCountPillText}>
-              {members.length === 1 ? t('squad.oneMember') : t('squad.membersCount', { count: members.length })}
+              {members.length === 1 ? t('onboarding.squad.oneMember') : t('onboarding.squad.membersCount', { count: members.length })}
             </Text>
           </View>
         </View>
@@ -200,7 +200,7 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
               <PersonIcon size={22} color={colors.textMuted} />
             </View>
             <Text style={styles.waitingText}>
-              {t('squad.waitingForPlusOne')}
+              {t('onboarding.squad.waitingForPlusOne')}
             </Text>
           </View>
         )}
@@ -220,21 +220,21 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
             {isGenerating ? (
               <View style={styles.generatingRow}>
                 <ActivityIndicator color={colors.background} size="small" />
-                <Text style={styles.findButtonText}>{t('squad.findingYourSpot')}</Text>
+                <Text style={styles.findButtonText}>{t('onboarding.squad.findingYourSpot')}</Text>
               </View>
             ) : (
               <View style={styles.findButtonContent}>
-                <Text style={styles.findButtonText}>{t('squad.findOurSpot')}</Text>
+                <Text style={styles.findButtonText}>{t('onboarding.squad.findOurSpot')}</Text>
                 <Text style={styles.findButtonArrow}>→</Text>
               </View>
             )}
           </TouchableOpacity>
           <Text style={styles.findHint}>
             {members.length === 1
-              ? t('squad.startNowOrWait')
+              ? t('onboarding.squad.startNowOrWait')
               : members.length === 2
-              ? t('squad.perfectDuo')
-              : t('squad.basedOnPreferences', { count: members.length })}
+              ? t('onboarding.squad.perfectDuo')
+              : t('onboarding.squad.basedOnPreferences', { count: members.length })}
           </Text>
         </View>
       )}
@@ -250,6 +250,7 @@ const MemberRow: React.FC<{member: SquadMember; isCreator: boolean}> = ({
 }) => {
   const statusLabel = member.has_app ? 'Ready' : 'Invite pending';
   const isReady = member.has_app;
+  const {t} = useTranslation();
 
   return (
     <View style={styles.memberRow}>
@@ -303,18 +304,18 @@ const MemberRow: React.FC<{member: SquadMember; isCreator: boolean}> = ({
             </View>
             {isCreator && (
               <View style={styles.creatorBadge}>
-                <Text style={styles.creatorBadgeText}>{t('squad.creator')}</Text>
+                <Text style={styles.creatorBadgeText}>{t('onboarding.squad.creator')}</Text>
               </View>
             )}
           </View>
           {!member.has_app && (
             <View style={styles.guestBadge}>
-              <Text style={styles.guestBadgeText}>{t('squad.guest')}</Text>
+              <Text style={styles.guestBadgeText}>{t('onboarding.squad.guest')}</Text>
             </View>
           )}
           {member.is_default_profile && (
             <View style={styles.guestBadge}>
-              <Text style={styles.guestBadgeText}>{t('squad.auto')}</Text>
+              <Text style={styles.guestBadgeText}>{t('onboarding.squad.auto')}</Text>
             </View>
           )}
         </View>

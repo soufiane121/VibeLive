@@ -2,6 +2,7 @@ import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions} from 'react-native';
 import {GlobalColors} from '../../styles/GlobalColors';
 import {VenueData} from '../../../features/voting/VotingApi';
+import useTranslation from '../../Hooks/useTranslation';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ const PremiumVenueCard: React.FC<PremiumVenueCardProps> = ({
   onDirections,
   translateY,
 }) => {
+  const { t } = useTranslation();
   const colors = GlobalColors.PremiumVenueCard;
 
   const rating = venue.googleRating != null ? venue.googleRating.toFixed(1) : null;
@@ -40,14 +42,14 @@ const PremiumVenueCard: React.FC<PremiumVenueCardProps> = ({
         {/* Top Header Section */}
         <View style={styles.header}>
           <View style={styles.headerPill}>
-            <Text style={styles.headerPillText}>{venue.category?.replace(/_/g, ' ').toUpperCase() || 'VENUE'}</Text>
+            <Text style={styles.headerPillText}>{venue.category?.replace(/_/g, ' ').toUpperCase() || t('venueCard.venue')}</Text>
           </View>
           <View style={styles.iconContainer}>
             <Text style={styles.centerIcon}>🏛️</Text>
           </View>
           <View style={[styles.headerPill, styles.openPill]}>
             <View style={styles.greenDot} />
-            <Text style={styles.openText}>Open</Text>
+            <Text style={styles.openText}>{t('venueCard.open')}</Text>
           </View>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeIcon}>✕</Text>
@@ -61,7 +63,7 @@ const PremiumVenueCard: React.FC<PremiumVenueCardProps> = ({
           <View style={styles.locationRow}>
             <Text style={styles.pinIcon}>📍</Text>
             <Text style={styles.addressText} numberOfLines={1}>
-              {addressText || venue.category?.replace(/_/g, ' ') || 'No address available'}
+              {addressText || venue.category?.replace(/_/g, ' ') || t('venueCard.noAddress')}
             </Text>
           </View>
 
@@ -89,12 +91,12 @@ const PremiumVenueCard: React.FC<PremiumVenueCardProps> = ({
           <TouchableOpacity 
             style={[styles.button, styles.directionsButton]}
             onPress={() => onDirections?.(venue.id)}>
-            <Text style={styles.directionsText}>↱ Directions</Text>
+            <Text style={styles.directionsText}>↱ {t('venueCard.directions')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.button, styles.viewVenueButton]}
             onPress={() => onViewVenue(venue.id)}>
-            <Text style={styles.viewVenueText}>View Venue 〉</Text>
+            <Text style={styles.viewVenueText}>{t('venueCard.viewVenue')} 〉</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -112,7 +114,7 @@ const colors = GlobalColors.PremiumVenueCard;
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 20, // distance from bottom of screen
+    bottom: 10, // distance from bottom of screen
     alignSelf: 'center',
     width: SCREEN_WIDTH * 0.9,
     zIndex: 999,
@@ -289,7 +291,7 @@ const styles = StyleSheet.create({
   pointer: {
     width: 20,
     height: 10,
-    borderTopWidth: 10,
+    // borderTopWidth: 10,
     borderTopColor: colors.pointerBorderTop,
     borderLeftWidth: 10,
     borderLeftColor: 'transparent',

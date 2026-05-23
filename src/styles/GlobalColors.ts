@@ -441,13 +441,20 @@ export const GlobalColors = {
 
   // Bottom Navigation
   BottomNavigation: {
-    background: baseColors.deepBlack,
-    border: baseColors.mediumGray,
-    tabActive: baseColors.gold_accent,
-    tabInactive: baseColors.mutedGray,
-    tabBackground: baseColors.newBackGroundColor,
-    badge: baseColors.error,
-    badgeText: baseColors.white,
+    background: premiumDark.primarySurface,
+    surface: premiumDark.secondarySurface,
+    border: premiumDark.primaryBorder,
+    shadow: 'rgba(0, 0, 0, 0.15)',
+    tabActive: premiumDark.accentPrimary,
+    tabInactive: premiumDark.tertiaryText,
+    labelActive: premiumDark.accentPrimary,
+    labelInactive: premiumDark.secondaryText,
+    indicator: premiumDark.accentPrimary,
+    centerButton: premiumDark.accentPrimary,
+    centerButtonIcon: '#FFFFFF',
+    centerButtonShadow: 'rgba(79, 126, 232, 0.35)',
+    badge: premiumDark.hotPrimary,
+    badgeText: '#FFFFFF',
   },
 
   // Event Creation Flow

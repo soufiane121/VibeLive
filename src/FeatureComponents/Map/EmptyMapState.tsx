@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
 import { GlobalColors } from '../../styles/GlobalColors';
 import Icon from 'react-native-vector-icons/Feather';
+import useTranslation from '../../Hooks/useTranslation';
 
 const { width, height } = Dimensions.get('window');
 
@@ -10,6 +11,7 @@ interface EmptyMapStateProps {
 }
 
 const EmptyMapState: React.FC<EmptyMapStateProps> = ({ isVisible }) => {
+  const { t } = useTranslation();
   const colors = GlobalColors.EmptyMapState;
   
   // Animations
@@ -96,7 +98,7 @@ const EmptyMapState: React.FC<EmptyMapStateProps> = ({ isVisible }) => {
           borderRadius: 25,
         },
       ]}
-      pointerEvents={isVisible ? 'auto' : 'none'}>
+      pointerEvents={isVisible === true ? 'auto' : 'none'}>
       <View style={[styles.content, {backgroundColor: colors.background}]}>
         {/* Top Header */}
         <View style={styles.header}>
@@ -107,7 +109,7 @@ const EmptyMapState: React.FC<EmptyMapStateProps> = ({ isVisible }) => {
             ]}
           />
           <Text style={[styles.headerText, {color: colors.blinkDot}]}>
-            SCANNING THE AREA...
+            {t('emptyMap.scanning')}
           </Text>
         </View>
 
@@ -141,7 +143,7 @@ const EmptyMapState: React.FC<EmptyMapStateProps> = ({ isVisible }) => {
 
           {/* Main Text */}
           <Text style={[styles.mainText, {color: colors.textPrimary}]}>
-            Quiet near you {'\n'} right now
+            {t('emptyMap.quietNearYou')}
           </Text>
         </View>
         <View
@@ -160,10 +162,10 @@ const EmptyMapState: React.FC<EmptyMapStateProps> = ({ isVisible }) => {
               marginRight: 3,
               fontWeight: '500',
             }}>
-            When the city moves,
+            {t('emptyMap.whenCityMoves')}
           </Text>
           <Text style={{color: colors.textSecondary, fontWeight: '500'}}>
-            the map moves with it
+            {t('emptyMap.mapMovesWithIt')}
           </Text>
         </View>
 
@@ -177,7 +179,7 @@ const EmptyMapState: React.FC<EmptyMapStateProps> = ({ isVisible }) => {
               ]}
             />
             <Text style={[styles.featureText, {color: colors.textSecondary}]}>
-              Real people
+              {t('emptyMap.realPeople')}
             </Text>
           </View>
           <View style={styles.featureSeparator} />
@@ -189,7 +191,7 @@ const EmptyMapState: React.FC<EmptyMapStateProps> = ({ isVisible }) => {
               ]}
             />
             <Text style={[styles.featureText, {color: colors.textSecondary}]}>
-              Real signals
+              {t('emptyMap.realSignals')}
             </Text>
           </View>
           <View style={styles.featureSeparator} />
@@ -207,7 +209,7 @@ const EmptyMapState: React.FC<EmptyMapStateProps> = ({ isVisible }) => {
               style={[styles.featureDot, {backgroundColor: colors.accentBlue}]}
             />
             <Text style={[styles.featureText, {color: colors.textSecondary}]}>
-              Nothing old
+              {t('emptyMap.nothingOld')}
             </Text>
           </View>
         </View>
@@ -219,12 +221,12 @@ const EmptyMapState: React.FC<EmptyMapStateProps> = ({ isVisible }) => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 0,
+    bottom:-5,
     left: 0,
     right: 0,
     zIndex: 1000,
     borderWidth: 1,
-    
+ 
   },
   content: {
     borderTopLeftRadius: 24,

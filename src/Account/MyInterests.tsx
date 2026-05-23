@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import {
   useGetAccountProfileQuery,
   useUpdateInterestsMutation,
@@ -35,6 +36,7 @@ const ALL_INTERESTS = tags.reduce((acc: string[], category) => {
 const MyInterests = () => {
   const navigation = useNavigation<any>();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   const userId = currentUser?._id;
 
@@ -58,7 +60,7 @@ const MyInterests = () => {
         return prev.filter(i => i !== label);
       }
       if (prev.length >= MAX_INTERESTS) {
-        Alert.alert('Maximum reached', `You can select up to ${MAX_INTERESTS} interests.`);
+        Alert.alert(t('account.maximumReached'), t('account.maximumInterests', { max: MAX_INTERESTS }));
         return prev;
       }
       return [...prev, label];
@@ -74,7 +76,7 @@ const MyInterests = () => {
       });
       navigation.goBack();
     } catch (err) {
-      Alert.alert('Error', 'Failed to save interests. Please try again.');
+      Alert.alert(t('common.error'), t('account.interestsSaveFailed'));
     }
   };
 
@@ -97,15 +99,15 @@ const MyInterests = () => {
       >
         {/* Title */}
         <View style={styles.titleSection}>
-          <Text style={styles.titleLabel}>PERSONALIZE YOUR FEED</Text>
-          <Text style={styles.titleText}>My Interests</Text>
+          <Text style={styles.titleLabel}>{t('account.personalizeYourFeed')}</Text>
+          <Text style={styles.titleText}>{t('account.myInterestsTitle')}</Text>
         </View>
 
         {/* Info Card */}
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
             <Feather name="zap" size={18} color={colors.accent} />
-            <Text style={styles.infoTitle}>Personalize your feed</Text>
+            <Text style={styles.infoTitle}>{t('account.personalizeYourFeedTitle')}</Text>
             <View style={styles.countBadge}>
               <Text style={styles.countBadgeText}>
                 {selected.length}/{MAX_INTERESTS}
@@ -113,7 +115,7 @@ const MyInterests = () => {
             </View>
           </View>
           <Text style={styles.infoDesc}>
-            Select up to 10 interests to see more relevant content and recommendations tailored to you.
+            {t('account.interestsDescription')}
           </Text>
         </View>
 
@@ -164,7 +166,7 @@ const MyInterests = () => {
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <Text style={[styles.saveBtnText, !hasChanges && styles.saveBtnTextDisabled]}>
-              {hasChanges ? 'Save Changes' : 'No Changes'}
+              {hasChanges ? t('account.saveChanges') : t('account.noChanges')}
             </Text>
           )}
         </TouchableOpacity>

@@ -127,7 +127,7 @@ const SquadScreen: React.FC = () => {
     },
     onVetoCast: ({member_name, reason}) => {
       // Show brief toast/feedback
-      Alert.alert(t('squad.veto'), t('squad.vetoMessage', { member_name, reason }));
+      Alert.alert(t('onboarding.squad.veto'), t('onboarding.squad.vetoMessage', { member_name, reason }));
     },
     onVetoResolved: ({new_recommendation}) => {
       setCurrentRecommendation(new_recommendation);
@@ -173,14 +173,14 @@ const SquadScreen: React.FC = () => {
     },
     onExpired: () => {
       setSquadStatus('expired');
-      Alert.alert(t('squad.expired'), t('squad.expiredDesc'));
+      Alert.alert(t('onboarding.squad.expired'), t('onboarding.squad.expiredDesc'));
       trackEvent(AnalyticsEventType.SQUAD_EXPIRED, {
         squadCode: activeSquadCode,
       }, 'squad');
     },
     onCancelled: () => {
       setSquadStatus('cancelled');
-      Alert.alert(t('squad.cancelled'), t('squad.cancelledDesc'));
+      Alert.alert(t('onboarding.squad.cancelled'), t('onboarding.squad.cancelledDesc'));
       trackEvent(AnalyticsEventType.SQUAD_CANCELLED, {
         squadCode: activeSquadCode,
       }, 'squad');
@@ -194,8 +194,8 @@ const SquadScreen: React.FC = () => {
   const handleCreateSquad = useCallback(async () => {
     if (!coordinates || coordinates?.length == 0) {
       Alert.alert(
-        t('squad.locationRequired'),
-        t('squad.locationRequiredDesc'),
+        t('onboarding.squad.locationRequired'),
+        t('onboarding.squad.locationRequiredDesc'),
       );
       return;
     }
@@ -228,7 +228,7 @@ const SquadScreen: React.FC = () => {
         setActiveSquadCode(err.data.squad_code);
         setSquadStatus('forming');
       } else {
-        Alert.alert(t('common.error'), err?.data?.error || t('squad.failedCreate'));
+        Alert.alert(t('common.error'), err?.data?.error || t('onboarding.squad.failedCreate'));
       }
     }
   }, [coordinates, createSquad]);
@@ -328,7 +328,7 @@ const SquadScreen: React.FC = () => {
   return (
     <View style={[styles.container, styles.centered]}>
       <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={styles.loadingText}>{t('squad.loading')}</Text>
+      <Text style={styles.loadingText}>{t('onboarding.squad.loading')}</Text>
     </View>
   );
 };
@@ -357,7 +357,7 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
       <View style={styles.emptyHeader}>
         <View style={styles.heroIconWrap}>
           <View style={styles.liveBadge}>
-            <Text style={styles.liveBadgeText}>{t('squad.liveBadge')}</Text>
+            <Text style={styles.liveBadgeText}>{t('onboarding.squad.liveBadge')}</Text>
           </View>
           <View style={styles.largerIconCircle}>
           <View style={styles.iconCircle}>
@@ -365,10 +365,10 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
           </View>
           </View>
         </View>
-        <Text style={styles.heroLabel}>{t('squad.groupFeature')}</Text>
-        <Text style={styles.emptyTitle}>{t('squad.squadMode')}</Text>
+        <Text style={styles.heroLabel}>{t('onboarding.squad.groupFeature')}</Text>
+        <Text style={styles.emptyTitle}>{t('onboarding.squad.squadMode')}</Text>
         <Text style={styles.emptySubtitle}>
-          {t('squad.squadModeDesc')}
+          {t('onboarding.squad.squadModeDesc')}
         </Text>
       </View>
 
@@ -376,7 +376,7 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
       {wasExpired && (
         <View style={[styles.statusBanner, {backgroundColor: colors.goldMuted}]}>
           <Text style={styles.statusBannerText}>
-            {t('squad.expiredBanner')}
+            {t('onboarding.squad.expiredBanner')}
           </Text>
         </View>
       )}
@@ -384,37 +384,37 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
         <View
           style={[styles.statusBanner, {backgroundColor: colors.accentMuted}]}>
           <Text style={styles.statusBannerText}>
-            {t('squad.cancelledBanner')}
+            {t('onboarding.squad.cancelledBanner')}
           </Text>
         </View>
       )}
 
       {/* How it works */}
       <View style={styles.howItWorks}>
-        <Text style={styles.sectionTitle}>{t('squad.howItWorks')}</Text>
+        <Text style={styles.sectionTitle}>{t('onboarding.squad.howItWorks')}</Text>
         <View style={styles.sectionDivider} />
         <StepItem
           number="1"
-          title={t('squad.step1Title')}
-          description={t('squad.step1Desc')}
+          title={t('onboarding.squad.step1Title')}
+          description={t('onboarding.squad.step1Desc')}
           isLast={false}
         />
         <StepItem
           number="2"
-          title={t('squad.step2Title')}
-          description={t('squad.step2Desc')}
+          title={t('onboarding.squad.step2Title')}
+          description={t('onboarding.squad.step2Desc')}
           isLast={false}
         />
         <StepItem
           number="3"
-          title={t('squad.step3Title')}
-          description={t('squad.step3Desc')}
+          title={t('onboarding.squad.step3Title')}
+          description={t('onboarding.squad.step3Desc')}
           isLast={false}
         />
         <StepItem
           number="4"
-          title={t('squad.step4Title')}
-          description={t('squad.step4Desc')}
+          title={t('onboarding.squad.step4Title')}
+          description={t('onboarding.squad.step4Desc')}
           isLast
         />
       </View>
@@ -428,13 +428,13 @@ const SquadEmptyState: React.FC<EmptyStateProps> = ({
         {isCreating ? (
           <ActivityIndicator color={colors.ctaButtonText} />
         ) : (
-          <Text style={styles.createButtonText}>{t('squad.startSquad')}</Text>
+          <Text style={styles.createButtonText}>{t('onboarding.squad.startSquad')}</Text>
         )}
       </TouchableOpacity>
 
       {/* Zero friction tagline */}
       <Text style={styles.tagline}>
-        {t('squad.tagline')}
+        {t('onboarding.squad.tagline')}
       </Text>
     </ScrollView>
   );

@@ -16,6 +16,7 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import useTranslation from '../Hooks/useTranslation';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useGetAccountProfileQuery } from '../../features/settings/SettingsSliceApi';
 import { useSingOutMutation } from '../../features/registrations/LoginSliceApi';
@@ -25,7 +26,7 @@ import { setLocalData } from '../Utils/LocalStorageHelper';
 const colors = GlobalColors.Account;
 
 // ---------- Minutes Gauge Component (View-based) ----------
-const MinutesGauge = ({ minutes, size = 72 }: { minutes: number; size?: number }) => {
+const MinutesGauge = ({ minutes, size = 72, minsLabel = 'MINS' }: { minutes: number; size?: number; minsLabel?: string }) => {
   return (
     <View style={{
       width: size,
@@ -38,7 +39,7 @@ const MinutesGauge = ({ minutes, size = 72 }: { minutes: number; size?: number }
       justifyContent: 'center',
     }}>
       <Text style={[styles.gaugeNumber, { fontSize: size * 0.3 }]}>{minutes}</Text>
-      <Text style={[styles.gaugeLabel, { fontSize: size * 0.12 }]}>MINS</Text>
+      <Text style={[styles.gaugeLabel, { fontSize: size * 0.12 }]}>{minsLabel}</Text>
     </View>
   );
 };
@@ -111,6 +112,7 @@ const Profile = () => {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   const userId = currentUser?._id;
 
@@ -129,7 +131,7 @@ const Profile = () => {
   const initials = (displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()).slice(0, 2);
   const joinDate = profile?.createdAt || currentUser?.createdAt;
   const joinLabel = joinDate
-    ? `Joined ${new Date(joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
+    ? t('account.joined', { date: new Date(joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) })
     : '';
   const minutes = profile?.streamingMinutes?.balance || 0;
   const interests = profile?.interests || [];
@@ -147,10 +149,10 @@ const Profile = () => {
   }, []);
 
   const handleSignOut = async () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('account.signOut'), t('account.signOutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Sign Out',
+        text: t('account.signOut'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -176,12 +178,12 @@ const Profile = () => {
 
   const handleHelpCenter = () => {
     Alert.alert(
-      'Help Center',
-      'Coming soon! For now, reach us by email.',
+      t('account.helpCenter'),
+      t('account.helpCenterMessage'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Email Support',
+          text: t('account.emailSupport'),
           onPress: () => Linking.openURL('mailto:support@vibelive.app'),
         },
       ],
@@ -206,8 +208,8 @@ const Profile = () => {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerLabel}>MY ACCOUNT</Text>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerLabel}>{t('account.myAccount')}</Text>
+          <Text style={styles.headerTitle}>{t('account.profile')}</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -239,7 +241,7 @@ const Profile = () => {
             </View>
 
             {/* Minutes Gauge */}
-            <MinutesGauge minutes={minutes} />
+            <MinutesGauge minutes={minutes} minsLabel={t('account.mins')} />
           </View>
 
           {/* Top Up Button */}
@@ -247,7 +249,7 @@ const Profile = () => {
             style={styles.topUpBtn}
             onPress={() => navigation.navigate('BuyMinutes')}
           >
-            <Text style={styles.topUpText}>+ Top Up</Text>
+            <Text style={styles.topUpText}>{t('account.topUp')}</Text>
           </TouchableOpacity>
 
           {/* Stats Row */}
@@ -255,17 +257,17 @@ const Profile = () => {
             <View style={styles.statBox}>
               <Feather name="tv" size={14} color={colors.textSecondary} style={{ marginBottom: 4 }} />
               <Text style={styles.statNumber}>{streamsCount}</Text>
-              <Text style={styles.statLabel}>Streams</Text>
+              <Text style={styles.statLabel}>{t('account.streams')}</Text>
             </View>
             <View style={styles.statBox}>
               <Feather name="clock" size={14} color={colors.textSecondary} style={{ marginBottom: 4 }} />
               <Text style={styles.statNumber}>{hoursCount}</Text>
-              <Text style={styles.statLabel}>Hours</Text>
+              <Text style={styles.statLabel}>{t('account.hours')}</Text>
             </View>
             <View style={styles.statBox}>
               <Feather name="users" size={14} color={colors.textSecondary} style={{ marginBottom: 4 }} />
               <Text style={styles.statNumber}>{referredCount}</Text>
-              <Text style={styles.statLabel}>Referred</Text>
+              <Text style={styles.statLabel}>{t('account.referred')}</Text>
             </View>
           </View>
 
@@ -275,17 +277,17 @@ const Profile = () => {
             onPress={() => navigation.navigate('EditProfile')}
           >
             <Feather name="edit-2" size={16} color={colors.accent} style={{ marginRight: 8 }} />
-            <Text style={styles.editProfileText}>Edit Profile</Text>
+            <Text style={styles.editProfileText}>{t('account.editProfile')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* My Interests */}
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <SectionHeader label="MY INTERESTS" />
+            <SectionHeader label={t('account.myInterests')} />
             <TouchableOpacity onPress={() => navigation.navigate('MyInterests')}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.editLink}>Edit</Text>
+                <Text style={styles.editLink}>{t('common.edit')}</Text>
                 <Feather name="external-link" size={12} color={colors.accent} style={{ marginLeft: 4 }} />
               </View>
             </TouchableOpacity>
@@ -302,7 +304,7 @@ const Profile = () => {
                 style={styles.addChip}
                 onPress={() => navigation.navigate('MyInterests')}
               >
-                <Text style={styles.addChipText}>+ Add</Text>
+                <Text style={styles.addChipText}>+ {t('common.add')}</Text>
               </TouchableOpacity>
             )}
             {interests.length > 0 && (
@@ -310,7 +312,7 @@ const Profile = () => {
                 style={styles.addChip}
                 onPress={() => navigation.navigate('MyInterests')}
               >
-                <Text style={styles.addChipText}>+ Add</Text>
+                <Text style={styles.addChipText}>+ {t('common.add')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -318,21 +320,21 @@ const Profile = () => {
 
         {/* Minutes & Billing Section */}
         <View style={styles.section}>
-          <SectionHeader label="MINUTES & BILLING" />
+          <SectionHeader label={t('account.minutesAndBilling')} />
           <View style={styles.menuCard}>
             <MenuRow
               icon="time-outline"
-              title="Buy Minutes"
-              subtitle={`${minutes} minutes remaining`}
-              badge="Top Up"
+              title={t('account.buyMinutes')}
+              subtitle={t('account.minutesRemaining', { count: minutes })}
+              badge={t('account.topUpBadge')}
               badgeColor={colors.gaugeActive}
               onPress={() => navigation.navigate('BuyMinutes')}
             />
             <View style={styles.menuDivider} />
             <MenuRow
               icon="receipt-outline"
-              title="Transaction History"
-              subtitle="Purchases and stream usage"
+              title={t('account.transactionHistory')}
+              subtitle={t('account.transactionHistorySubtitle')}
               onPress={() => navigation.navigate('TransactionHistory')}
             />
           </View>
@@ -340,40 +342,40 @@ const Profile = () => {
 
         {/* Account Section */}
         <View style={styles.section}>
-          <SectionHeader label="ACCOUNT" />
+          <SectionHeader label={t('account.accountSection')} />
           <View style={styles.menuCard}>
             <MenuRow
               icon="notifications-outline"
-              title="Notifications"
-              subtitle="Push and email alerts"
+              title={t('account.notifications')}
+              subtitle={t('account.notificationsSubtitle')}
               onPress={() => navigation.navigate('NotificationSettings')}
             />
             <View style={styles.menuDivider} />
             <MenuRow
               icon="gift-outline"
-              title="Refer a Friend"
-              subtitle="Earn 10 free minutes per invite"
-              badge="+10 min"
+              title={t('account.referFriend')}
+              subtitle={t('account.referFriendSubtitle')}
+              badge={t('account.referFriendBadge')}
               badgeColor={colors.success}
-              onPress={() => Alert.alert('Refer a Friend', 'Coming soon!')}
+              onPress={() => Alert.alert(t('account.referFriend'), t('account.referFriendComingSoon'))}
             />
           </View>
         </View>
 
         {/* Support Section */}
         <View style={styles.section}>
-          <SectionHeader label="SUPPORT" />
+          <SectionHeader label={t('account.support')} />
           <View style={styles.menuCard}>
             <MenuRow
               icon="help-circle-outline"
-              title="Help Center"
-              subtitle="FAQs and email support"
+              title={t('account.helpCenter')}
+              subtitle={t('account.helpCenterSubtitle')}
               onPress={handleHelpCenter}
             />
             <View style={styles.menuDivider} />
             <MenuRow
               icon="log-out-outline"
-              title="Sign Out"
+              title={t('account.signOut')}
               onPress={handleSignOut}
               showChevron={false}
               isDestructive

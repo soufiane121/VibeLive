@@ -34,49 +34,6 @@ import {
 
 const colors = GlobalColors.BoostFOMOFlow;
 
-  const eventsList = [
-    {
-      key: 'nightlife',
-      label: 'Nightlife & Parties',
-      emoji: (color: string)=> (<NightLifeIcon size={32} color={color} />),
-    },
-    {
-      key: 'bars',
-      label: 'Bars & Lounges',
-      emoji: (color: string)=> (<BarIcon size={32} color={color} />),
-    },
-    {
-      key: 'concerts',
-      label: 'Music & Concerts',
-      emoji: (color: string)=> (<MusicIcon size={32} color={color} />),
-    },
-    {
-      key: 'sports',
-      label: 'Sports Events',
-      emoji: (color: string)=> (<SportIcon size={32} color={color} />),
-    },
-    {
-      key: 'festivals',
-      label: 'Festivals & Fairs',
-      emoji: (color: string)=> (<StarIcon size={32} color={color} />),
-    },
-    {
-      key: 'food',
-      label: 'Food & Drink events',
-      emoji: (color: string)=> (<FoodIcon size={32} color={color} />),
-    },
-    {
-      key: 'art',
-      label: 'Art & Culture',
-      emoji: (color: string)=> (<SmileFaceIcon size={32} color={color} />),
-    },
-    {
-      key: 'show',
-      label: 'Show & Performances',
-      emoji: (color: string)=> (<TVPlayIcon size={32} color={color} />),
-    },
-  ];
-
 // ─────────────────────────────────────────────────────────────────
 // Minute package definitions (replaces old BoostTier)
 // ─────────────────────────────────────────────────────────────────
@@ -164,6 +121,50 @@ type FlowStep =
 
 const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const { t } = useTranslation();
+
+  const eventsList = [
+    {
+      key: 'nightlife',
+      getLabel: () => t('onboarding.event.categories.nightlife'),
+      emoji: (color: string) => <NightLifeIcon size={32} color={color} />,
+    },
+    {
+      key: 'bars',
+      getLabel: () => t('onboarding.event.categories.bars'),
+      emoji: (color: string) => <BarIcon size={32} color={color} />,
+    },
+    {
+      key: 'concerts',
+      getLabel: () => t('onboarding.event.categories.concerts'),
+      emoji: (color: string) => <MusicIcon size={32} color={color} />,
+    },
+    {
+      key: 'sports',
+      getLabel: () => t('onboarding.event.categories.sports'),
+      emoji: (color: string) => <SportIcon size={32} color={color} />,
+    },
+    {
+      key: 'festivals',
+      getLabel: () => t('onboarding.event.categories.festivals'),
+      emoji: (color: string) => <StarIcon size={32} color={color} />,
+    },
+    {
+      key: 'food',
+      getLabel: () => t('onboarding.event.categories.food'),
+      emoji: (color: string) => <FoodIcon size={32} color={color} />,
+    },
+    {
+      key: 'art',
+      getLabel: () => t('onboarding.event.categories.art'),
+      emoji: (color: string) => <SmileFaceIcon size={32} color={color} />,
+    },
+    {
+      key: 'show',
+      getLabel: () => t('onboarding.event.categories.show'),
+      emoji: (color: string) => <TVPlayIcon size={32} color={color} />,
+    },
+  ];
+
   const [title, setTitle] = useState('');
   const [currentStep, setCurrentStep] = useState<FlowStep>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -361,7 +362,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       const selectedEvent = eventsList.find(event => event.key === category);
       if (navigation && selectedEvent) {
         (navigation as any).navigate('SubcategorySelection', {
-          parentCategory: selectedEvent.label,
+          parentCategory: selectedEvent.getLabel(),
           categoryKey: category,
           title: title.trim(),
         });
@@ -375,7 +376,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     const selectedEvent = eventsList.find(event => event.key === category);
     trackEvent(AnalyticsEventType.GO_LIVE_STARTED, {
       category,
-      parentCategory: selectedEvent?.label,
+      parentCategory: selectedEvent?.getLabel(),
       subcategories: selectedSubcategories,
       title: title.trim(),
       timestamp: new Date().toISOString(),
@@ -385,7 +386,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       value: category,
       title: title.trim(),
       subcategories: selectedSubcategories,
-      parentCategory: selectedEvent?.label,
+      parentCategory: selectedEvent?.getLabel(),
       venueTag: getSelectedVenueTag(),
     });
   };
@@ -397,7 +398,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     console.log('User chose Maybe Later — proceeding without purchase');
     trackEvent(AnalyticsEventType.BOOST_SKIPPED, {
       category: selectedCategory,
-      parentCategory: selectedEvent?.label,
+      parentCategory: selectedEvent?.getLabel(),
       subcategories: selectedSubcategories,
       title: title.trim(),
       step: currentStep,
@@ -408,7 +409,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       value: selectedCategory,
       title: title.trim(),
       subcategories: selectedSubcategories,
-      parentCategory: selectedEvent?.label,
+      parentCategory: selectedEvent?.getLabel(),
       venueTag: getSelectedVenueTag(),
     });
   };
@@ -561,11 +562,11 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     } catch (error: any) {
       console.error('Minutes purchase failed:', error);
       Alert.alert(
-        t('event.purchaseFailed'),
-        t('event.purchaseFailedDesc', { error: error?.data?.error || error?.message || t('common.unknownError') }),
+        t('onboarding.event.purchaseFailed'),
+        t('onboarding.event.purchaseFailedDesc', { error: error?.data?.error || error?.message || t('common.unknownError') }),
         [
-          {text: t('event.tryAgain'), onPress: () => setCurrentStep('boost_tiers')},
-          {text: t('event.maybeLater'), onPress: handleSkipBoost},
+          {text: t('onboarding.event.tryAgain'), onPress: () => setCurrentStep('boost_tiers')},
+          {text: t('onboarding.event.maybeLater'), onPress: handleSkipBoost},
         ],
       );
 
@@ -589,7 +590,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       value: selectedCategory,
       boostData: boostData!,
       subcategories: selectedSubcategories,
-      parentCategory: selectedEvent?.label,
+      parentCategory: selectedEvent?.getLabel(),
       title: title.trim(),
       venueTag: getSelectedVenueTag(),
     });
@@ -602,8 +603,8 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     return (
       <View style={styles.processingContainer}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={styles.processingText}>{t('event.processingPurchase')}</Text>
-        <Text style={styles.processingSubtext}>{t('event.processingSubtext')}</Text>
+        <Text style={styles.processingText}>{t('onboardingevent.processingPurchase')}</Text>
+        <Text style={styles.processingSubtext}>{t('onboardingevent.processingSubtext')}</Text>
       </View>
     );
   }
@@ -619,27 +620,27 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         </View>
 
         <Text style={styles.confirmationTitle}>
-          {t('event.minutesAdded', { minutes: boostData.duration })}
+          {t('onboarding.event.minutesAdded', { minutes: boostData.duration })}
         </Text>
         <Text style={styles.confirmationSubtitle}>
-          {t('event.minutesNeverExpire')}
+          {t('onboarding.event.minutesNeverExpire')}
         </Text>
 
         <View style={styles.purchaseSummaryCard}>
           <View style={styles.purchaseSummaryRow}>
-            <Text style={styles.purchaseSummaryLabel}>{t('event.package')}</Text>
+            <Text style={styles.purchaseSummaryLabel}>{t('onboarding.event.package')}</Text>
             <Text style={styles.purchaseSummaryValue}>
               {selectedPackage?.name}
             </Text>
           </View>
           <View style={styles.purchaseSummaryRow}>
-            <Text style={styles.purchaseSummaryLabel}>{t('event.minutes')}</Text>
+            <Text style={styles.purchaseSummaryLabel}>{t('onboarding.event.minutes')}</Text>
             <Text style={styles.purchaseSummaryValue}>
-              {boostData.duration} {t('event.min')}
+              {boostData.duration} {t('onboarding.event.min')}
             </Text>
           </View>
           <View style={styles.purchaseSummaryRow}>
-            <Text style={styles.purchaseSummaryLabel}>{t('event.transaction')}</Text>
+            <Text style={styles.purchaseSummaryLabel}>{t('onboarding.event.transaction')}</Text>
             <Text style={styles.purchaseSummaryValue}>
               {boostData.transactionId.slice(-8)}
             </Text>
@@ -650,7 +651,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           style={styles.startStreamButton}
           onPress={handleBoostConfirmation}
           >
-          <Text style={styles.startStreamButtonText}>{t('event.startStreaming')}</Text>
+          <Text style={styles.startStreamButtonText}>{t('onboarding.event.startStreaming')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -667,24 +668,24 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           contentContainerStyle={styles.packageScrollContent}>
           
           <View style={styles.headerContainer}>
-            <Text style={styles.headerSmallText}>{t('event.streamMinutes')}</Text>
-            <Text style={styles.headerTitle}>{t('event.chooseMinutes')}</Text>
+            <Text style={styles.headerSmallText}>{t('onboarding.event.streamMinutes')}</Text>
+            <Text style={styles.headerTitle}>{t('onboarding.event.chooseMinutes')}</Text>
             <Text style={styles.headerSubtitle}>
-              {t('event.minutesNeverExpireSubtitle')}
+              {t('onboarding.event.minutesNeverExpireSubtitle')}
             </Text>
           </View>
 
           <View style={styles.topInfoBanner}>
             <CommonMaterialCommunityIcons name="clock-outline" size={18} color={colors.accent} style={{marginRight: 10}} />
             <Text style={styles.topInfoBannerText}>
-              {t('event.freeStreamsReminder')}
+              {t('onboarding.event.freeStreamsReminder')}
             </Text>
           </View>
 
           {iapLoading ? (
             <View style={styles.loadingPlaceholder}>
               <ActivityIndicator size="small" color={colors.accent} />
-              <Text style={styles.loadingText}>{t('event.loadingPrices')}</Text>
+              <Text style={styles.loadingText}>{t('onboarding.event.loadingPrices')}</Text>
             </View>
           ) : (
             MINUTES_PACKAGES.map(pkg => {
@@ -751,7 +752,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                            color={isSelected ? colors.accent : colors.iconColor} 
                         />
                         <Text style={[styles.footerBadgeText, isSelected ? styles.footerBadgeTextSelected : null]}>
-                          {t('event.perMinuteRate', { rate: perMinute })}
+                          {t('onboarding.event.perMinuteRate', { rate: perMinute })}
                         </Text>
                       </View>
                     </View>
@@ -765,7 +766,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           <View style={styles.freeMinutesCard}>
             <CommonMaterialCommunityIcons name="heart-outline" size={20} color={colors.success} style={{marginTop: 2, marginRight: 12}} />
             <Text style={styles.freeMinutesText}>
-              {t('event.freeMinutesCard')}
+              {t('onboarding.event.freeMinutesCard')}
             </Text>
           </View>
         </ScrollView>
@@ -774,7 +775,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         <View style={styles.stickyBottomContainer}>
           {selectedPackage && (
              <Text style={styles.stickySummaryText}>
-               {selectedPackage.name} · {selectedPackage.minutes} {t('event.min')} · <Text style={{fontWeight: '700'}}>{getDisplayPrice(selectedPackage)}</Text>
+               {selectedPackage.name} · {selectedPackage.minutes} {t('onboarding.event.min')} · <Text style={{fontWeight: '700'}}>{getDisplayPrice(selectedPackage)}</Text>
              </Text>
           )}
           <TouchableOpacity
@@ -790,7 +791,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                 styles.continueToPaymentText,
                 !selectedPackage && styles.continueToPaymentTextDisabled,
               ]}>
-              {t('event.continueToPayment')}
+              {t('onboarding.event.continueToPayment')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -806,24 +807,24 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       <View style={styles.triggerContainer}>
         <View style={styles.triggerContent}>
           <Text style={styles.triggerHeadline}>
-            {t('event.wantToStreamLonger')}
+            {t('onboarding.event.wantToStreamLonger')}
           </Text>
           <Text style={styles.triggerSubheadline}>
-            {t('event.freeMinutesRunOut')}
+            {t('onboarding.event.freeMinutesRunOut')}
           </Text>
 
           {/* Primary CTA */}
           <TouchableOpacity
             style={styles.getMoreMinutesButton}
             onPress={() => setCurrentStep('boost_tiers')}>
-            <Text style={styles.getMoreMinutesText}>{t('event.getMoreMinutes')}</Text>
+            <Text style={styles.getMoreMinutesText}>{t('onboarding.event.getMoreMinutes')}</Text>
           </TouchableOpacity>
 
           {/* Dismissal */}
           <TouchableOpacity
             style={styles.maybeLaterButton}
             onPress={handleSkipBoost}>
-            <Text style={styles.maybeLaterText}>{t('event.maybeLater')}</Text>
+            <Text style={styles.maybeLaterText}>{t('onboarding.event.maybeLater')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -842,10 +843,10 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
           <Text style={styles.headerTitle}>
             {t('onboarding.event.readyToGoLive')}
           </Text>
-          <Text style={styles.headerSubtitle}>{t('event.chooseYourVibe')}</Text>
+          <Text style={styles.headerSubtitle}>{t('onboarding.event.chooseYourVibe')}</Text>
         </View>
 
-        <Text style={styles.categoryTitle}>{t('event.whatsYourVibe')}</Text>
+        <Text style={styles.categoryTitle}>{t('onboarding.event.whatsYourVibe')}</Text>
 
         <FlatList
           data={eventsList}
@@ -885,7 +886,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                 }}>
                 {item.emoji(colors.selectedIconColor)}
               </View>
-              <Text style={styles.categoryLabel}>{item.label}</Text>
+              <Text style={styles.categoryLabel}>{item.getLabel()}</Text>
             </TouchableOpacity>
           )}
         />
@@ -893,7 +894,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         {/* Venue Tagging Section */}
         {venueLoadingState === 'loading' && (
           <View style={venueStyles.section}>
-            <Text style={styles.categoryTitle}>{t('event.tagVenue')}</Text>
+            <Text style={styles.categoryTitle}>{t('onboarding.event.tagVenue')}</Text>
             <View style={venueStyles.skeletonRow}>
               {[0, 1, 2].map(i => (
                 <View key={i} style={venueStyles.skeletonCard} />
@@ -904,7 +905,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
         {venueLoadingState === 'loaded' && nearbyVenues.length > 0 && (
           <View style={venueStyles.section}>
-            <Text style={styles.categoryTitle}>{t('event.tagVenue')}</Text>
+            <Text style={styles.categoryTitle}>{t('onboarding.event.tagVenue')}</Text>
             <FlatList
               horizontal
               data={[
@@ -950,7 +951,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                     </Text>
                     {!isNone && item.primaryTag && (
                       <Text style={venueStyles.cardTag} numberOfLines={1}>
-                        {item.primaryTag.replace(/_/g, ' ')}
+                        {t(`squad.venue.${item.primaryTag}`, {defaultValue: item.primaryTag.replace(/_/g, ' ')})}
                       </Text>
                     )}
                     {!isNone && (
@@ -968,7 +969,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
         {venueLoadingState === 'loaded' &&
           nearbyVenues.length === 0 && (
             <View style={venueStyles.section}>
-              <Text style={styles.categoryTitle}>{t('event.tagVenue')}</Text>
+              <Text style={styles.categoryTitle}>{t('onboarding.event.tagVenue')}</Text>
               <View style={venueStyles.emptyCard}>
                 <CommonMaterialCommunityIcons
                   name="map-marker-off"
@@ -976,10 +977,10 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
                   color={colors.textMuted || colors.textSecondary}
                 />
                 <Text style={venueStyles.emptyTitle}>
-                  {t('event.nothingNearby')}
+                  {t('onboarding.event.nothingNearby')}
                 </Text>
                 <Text style={venueStyles.emptySubtitle}>
-                  {t('event.moveCloser')}
+                  {t('onboarding.event.moveCloser')}
                 </Text>
               </View>
             </View>
@@ -987,14 +988,14 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
 
         {selectedCategory && nearbyVenues.length > 0 && (
           <View style={styles.actionSection}>
-            <Text style={styles.actionTitle}>{t('event.readyToStream')}</Text>
+            <Text style={styles.actionTitle}>{t('onboarding.event.readyToStream')}</Text>
 
             <TouchableOpacity
               style={styles.primaryActionButton}
               onPress={() => handleGoDirectToStream(selectedCategory)}>
               <StreamIcon color={colors.text} size={20} />
               <Text style={styles.primaryActionText}>
-                {t('event.startStreaming')}
+                {t('onboarding.event.startStreaming')}
               </Text>
             </TouchableOpacity>
 
@@ -1008,7 +1009,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
               style={styles.boostActionButton}
               onPress={() => handleCategorySelection(selectedCategory, true)}>
               <Text style={styles.boostActionText}>
-                {t('event.getMoreMinutes')}
+                {t('onboarding.event.getMoreMinutes')}
               </Text>
             </TouchableOpacity>
           </View>

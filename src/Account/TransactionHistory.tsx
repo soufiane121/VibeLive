@@ -14,11 +14,12 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { GlobalColors } from '../styles/GlobalColors';
+import useTranslation from '../Hooks/useTranslation';
 import { useGetTransactionHistoryQuery, TransactionItem } from '../../features/settings/SettingsSliceApi';
 
 const colors = GlobalColors.Account;
 
-const TransactionRow = ({ item }: { item: TransactionItem }) => {
+const TransactionRow = ({ item, t }: { item: TransactionItem; t: (key: string, options?: Record<string, any>) => string }) => {
   const isPurchase = item.type === 'purchase';
   const iconName = isPurchase ? 'arrow-down-circle' : 'clock';
   const iconColor = isPurchase ? colors.success : colors.gaugeActive;
@@ -43,7 +44,7 @@ const TransactionRow = ({ item }: { item: TransactionItem }) => {
         <Text style={styles.txTitle}>{item.title}</Text>
         <Text style={styles.txDesc}>{item.description}</Text>
         <Text style={styles.txDate}>
-          {formattedDate} at {formattedTime}
+          {t('account.dateAtTime', { date: formattedDate, time: formattedTime })}
         </Text>
       </View>
       <View style={styles.txRight}>
@@ -52,15 +53,15 @@ const TransactionRow = ({ item }: { item: TransactionItem }) => {
             <Text style={styles.txAmount}>-${item.amount.toFixed(2)}</Text>
             <View style={[styles.txStatusBadge, { backgroundColor: colors.successSurface }]}>
               <Text style={[styles.txStatusText, { color: colors.success }]}>
-                {item.status === 'completed' ? 'Completed' : item.status}
+                {item.status === 'completed' ? t('account.completed') : item.status}
               </Text>
             </View>
           </>
         ) : (
           <>
-            <Text style={[styles.txAmount, { color: colors.textMuted }]}>Free</Text>
+            <Text style={[styles.txAmount, { color: colors.textMuted }]}>{t('account.free')}</Text>
             <View style={[styles.txStatusBadge, { backgroundColor: colors.accentSurface }]}>
-              <Text style={[styles.txStatusText, { color: colors.accent }]}>Active</Text>
+              <Text style={[styles.txStatusText, { color: colors.accent }]}>{t('account.active')}</Text>
             </View>
           </>
         )}
@@ -69,18 +70,19 @@ const TransactionRow = ({ item }: { item: TransactionItem }) => {
   );
 };
 
-const EmptyState = () => (
+const EmptyState = ({ t }: { t: (key: string, options?: Record<string, any>) => string }) => (
   <View style={styles.emptyState}>
     <Feather name="inbox" size={48} color={colors.textMuted} />
-    <Text style={styles.emptyTitle}>No Transactions Yet</Text>
+    <Text style={styles.emptyTitle}>{t('account.noTransactionsTitle')}</Text>
     <Text style={styles.emptyDesc}>
-      Your purchase history and stream usage will appear here.
+      {t('account.noTransactionsMessage')}
     </Text>
   </View>
 );
 
 const TransactionHistory = () => {
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   const userId = currentUser?._id;
 
@@ -104,8 +106,8 @@ const TransactionHistory = () => {
 
       {/* Title */}
       <View style={styles.titleSection}>
-        <Text style={styles.titleLabel}>MINUTES & BILLING</Text>
-        <Text style={styles.titleText}>Transaction History</Text>
+        <Text style={styles.titleLabel}>{t('account.minutesAndBilling')}</Text>
+        <Text style={styles.titleText}>{t('account.transactionHistory')}</Text>
       </View>
 
       {isLoading ? (
@@ -113,7 +115,7 @@ const TransactionHistory = () => {
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : transactions.length === 0 ? (
-        <EmptyState />
+        <EmptyState t={t} />
       ) : (
         <ScrollView
           style={styles.scrollView}
@@ -124,27 +126,27 @@ const TransactionHistory = () => {
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Total Spent</Text>
+                <Text style={styles.summaryLabel}>{t('account.totalSpent')}</Text>
                 <Text style={styles.summaryValue}>
                   $
                   {transactions
-                    .filter(t => t.type === 'purchase')
-                    .reduce((sum, t) => sum + t.amount, 0)
+                    .filter(tx => tx.type === 'purchase')
+                    .reduce((sum, tx) => sum + tx.amount, 0)
                     .toFixed(2)}
                 </Text>
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Minutes Purchased</Text>
+                <Text style={styles.summaryLabel}>{t('account.minutesPurchased')}</Text>
                 <Text style={styles.summaryValue}>
                   {transactions
-                    .filter(t => t.type === 'purchase')
-                    .reduce((sum, t) => sum + (t.minutesAllowed || 0), 0)}
+                    .filter(tx => tx.type === 'purchase')
+                    .reduce((sum, tx) => sum + (tx.minutesAllowed || 0), 0)}
                 </Text>
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Transactions</Text>
+                <Text style={styles.summaryLabel}>{t('account.transactions')}</Text>
                 <Text style={styles.summaryValue}>{transactions.length}</Text>
               </View>
             </View>
@@ -154,7 +156,7 @@ const TransactionHistory = () => {
           <View style={styles.transactionList}>
             {transactions.map((tx, idx) => (
               <React.Fragment key={tx.id}>
-                <TransactionRow item={tx} />
+                <TransactionRow item={tx} t={t} />
                 {idx < transactions.length - 1 && <View style={styles.txDivider} />}
               </React.Fragment>
             ))}
