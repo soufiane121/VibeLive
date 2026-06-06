@@ -39,6 +39,7 @@ export interface VenueData {
   venueDescription?: string | null;
   businessHours?: BusinessHour[];
   coverPhotoUrl?: string | null;
+  photos?: string[];
 }
 
 export interface VoteResult {
@@ -71,6 +72,8 @@ export interface VenueVibeData {
     totalVotesTonight: number;
     lastVoteAt: string | null;
     isBoosted: boolean;
+    photos?: string[]
+    businessHours?: any[]
   };
   recentVotes: Array<{type: string; at: string; source: string}>;
   velocity: VoteVelocity;
@@ -193,7 +196,7 @@ export const votingApi = createApi({
     }),
 
     // Venue endpoints
-    getNearbyVenues: builder.query<{venues: VenueData[]; count: number}, {latitude: number; longitude: number; radius?: number}>({
+    getNearbyVenues: builder.query<{venues: VenueData[]; count: number}, {latitude: number; longitude: number; radius?: number, photos?: string[]}>({
       query: ({latitude, longitude, radius}) => ({
         url: `voting/venues/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius || 2}`,
       }),

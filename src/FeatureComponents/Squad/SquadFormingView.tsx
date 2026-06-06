@@ -248,9 +248,9 @@ const MemberRow: React.FC<{member: SquadMember; isCreator: boolean}> = ({
   member,
   isCreator,
 }) => {
-  const statusLabel = member.has_app ? 'Ready' : 'Invite pending';
-  const isReady = member.has_app;
   const {t} = useTranslation();
+  const statusLabel = member.has_app ? t('onboarding.squad.ready') : t('onboarding.squad.invitePending');
+  const isReady = member.has_app;
 
   return (
     <View style={styles.memberRow}>

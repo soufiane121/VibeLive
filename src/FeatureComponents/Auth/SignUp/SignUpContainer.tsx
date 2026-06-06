@@ -28,21 +28,18 @@ interface PasswordRule {
   test: (password: string) => boolean;
 }
 
-const PASSWORD_RULES: PasswordRule[] = [
-  {label: 'At least 8 characters', test: (p: string) => p.length >= 8},
-  {label: 'One uppercase letter', test: (p: string) => /[A-Z]/.test(p)},
-  {label: 'One number', test: (p: string) => /[0-9]/.test(p)},
-  {
-    label: 'One special character',
-    test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(p),
-  },
-];
-
 type PasswordStrength = 'none' | 'weak' | 'fair' | 'strong';
+
+const PASSWORD_TESTS = [
+  (p: string) => p.length >= 8,
+  (p: string) => /[A-Z]/.test(p),
+  (p: string) => /[0-9]/.test(p),
+  (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(p),
+];
 
 const getPasswordStrength = (password: string): PasswordStrength => {
   if (!password) return 'none';
-  const passedRules = PASSWORD_RULES.filter(rule => rule.test(password)).length;
+  const passedRules = PASSWORD_TESTS.filter(test => test(password)).length;
   if (passedRules <= 1) return 'weak';
   if (passedRules <= 3) return 'fair';
   return 'strong';
@@ -53,13 +50,6 @@ const STRENGTH_COLORS: Record<PasswordStrength, string> = {
   weak: '#EF4444',
   fair: '#F59E0B',
   strong: '#10B981',
-};
-
-const STRENGTH_LABELS: Record<PasswordStrength, string> = {
-  none: '',
-  weak: 'Weak',
-  fair: 'Fair',
-  strong: 'Strong',
 };
 
 const SignUpContainer = ({navigation}) => {
@@ -78,6 +68,23 @@ const SignUpContainer = ({navigation}) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const {t} = useTranslation();
+
+  const PASSWORD_RULES: PasswordRule[] = [
+    {label: t('auth.signup.rules.minLength'), test: (p: string) => p.length >= 8},
+    {label: t('auth.signup.rules.uppercase'), test: (p: string) => /[A-Z]/.test(p)},
+    {label: t('auth.signup.rules.number'), test: (p: string) => /[0-9]/.test(p)},
+    {
+      label: t('auth.signup.rules.special'),
+      test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(p),
+    },
+  ];
+
+  const STRENGTH_LABELS: Record<PasswordStrength, string> = {
+    none: '',
+    weak: t('auth.signup.strengthWeak'),
+    fair: t('auth.signup.strengthFair'),
+    strong: t('auth.signup.strengthStrong'),
+  };
 
   const formatPhoneNumber = (raw: string) => {
     const cleaned = raw.replace(/\D/g, '');
@@ -179,7 +186,7 @@ const SignUpContainer = ({navigation}) => {
   };
 
   const passwordStrength = useMemo(() => getPasswordStrength(form.password), [form.password]);
-  const allRulesPassed = useMemo(() => PASSWORD_RULES.every(rule => rule.test(form.password)), [form.password]);
+  const allRulesPassed = useMemo(() => PASSWORD_RULES.every(rule => rule.test(form.password)), [form.password, PASSWORD_RULES]);
 
   const isFormValid =
     requiredFields.every(field => !!form[field as keyof typeof form]) &&
@@ -428,8 +435,8 @@ const SignUpContainer = ({navigation}) => {
               },
             ]}>
             {form.password === form.confirmPassword
-              ? 'Passwords match'
-              : 'Passwords do not match'}
+              ? t('auth.signup.passwordsMatch')
+              : t('auth.signup.passwordsDontMatch')}
           </Text>
         </View>
       )}

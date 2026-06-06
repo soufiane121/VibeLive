@@ -60,6 +60,29 @@ const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
 const eventIcon = require('../../../assests/yawning.png'); // We'll need to add this icon
 
+// Helper: assign icon key to feature properties so SymbolLayer expressions can resolve it
+const assignFeatureIcon = (feature: any): any => {
+  if (!feature || !feature.properties) return feature;
+  const isLive = feature.properties.cluster === true;
+  const icon = isLive
+    ? `cluster-${feature.properties.id}`
+    : `marker-${feature.properties.id}`;
+  return {
+    ...feature,
+    properties: {
+      ...feature.properties,
+      icon,
+    },
+  };
+};
+
+// Helper: build Mux thumbnail URL from playbackId
+const buildThumbnailUrl = (playbackId: string | undefined): string | null => {
+  if (!playbackId) return null;
+  return `https://image.mux.com/${playbackId}/thumbnail.jpg?width=40&height=40&fit_mode=crop`;
+  // return `https://image.mux.com/${playbackId}/animated.gif?start=20&width=50&height=50&fit_mode=crop`;
+};
+
 setAccessToken(PUB_MAPBOX_KEY);
 
 // Memoized event marker component
@@ -164,13 +187,11 @@ const LiveIcon = memo(
     const {navigate} =
       useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     if (!feature.isLive) return null;
-
     return (
       <ShapeSource
         key={`marker-${feature.id}`}
         id={`marker-${feature.id}`}
-        shape={point(feature.coordinates)}
-        {...feature}
+        shape={point(feature.coordinates, feature.properties)}
         onPress={e => {
           // Track marker click analytics
           trackMapInteraction('map_marker_clicked', {
@@ -214,17 +235,20 @@ const LiveIcon = memo(
         <CircleLayer
           ref={circleLayerRef} // Reference to directly update properties
           id={`pulse-${feature.id}`}
+          key={`pulse-${feature.id}`}
           style={{
             circleRadius: 70, // Initial radius
             circleColor: 'rgba(255, 0, 0, 0.5)',
             circleOpacity: 0.9, // Initial opacity
           }}
         />
+
         <SymbolLayer
           id={`icon-${feature.id}`}
+          key={`icon-${feature.id}`}
           style={{
-            iconImage: feature.imageUrl || 'tw',
-            iconSize: 0.1,
+            iconImage: ['coalesce', ['get', 'icon'], 'event-icon'],
+            iconSize: 1,
           }}
         />
       </ShapeSource>
@@ -375,14 +399,18 @@ const MapContainer = () => {
     if (!socket) return;
 
     const handleAddToMap = (data: any) => {
-      console.log({data}, 'add-to-map');
-      setFeaturesPointsData(prevState => {
-        // Remove any existing feature with the same ID to prevent duplicates
-        const filtered = prevState.filter(
-          feature => feature.properties?.id !== data?.data?.mapItem?.properties?.id
-        );
-        return [...filtered, data?.data?.mapItem];
-      });
+      const incoming = assignFeatureIcon(data?.data?.mapItem);
+      if (!incoming) return;
+      // Delay 13s to add live stream marker so MUX thumbnail is ready before marker renders on map
+      setTimeout(() => {
+        setFeaturesPointsData(prevState => {
+          // Remove any existing feature with the same ID to prevent duplicates
+          const filtered = prevState.filter(
+            feature => feature.properties?.id !== incoming.properties?.id,
+          );
+          return [...filtered, incoming];
+        });
+      }, 13000);
     };
     const handleUpdateUser = (data: any) => {
       console.log('socket new user', {data});
@@ -467,21 +495,45 @@ const MapContainer = () => {
   }, [coordinates.length, calculateDynamicBounds]);
 
 
+  // Persistent image registry: accumulate all image keys ever seen.
+  // This prevents Mapbox race conditions where a SymbolLayer still references
+  // an image key that was just removed from the registry.
+  const persistentImageRegistry = useRef<Record<string, {uri: string}>>({});
+
   // Register dynamic images using URLs
   const images = useMemo(() => {
-    const imgUrl =
-      'https://fastly.picsum.photos/id/218/20/20.jpg?hmac=pIx-HTJBJRheNaHmhgqsQRX8JbTGvag_zic9NTNWFJU';
     const imageRegistry = {} as any;
+
     if (featuresPointsData.length > 0) {
       featuresPointsData?.forEach(feature => {
-        imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};
+        const playbackId = feature.properties?.liveDetails?.playbackId;
+        const thumbnailUrl = buildThumbnailUrl(playbackId);
+        if (!thumbnailUrl) return;
+
+        const isLive = feature.properties?.cluster === true;
+        const id = isLive
+          ? `cluster-${feature.properties.id}`
+          : `marker-${feature.properties.id}`;
+        imageRegistry[id] = {uri: thumbnailUrl};
       });
     }
-    // Add event icon - using a simple text-based icon for now
-    imageRegistry['event-icon'] = {
-      uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
-    }; // Base64 encoded calendar SVG
-    return imageRegistry;
+
+    // Merge current images into persistent registry so we never unload
+    // an image that a SymbolLayer might still be referencing during a transition
+    Object.assign(persistentImageRegistry.current, imageRegistry);
+
+    return persistentImageRegistry.current;
+// TODO: maybe it was used to show event image
+    // if (featuresPointsData.length > 0) {
+    //   featuresPointsData?.forEach(feature => {
+    //     imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};
+    //   });
+    // }
+    // // Add event icon - using a simple text-based icon for now
+    // imageRegistry['event-icon'] = {
+    //   uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
+    // }; // Base64 encoded calendar SVG
+    // return imageRegistry;
   }, [featuresPointsData]);
 
   const handleGetMapsPoints = async () => {
@@ -489,8 +541,9 @@ const MapContainer = () => {
       const {data} = await fetchMapFeatures({
         coordinates,
       }).unwrap();
-      if (data) {
-        setFeaturesPointsData(data.features);
+      if (data?.features) {
+        const enriched = data.features.map(assignFeatureIcon);
+        setFeaturesPointsData(enriched);
       }
     } catch (error) {}
   };
@@ -613,9 +666,15 @@ const MapContainer = () => {
   const handleRegionChange = useCallback(
     throttle(async map => {
       // const region = await map?.getVisibleBounds();
-      const region = await map?.getBounds()();
-      const {ne, sw} = region;
-      const newBounds = [sw.lng, sw.lat, ne.lng, ne.lat];
+      // const region = await map?.getBounds()();
+      // const {ne, sw} = region;
+      // const newBounds = [sw.lng, sw.lat, ne.lng, ne.lat];
+      // setBounds(newBounds);
+
+      // new ones
+      const bounds = map?.properties?.bounds; 
+      const {ne, sw} = bounds;
+      const newBounds = [...sw, ...ne];
       setBounds(newBounds);
 
       const zoom = await map.getZoom();
@@ -754,13 +813,12 @@ const MapContainer = () => {
                   <ShapeSource
                     key={id}
                     id={id}
-                    {...cluster.properties}
-                    shape={point(coordinates)}
+                    shape={cluster}
                     clusterRadius={50}>
                     <SymbolLayer
                       id={`cluster-icon-${id}`}
                       style={{
-                        iconImage: imageUrl || 'in',
+                        iconImage: ['coalesce', ['get', 'icon'], 'event-icon'],
                         iconSize: 0.1,
                       }}
                     />
@@ -772,10 +830,13 @@ const MapContainer = () => {
                       feature={{
                         id: cluster.properties.id,
                         isLive: isCluster,
-                        coordinates: cluster.properties.coordinates, // Ensure this is an array [longitude, latitude]
+                        coordinates: cluster.properties.coordinates || cluster.geometry.coordinates,
                         imageUrl: cluster?.properties?.imageUrl,
                         properties: {
                           ...cluster?.properties,
+                          icon: cluster.properties.point_count
+                            ? 'event-icon'
+                            : cluster.properties.icon,
                         },
                         hasNestedMarkers: hasNestedMarkers,
                         groupedFeatures: cluster?.groupedFeatures,
@@ -837,8 +898,8 @@ const MapContainer = () => {
         flex
         z-10 
         absolute
-        bottom-6 
-        mb-20
+        bottom-5 
+        // mb-1
         right-3 
         justify-end 
         items-end 

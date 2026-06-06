@@ -36,6 +36,30 @@ const PremiumVenueCard: React.FC<PremiumVenueCardProps> = ({
   const starCount = venue.googleRating != null ? Math.round(venue.googleRating) : 0;
   const stars = starCount > 0 ? '★'.repeat(starCount) + '☆'.repeat(5 - starCount) : null;
 
+  const now = new Date();
+  const currentDay = now.getDay(); // 0 = Sunday ... 6 = Saturday
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const todayHours = venue.businessHours?.find(h => h.day === currentDay);
+
+  let isOpen = false;
+  let hoursLabel = '';
+
+  if (todayHours) {
+    const [openH, openM] = todayHours.open.split(':').map(Number);
+    const [closeH, closeM] = todayHours.close.split(':').map(Number);
+    const openMinutes = openH * 60 + openM;
+    const closeMinutes = closeH * 60 + closeM;
+
+    if (closeMinutes < openMinutes) {
+      // Closes after midnight (e.g., 18:00 - 02:00)
+      isOpen = currentMinutes >= openMinutes || currentMinutes < closeMinutes;
+    } else {
+      isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+    }
+
+  }
+
   return (
     <Animated.View style={[styles.container, {transform: [{translateY}]}]}>
       <View style={styles.card}>
@@ -47,10 +71,14 @@ const PremiumVenueCard: React.FC<PremiumVenueCardProps> = ({
           <View style={styles.iconContainer}>
             <Text style={styles.centerIcon}>🏛️</Text>
           </View>
-          <View style={[styles.headerPill, styles.openPill]}>
-            <View style={styles.greenDot} />
-            <Text style={styles.openText}>{t('venueCard.open')}</Text>
-          </View>
+          {todayHours && (
+            <View style={[styles.headerPill, styles.openPill, isOpen ? styles.openPillActive : styles.openPillInactive]}>
+              <View style={[styles.statusDot, isOpen ? styles.greenDot : styles.redDot]} />
+              <Text style={[styles.openText, isOpen ? styles.openTextActive : styles.openTextInactive]}>
+                {isOpen ? t('venueCard.open') : t('venueCard.closed')} 
+              </Text>
+            </View>
+          )}
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeIcon}>✕</Text>
           </TouchableOpacity>
@@ -155,21 +183,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.openPillBackground,
-    borderColor: colors.openPillBorder,
     marginLeft: 'auto',
     marginRight: 10,
   },
-  greenDot: {
+  openPillActive: {
+    backgroundColor: colors.openPillBackground,
+    borderColor: colors.openPillBorder,
+  },
+  openPillInactive: {
+    backgroundColor: colors.closedPillBackground,
+    borderColor: colors.closedPillBorder,
+  },
+  statusDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
+  },
+  greenDot: {
     backgroundColor: colors.openPillDot,
   },
+  redDot: {
+    backgroundColor: colors.closedPillDot,
+  },
   openText: {
-    color: colors.openPillText,
     fontSize: 10,
     fontWeight: '600',
+  },
+  openTextActive: {
+    color: colors.openPillText,
+  },
+  openTextInactive: {
+    color: colors.closedPillText,
   },
   iconContainer: {
     position: 'absolute',

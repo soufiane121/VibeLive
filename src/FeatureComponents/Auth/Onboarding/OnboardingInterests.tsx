@@ -22,6 +22,18 @@ interface Tag {
   children: string[];
 }
 
+const toTagKey = (tag: string): string => {
+  return tag
+    .replace(
+      /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g,
+      '',
+    )
+    .replace(/&/g, 'And')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+(.)/g, (_, char: string) => char.toUpperCase());
+};
+
 const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
   navigation,
   route,
@@ -106,7 +118,7 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
           onPress={() => toggleCategory(tag.parent)}
           activeOpacity={0.8}>
           <Text style={styles.parentTagText}>
-            {tag.parent}
+            {t(`onboarding.interestTags.${toTagKey(tag.parent)}`, {defaultValue: tag.parent})}
           </Text>
           <View style={styles.parentTagRight}>
             {selectedChildrenCount > 0 && (
@@ -148,7 +160,7 @@ const OnboardingInterests: React.FC<OnboardingInterestsProps> = ({
                       styles.childTagText,
                       isSelected && styles.childTagTextActive,
                     ]}>
-                      {child}
+                      {t(`onboarding.interestTags.${toTagKey(child)}`, {defaultValue: child})}
                     </Text>
                   </TouchableOpacity>
                 );

@@ -9,6 +9,7 @@ import {
 import { CommonMaterialCommunityIcons } from '../../../UIComponents/Icons';
 import GlobalColors from '../../../styles/GlobalColors';
 import { MyVenue } from '../../../../features/Events/EventsApi';
+import useTranslation from '../../../Hooks/useTranslation';
 
 const GlobalColorsLocal = GlobalColors.EventCreationFlow;
 
@@ -47,6 +48,7 @@ const EventLocation: React.FC<EventLocationProps> = ({
   onUpdateFormData,
   venue,
 }) => {
+  const { t } = useTranslation();
 
   const handleUseVenueAddress = () => {
     if (!venue) return;
@@ -72,13 +74,13 @@ const EventLocation: React.FC<EventLocationProps> = ({
 
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Location</Text>
+      <Text style={styles.stepTitle}>{t('eventLocation.location')}</Text>
 
       {venue && (
         <TouchableOpacity style={styles.venueButton} onPress={handleUseVenueAddress} activeOpacity={0.7}>
           <CommonMaterialCommunityIcons name="store" size={20} color={colors.primary} />
           <View style={styles.venueButtonTextContainer}>
-            <Text style={styles.venueButtonLabel}>Use Venue Address</Text>
+            <Text style={styles.venueButtonLabel}>{t('eventLocation.useVenueAddress')}</Text>
             <Text style={styles.venueButtonName}>{venue.name}</Text>
           </View>
           <CommonMaterialCommunityIcons name="arrow-right" size={18} color={colors.textSecondary} />
@@ -86,36 +88,36 @@ const EventLocation: React.FC<EventLocationProps> = ({
       )}
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Address 1 *</Text>
+        <Text style={styles.label}>{t('eventLocation.address1')}</Text>
         <TextInput
           style={[styles.input, errors.address1 && styles.inputError]}
           value={formData.location.address1}
           onChangeText={(text) => updateLocationField('address1', text)}
-          placeholder="Street address"
+          placeholder={t('eventLocation.streetAddress')}
           placeholderTextColor={colors.textMuted}
         />
         {errors.address1 && <Text style={styles.errorText}>{errors.address1}</Text>}
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>City *</Text>
+        <Text style={styles.label}>{t('eventLocation.city')}</Text>
         <TextInput
           style={[styles.input, errors.city && styles.inputError]}
           value={formData.location.city}
           onChangeText={(text) => updateLocationField('city', text)}
-          placeholder="City"
+          placeholder={t('eventLocation.cityPlaceholder')}
           placeholderTextColor={colors.textMuted}
         />
         {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Zip Code</Text>
+        <Text style={styles.label}>{t('eventLocation.zipCode')}</Text>
         <TextInput
           style={[styles.input, errors.zip && styles.inputError]}
           value={formData.location.zip}
           onChangeText={(text) => updateLocationField('zip', text)}
-          placeholder="Zip code"
+          placeholder={t('eventLocation.zipPlaceholder')}
           placeholderTextColor={colors.textMuted}
           keyboardType="number-pad"
         />

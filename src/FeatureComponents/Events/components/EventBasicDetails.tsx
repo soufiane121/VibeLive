@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import {CommonMaterialCommunityIcons} from '../../../UIComponents/Icons';
 import { GlobalColors } from '../../../styles/GlobalColors';
+import useTranslation from '../../../Hooks/useTranslation';
 import * as ImagePicker from 'expo-image-picker';
 import {
   useGetUploadUrlMutation,
@@ -54,6 +55,7 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
   onUpdateFormData,
   isOperator = true,
 }) => {
+  const { t } = useTranslation();
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [showAndroidActionSheet, setShowAndroidActionSheet] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
@@ -64,7 +66,7 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ['Cancel', 'Choose from Library', 'Take Photo'],
+          options: [t('common.cancel'), t('eventBasicDetails.chooseFromLibrary'), t('eventBasicDetails.takePhoto')],
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
@@ -84,7 +86,7 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permissionResult.granted) {
-      Alert.alert('Permission required', 'Permission to access the media library is required.');
+      Alert.alert(t('eventBasicDetails.permissionRequired'), t('eventBasicDetails.mediaLibraryPermission'));
       return;
     }
 
@@ -104,7 +106,7 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 
     if (!permissionResult.granted) {
-      Alert.alert('Permission required', 'Permission to access the camera is required.');
+      Alert.alert(t('eventBasicDetails.permissionRequired'), t('eventBasicDetails.cameraPermission'));
       return;
     }
 
@@ -241,9 +243,9 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
           size={45}
           color={colors.primary}
         />
-        <Text style={styles.uploadLabel}>Add Event Photo</Text>
+        <Text style={styles.uploadLabel}>{t('eventBasicDetails.addEventPhoto')}</Text>
         <Text style={styles.uploadHint}>
-          Optional · Tap to choose from library or take a photo
+          {t('eventBasicDetails.photoUploadHint')}
         </Text>
       </TouchableOpacity>
     );
@@ -251,15 +253,15 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
 
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.stepSubtitle}>STEP 1 OF 5</Text>
-      <Text style={styles.stepTitle}>Event details</Text>
+      <Text style={styles.stepSubtitle}>{t('eventBasicDetails.step1of5')}</Text>
+      <Text style={styles.stepTitle}>{t('eventBasicDetails.eventDetails')}</Text>
 
       {/* Photo Upload Section */}
       <View style={styles.photoSection}>
         {renderPhotoUploadSection()}
         {formData.coverImageUploadState === 'error' && (
           <Text style={styles.uploadError}>
-            Photo upload failed. Please try again.
+            {t('eventBasicDetails.photoUploadFailed')}
           </Text>
         )}
       </View>
@@ -284,7 +286,7 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
               }}
             >
               <CommonMaterialCommunityIcons name="image" size={24} color={colors.text} />
-              <Text style={styles.actionSheetText}>Choose from Library</Text>
+              <Text style={styles.actionSheetText}>{t('eventBasicDetails.chooseFromLibrary')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionSheetOption}
@@ -294,13 +296,13 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
               }}
             >
               <CommonMaterialCommunityIcons name="camera" size={24} color={colors.text} />
-              <Text style={styles.actionSheetText}>Take Photo</Text>
+              <Text style={styles.actionSheetText}>{t('eventBasicDetails.takePhoto')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionSheetOption, styles.actionSheetCancel]}
               onPress={() => setShowAndroidActionSheet(false)}
             >
-              <Text style={styles.actionSheetCancelText}>Cancel</Text>
+              <Text style={styles.actionSheetCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -318,19 +320,19 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
           onPress={() => setShowRemoveConfirm(false)}
         >
           <View style={styles.confirmContainer}>
-            <Text style={styles.confirmTitle}>Remove photo?</Text>
+            <Text style={styles.confirmTitle}>{t('eventBasicDetails.removePhotoQuestion')}</Text>
             <View style={styles.confirmButtons}>
               <TouchableOpacity
                 style={styles.confirmCancelButton}
                 onPress={() => setShowRemoveConfirm(false)}
               >
-                <Text style={styles.confirmCancelText}>Cancel</Text>
+                <Text style={styles.confirmCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.confirmRemoveButton}
                 onPress={confirmRemovePhoto}
               >
-                <Text style={styles.confirmRemoveText}>Remove</Text>
+                <Text style={styles.confirmRemoveText}>{t('eventBasicDetails.remove')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -340,13 +342,13 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
       <View style={styles.inputGroup}>
         <View style={styles.labelContainer}>
           <View style={styles.labelDot} />
-          <Text style={styles.label}>Event title</Text>
+          <Text style={styles.label}>{t('eventBasicDetails.eventTitle')}</Text>
         </View>
         <TextInput
           style={[styles.input, errors.title && styles.inputError]}
           value={formData.title}
           onChangeText={text => onUpdateFormData({title: text})}
-          placeholder="Enter event title"
+          placeholder={t('eventBasicDetails.enterEventTitle')}
           placeholderTextColor={colors.textMuted}
           maxLength={100}
         />
@@ -356,13 +358,13 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
       <View style={styles.inputGroup}>
         <View style={styles.labelContainer}>
           <View style={styles.labelDot} />
-          <Text style={styles.label}>Description</Text>
+          <Text style={styles.label}>{t('eventBasicDetails.description')}</Text>
         </View>
         <TextInput
           style={[styles.textArea, errors.description && styles.inputError]}
           value={formData.description}
           onChangeText={text => onUpdateFormData({description: text})}
-          placeholder="Describe your event"
+          placeholder={t('eventBasicDetails.describeYourEvent')}
           placeholderTextColor={colors.textMuted}
           multiline
           numberOfLines={4}
@@ -402,7 +404,7 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
                       styles.eventTypeText,
                       isActive && styles.eventTypeTextActive,
                     ]}>
-                    {type.label}
+                    {t(`eventBasicDetails.eventTypes.${type.key}`)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -416,13 +418,13 @@ const EventBasicDetails: React.FC<EventBasicDetailsProps> = ({
         <View style={styles.inputGroup}>
           <View style={styles.labelContainer}>
             <View style={styles.labelDot} />
-            <Text style={styles.label}>Event type</Text>
+            <Text style={styles.label}>{t('eventBasicDetails.eventType')}</Text>
           </View>
           <View style={[styles.eventTypeItem, styles.eventTypeItemActive, { width: '100%', aspectRatio: undefined, paddingVertical: 16, flexDirection: 'row' }]}>
             <View style={[styles.eventIconWrapper, styles.eventIconWrapperActive, { marginBottom: 0, marginRight: 12 }]}>
               <CommonMaterialCommunityIcons name="glass-mug-variant" size={20} color={colors.background} />
             </View>
-            <Text style={[styles.eventTypeText, styles.eventTypeTextActive, { fontSize: 16 }]}>Happy Hour</Text>
+            <Text style={[styles.eventTypeText, styles.eventTypeTextActive, { fontSize: 16 }]}>{t('eventBasicDetails.eventTypes.happyhour')}</Text>
           </View>
         </View>
       )}

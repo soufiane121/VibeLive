@@ -138,31 +138,31 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       getLabel: () => t('onboarding.event.categories.concerts'),
       emoji: (color: string) => <MusicIcon size={32} color={color} />,
     },
-    {
-      key: 'sports',
-      getLabel: () => t('onboarding.event.categories.sports'),
-      emoji: (color: string) => <SportIcon size={32} color={color} />,
-    },
-    {
-      key: 'festivals',
-      getLabel: () => t('onboarding.event.categories.festivals'),
-      emoji: (color: string) => <StarIcon size={32} color={color} />,
-    },
-    {
-      key: 'food',
-      getLabel: () => t('onboarding.event.categories.food'),
-      emoji: (color: string) => <FoodIcon size={32} color={color} />,
-    },
-    {
-      key: 'art',
-      getLabel: () => t('onboarding.event.categories.art'),
-      emoji: (color: string) => <SmileFaceIcon size={32} color={color} />,
-    },
-    {
-      key: 'show',
-      getLabel: () => t('onboarding.event.categories.show'),
-      emoji: (color: string) => <TVPlayIcon size={32} color={color} />,
-    },
+    // {
+    //   key: 'sports',
+    //   getLabel: () => t('onboarding.event.categories.sports'),
+    //   emoji: (color: string) => <SportIcon size={32} color={color} />,
+    // },
+    // {
+    //   key: 'festivals',
+    //   getLabel: () => t('onboarding.event.categories.festivals'),
+    //   emoji: (color: string) => <StarIcon size={32} color={color} />,
+    // },
+    // {
+    //   key: 'food',
+    //   getLabel: () => t('onboarding.event.categories.food'),
+    //   emoji: (color: string) => <FoodIcon size={32} color={color} />,
+    // },
+    // {
+    //   key: 'art',
+    //   getLabel: () => t('onboarding.event.categories.art'),
+    //   emoji: (color: string) => <SmileFaceIcon size={32} color={color} />,
+    // },
+    // {
+    //   key: 'show',
+    //   getLabel: () => t('onboarding.event.categories.show'),
+    //   emoji: (color: string) => <TVPlayIcon size={32} color={color} />,
+    // },
   ];
 
   const [title, setTitle] = useState('');

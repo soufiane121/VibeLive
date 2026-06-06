@@ -1,7 +1,8 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useState, useCallback} from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -31,6 +32,79 @@ const VenueDetailsScreen = () => {
   const venue: VenueData | undefined = paramsVenue || apiData?.venue;
 
   const colors = GlobalColors.VenueDetailsScreen;
+
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+
+  const displayPhotos = useMemo(() => {
+    if (!venue?.photos || venue.photos.length === 0) return [];
+    const photos = [...venue.photos];
+    if (activePhotoIndex === 0) return photos;
+    const selected = photos.splice(activePhotoIndex, 1)[0];
+    photos.push(photos.splice(0, 1)[0]);
+    return [selected, ...photos];
+  }, [venue?.photos, activePhotoIndex]);
+
+  const handleThumbnailPress = useCallback((thumbnailIndex: number) => {
+    if (!venue?.photos) return;
+    const tappedPhotoUrl = displayPhotos[thumbnailIndex + 1];
+    const originalIndex = venue.photos.indexOf(tappedPhotoUrl);
+    if (originalIndex >= 0) {
+      setActivePhotoIndex(originalIndex);
+    }
+  }, [venue?.photos, displayPhotos]);
+
+  const openPillInfo = useMemo(() => {
+    if (!venue?.businessHours || venue.businessHours.length === 0) return null;
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = currentHour * 60 + currentMinute;
+
+    const todayEntry = venue.businessHours.find(h => h.day === currentDay);
+    const yesterdayEntry = venue.businessHours.find(
+      h => h.day === (currentDay === 0 ? 6 : currentDay - 1),
+    );
+
+    const parseTime = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const formatTime = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      const suffix = h >= 12 ? 'pm' : 'am';
+      const hour12 = h % 12 || 12;
+      return m === 0 ? `${hour12}${suffix}` : `${hour12}:${String(m).padStart(2, '0')}${suffix}`;
+    };
+
+    if (yesterdayEntry) {
+      const yClose = parseTime(yesterdayEntry.close);
+      const yOpen = parseTime(yesterdayEntry.open);
+      if (yClose < yOpen && currentTime < yClose) {
+        return {isOpen: true, label: `Open · Closes ${formatTime(yesterdayEntry.close)}`};
+      }
+    }
+
+    if (todayEntry) {
+      const open = parseTime(todayEntry.open);
+      const close = parseTime(todayEntry.close);
+      if (close < open) {
+        if (currentTime >= open) {
+          return {isOpen: true, label: `Open · Closes ${formatTime(todayEntry.close)}`};
+        }
+      } else {
+        if (currentTime >= open && currentTime < close) {
+          return {isOpen: true, label: `Open · Closes ${formatTime(todayEntry.close)}`};
+        }
+      }
+      if (currentTime < open) {
+        return {isOpen: false, label: `Closed · Opens ${formatTime(todayEntry.open)}`};
+      }
+    }
+
+    return {isOpen: false, label: 'Closed'};
+  }, [venue?.businessHours]);
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -121,27 +195,59 @@ const VenueDetailsScreen = () => {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Open Pill */}
-        <View style={styles.openPillContainer}>
-          <View style={styles.openPill}>
-            <View style={styles.greenDot} />
-            <Text style={styles.openText}>Open · Closes 2am</Text>
-          </View>
-        </View>
-
-        {/* Venue Icon & Image placeholders */}
-        <View style={styles.mediaContainer}>
-          <View style={styles.mainIconContainer}>
-            <Text style={styles.mainIcon}>🏛️</Text>
-          </View>
-          <View style={styles.imageThumbnails}>
-            <View style={[styles.thumbnail, {backgroundColor: '#2F3C59'}]} />
-            <View style={[styles.thumbnail, {backgroundColor: '#3E2F59'}]} />
-            <View style={[styles.thumbnail, {backgroundColor: '#2F5937'}]} />
-            <View style={[styles.thumbnail, {backgroundColor: '#593B2F'}]} />
-            <View style={[styles.thumbnail, styles.moreThumbnail]}>
-              <Text style={styles.moreThumbnailText}>+1 more</Text>
+        {openPillInfo && (
+          <View style={styles.openPillContainer}>
+            <View style={[styles.openPill, !openPillInfo.isOpen && styles.closedPill]}>
+              <View style={[styles.greenDot, !openPillInfo.isOpen && styles.redDot]} />
+              <Text style={[styles.openText, !openPillInfo.isOpen && styles.closedText]}>
+                {openPillInfo.label}
+              </Text>
             </View>
           </View>
+        )}
+
+        {/* Venue Photos */}
+        <View style={styles.mediaContainer}>
+          {displayPhotos.length > 0 ? (
+            <>
+              <Image
+                source={{uri: displayPhotos[0]}}
+                style={styles.mainPhoto}
+                resizeMode="cover"
+              />
+              {displayPhotos.length > 1 && (
+                <View style={styles.imageThumbnails}>
+                  {displayPhotos.slice(1, 5).map((photoUrl: string, index: number) => (
+                    <TouchableOpacity
+                      key={photoUrl}
+                      activeOpacity={0.7}
+                      onPress={() => handleThumbnailPress(index)}>
+                      <Image
+                        source={{uri: photoUrl}}
+                        style={styles.thumbnail}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  ))}
+                  {displayPhotos.length > 5 && (
+                    <View style={[styles.thumbnail, styles.moreThumbnail]}>
+                      <Text style={styles.moreThumbnailText}>+{displayPhotos.length - 5} more</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </>
+          ) : venue.coverPhotoUrl ? (
+            <Image
+              source={{uri: venue.coverPhotoUrl}}
+              style={styles.mainPhoto}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.mainIconContainer}>
+              <Text style={styles.mainIcon}>🏛️</Text>
+            </View>
+          )}
         </View>
 
         {/* Category Label */}
@@ -149,7 +255,7 @@ const VenueDetailsScreen = () => {
 
         {/* Venue Name & Tagline */}
         <Text style={styles.venueName}>{venue.name}</Text>
-        <Text style={styles.tagline}>Where unforgettable events are born</Text>
+        {/* <Text style={styles.tagline}>Where unforgettable events are born</Text> */}
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
@@ -293,7 +399,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 350,
-    backgroundColor: '#1C2130', // Deep dark blue placeholder for the gradient background
+    backgroundColor: colors.headerBackground,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
@@ -310,11 +416,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: colors.backButtonBg,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.backButtonBorder,
   },
   headerRightActions: {
     flexDirection: 'row',
@@ -350,19 +456,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  closedPill: {
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+  },
+  redDot: {
+    backgroundColor: '#EF4444',
+  },
+  closedText: {
+    color: '#EF4444',
+  },
   mediaContainer: {
     alignItems: 'center',
     marginBottom: 30,
+  },
+  mainPhoto: {
+    width: SCREEN_WIDTH - 40,
+    height: 180,
+    borderRadius: 16,
+    marginBottom: 12,
+    backgroundColor: colors.photoPlaceholder,
   },
   mainIconContainer: {
     width: 100,
     height: 100,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.thumbnailPlaceholder,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.thumbnailBorder,
     marginBottom: 20,
   },
   mainIcon: {
@@ -373,11 +496,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   thumbnail: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+    width: 48,
+    height: 48,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.thumbnailBorder,
+    backgroundColor: colors.thumbnailPlaceholder,
   },
   moreThumbnail: {
     backgroundColor: 'transparent',
@@ -519,7 +643,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.iconContainerBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,

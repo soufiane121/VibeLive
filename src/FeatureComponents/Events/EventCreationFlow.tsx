@@ -23,6 +23,7 @@ import { useSelector } from 'react-redux';
 import { useAnalytics } from '../../Hooks/useAnalytics';
 import { GlobalColors } from '../../styles/GlobalColors';
 import {useCoordinates} from '../../CustomHooks/useGetLocation';
+import useTranslation from '../../Hooks/useTranslation';
 import { KeyboardAvoidingView } from 'react-native';
 import { Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -37,6 +38,7 @@ const EventCreationFlow: React.FC = () => {
   const myVenue = currentUser?.operatorVenue ?? null;
   const isOperator = !!myVenue;
   const totalSteps = isOperator ? 5 : 3;
+  const { t } = useTranslation();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -86,21 +88,21 @@ const EventCreationFlow: React.FC = () => {
 
     switch (step) {
       case 1:
-        if (!formData.title.trim()) newErrors.title = 'Event title is required';
-        if (!formData.description.trim()) newErrors.description = 'Event description is required';
-        if (!formData.eventType) newErrors.eventType = 'Event type is required';
+        if (!formData.title.trim()) newErrors.title = t('eventCreation.titleRequired');
+        if (!formData.description.trim()) newErrors.description = t('eventCreation.descriptionRequired');
+        if (!formData.eventType) newErrors.eventType = t('eventCreation.typeRequired');
         break;
       case 2:
-        if (formData.startDate <= new Date()) newErrors.startDate = 'Start date must be in the future';
-        if (formData.endDate <= formData.startDate) newErrors.endDate = 'End date must be after start date';
+        if (formData.startDate <= new Date()) newErrors.startDate = t('eventCreation.startDateFuture');
+        if (formData.endDate <= formData.startDate) newErrors.endDate = t('eventCreation.endDateAfterStart');
         break;
       case 3:
-        if (!formData.location.address1.trim()) newErrors.address1 = 'Address is required';
-        if (!formData.location.city.trim()) newErrors.city = 'City is required';
+        if (!formData.location.address1.trim()) newErrors.address1 = t('eventCreation.addressRequired');
+        if (!formData.location.city.trim()) newErrors.city = t('eventCreation.cityRequired');
         break;
       case 4:
         if (isOperator && !formData.ticketing.isFree && formData.ticketing.price <= 0) {
-          newErrors.price = 'Price must be greater than 0 for paid events';
+          newErrors.price = t('eventCreation.priceGreaterThanZero');
         }
         break;
       case 5:
@@ -192,12 +194,12 @@ const EventCreationFlow: React.FC = () => {
       if (formData.promotion.isPromoted && formData.promotion.totalCost > 0) {
         // Show payment confirmation
         Alert.alert(
-          'Payment Required',
-          `This promotion costs $${formData.promotion.totalCost}. Proceed with payment?`,
+          t('eventCreation.paymentRequired'),
+          t('eventCreation.promotionCost', {cost: formData.promotion.totalCost}),
           [
-            { text: 'Cancel', style: 'cancel' },
+            { text: t('common.cancel'), style: 'cancel' },
             {
-              text: 'Pay & Create Event',
+              text: t('eventCreation.payAndCreate'),
               onPress: async () => {
                 try {
                   // Process payment (commented IAP flow)
@@ -207,7 +209,7 @@ const EventCreationFlow: React.FC = () => {
                     await createEventWithPromotion(paymentResult.transactionId);
                   }
                 } catch (error: any) {
-                  Alert.alert('Payment Failed', error.message || 'Payment could not be processed. Please try again.');
+                  Alert.alert(t('eventCreation.paymentFailed'), error.message || t('eventCreation.paymentCouldNotProcess'));
                 }
               }
             }
@@ -241,12 +243,12 @@ const EventCreationFlow: React.FC = () => {
       const result = await createEvent(eventData).unwrap();
 
       const successMessage = isOperator
-        ? 'Your event has been created successfully.'
-        : 'Your Happy Hour event has been submitted for review. You will see it in your event list with a pending status.';
+        ? t('eventCreation.eventCreatedSuccess')
+        : t('eventCreation.happyHourSubmitted');
       
-      Alert.alert('Success!', successMessage, [
+      Alert.alert(t('common.success'), successMessage, [
         {
-          text: 'OK',
+          text: t('common.ok'),
           onPress: () => navigation.dispatch(
             CommonActions.reset({
               index: 0,
@@ -256,7 +258,7 @@ const EventCreationFlow: React.FC = () => {
         },
       ]);
     } catch (error: any) {
-      Alert.alert('Error', error?.data?.message || 'Failed to create event. Please try again.');
+      Alert.alert(t('common.error'), error?.data?.message || t('eventCreation.failedToCreate'));
     }
   };
 
@@ -275,7 +277,7 @@ const EventCreationFlow: React.FC = () => {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <CommonMaterialCommunityIcons name="chevron-left" size={24} color={colors.textSecondary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{isOperator ? 'Create Event' : 'Create Happy Hour'}</Text>
+        <Text style={styles.headerTitle}>{isOperator ? t('eventCreation.createEvent') : t('eventCreation.createHappyHour')}</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -326,7 +328,7 @@ const EventCreationFlow: React.FC = () => {
 
         <View style={styles.footer}>
           <View style={styles.progressBarContainer}>
-            <Text style={styles.progressText}>Step {currentStep} of {totalSteps}</Text>
+            <Text style={styles.progressText}>{t('eventCreation.stepOf', {current: currentStep, total: totalSteps})}</Text>
             <View style={styles.progressBarBackground}>
               <View style={[styles.progressBarFill, { width: `${(currentStep / totalSteps) * 100}%` }]} />
             </View>
@@ -343,7 +345,7 @@ const EventCreationFlow: React.FC = () => {
             ) : (
               <View style={styles.nextButtonContent}>
                 <Text style={[styles.nextButtonText, currentStep === totalSteps && styles.createSubmitButtonText]}>
-                  {currentStep === totalSteps ? (isOperator ? 'Create Event' : 'Submit for Review') : 'Next'}
+                  {currentStep === totalSteps ? (isOperator ? t('eventCreation.createEvent') : t('eventCreation.submitForReview')) : t('common.next')}
                 </Text>
                 {currentStep < totalSteps && (
                   <CommonMaterialCommunityIcons 

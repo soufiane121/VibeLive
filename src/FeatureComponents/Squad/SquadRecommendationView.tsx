@@ -25,6 +25,7 @@ import type {
   SquadMember,
   VenueRecommendation,
 } from '../../../features/squad/SquadApi';
+import useTranslation from '../../Hooks/useTranslation';
 
 const colors = GlobalColors.SquadMode;
 
@@ -45,6 +46,7 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
   autoConfirmWarning,
   creatorFinalSayOptions,
 }) => {
+  const { t } = useTranslation();
   const [castVeto, {isLoading: isVetoing}] = useCastVetoMutation();
   const [confirmVenue, {isLoading: isConfirming}] = useConfirmVenueMutation();
   const [showAlternatives, setShowAlternatives] = useState(false);
@@ -55,22 +57,28 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
   // ── Veto ────────────────────────────────────────────────────────────
   const handleVeto = useCallback(
     (reason: string) => {
-      Alert.alert('Veto this spot?', getVetoMessage(reason), [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Veto',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await castVeto({squad_code: squadCode, reason}).unwrap();
-            } catch (err: any) {
-              Alert.alert('Error', err?.data?.error || 'Failed to cast veto');
-            }
+      Alert.alert(
+        t('onboarding.squad.vetoTitle'),
+        t(`onboarding.squad.vetoReasonMessage.${reason}`, {
+          defaultValue: t('onboarding.squad.vetoReasonMessage.default'),
+        }),
+        [
+          {text: t('onboarding.squad.vetoCancel'), style: 'cancel'},
+          {
+            text: t('onboarding.squad.vetoConfirm'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await castVeto({squad_code: squadCode, reason}).unwrap();
+              } catch (err: any) {
+                Alert.alert(t('common.error'), err?.data?.error || t('onboarding.squad.vetoError'));
+              }
+            },
           },
-        },
-      ]);
+        ],
+      );
     },
-    [squadCode, castVeto],
+    [squadCode, castVeto, t],
   );
 
   // ── Confirm ─────────────────────────────────────────────────────────
@@ -82,10 +90,10 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
           venue_id: venueId,
         }).unwrap();
       } catch (err: any) {
-        Alert.alert('Error', err?.data?.error || 'Failed to confirm venue');
+        Alert.alert(t('common.error'), err?.data?.error || t('onboarding.squad.confirmError'));
       }
     },
-    [squadCode, confirmVenue],
+    [squadCode, confirmVenue, t],
   );
 
   // ── Creator Final Say (after 2 vetoes) ──────────────────────────────
@@ -96,9 +104,9 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Your Call</Text>
+          <Text style={styles.title}>{t('onboarding.squad.creatorFinalSayTitle')}</Text>
           <Text style={styles.subtitle}>
-            Two vetos in — you decide where the squad goes
+            {t('onboarding.squad.creatorFinalSayDesc')}
           </Text>
         </View>
 
@@ -110,7 +118,7 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
             activeOpacity={0.8}>
             <VenueCardContent venue={option} compact />
             <View style={styles.selectButton}>
-              <Text style={styles.selectButtonText}>Pick this spot</Text>
+              <Text style={styles.selectButtonText}>{t('onboarding.squad.pickThisSpot')}</Text>
               <ChevronForwardIcon size={16} color={colors.background} />
             </View>
           </TouchableOpacity>
@@ -127,18 +135,18 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Text style={styles.eyebrow}>Squad pick</Text>
+          <Text style={styles.eyebrow}>{t('onboarding.squad.squadPick')}</Text>
           <View style={styles.roundPill}>
             <Text style={styles.roundPillText}>
-              Round {recommendation.round} of 2
+              {t('onboarding.squad.roundOf', {round: recommendation.round})}
             </Text>
           </View>
         </View>
-        <Text style={styles.title}>Your spot tonight</Text>
+        <Text style={styles.title}>{t('onboarding.squad.yourSpotTonight')}</Text>
         <Text style={styles.subtitle}>
           {recommendation.round === 1
-            ? "Veto once if it's not right for everyone"
-            : 'Creator decides if this is vetoed'}
+            ? t('onboarding.squad.vetoOnceHint')
+            : t('onboarding.squad.creatorDecidesHint')}
         </Text>
       </View>
 
@@ -170,29 +178,29 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
               ) : (
                 <>
                   <CheckmarkIcon size={22} color={colors.text} />
-                  <Text style={styles.confirmButtonText}>Let's go here</Text>
+                  <Text style={styles.confirmButtonText}>{t('onboarding.squad.letsGoHere')}</Text>
                 </>
               )}
             </TouchableOpacity>
           )}
 
           {/* Veto Reasons */}
-          <Text style={styles.vetoLabel}>Not feeling it?</Text>
+          <Text style={styles.vetoLabel}>{t('onboarding.squad.notFeelingIt')}</Text>
           <View style={styles.vetoRow}>
             <VetoButton
-              label="Too Far"
+              label={t('onboarding.squad.vetoReason.tooFar')}
               reason="too_far"
               onPress={handleVeto}
               isLoading={isVetoing}
             />
             <VetoButton
-              label="Not My Vibe"
+              label={t('onboarding.squad.vetoReason.notMyVibe')}
               reason="not_my_vibe"
               onPress={handleVeto}
               isLoading={isVetoing}
             />
             <VetoButton
-              label="Been Recently"
+              label={t('onboarding.squad.vetoReason.beenRecently')}
               reason="been_recently"
               onPress={handleVeto}
               isLoading={isVetoing}
@@ -205,13 +213,13 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
       {alternatives.length > 0 && (
         <View style={styles.alternativesSection}>
           <View style={styles.alternativesHeader}>
-            <Text style={styles.alternativesTitle}>Alternatives</Text>
+            <Text style={styles.alternativesTitle}>{t('onboarding.squad.alternatives')}</Text>
             <TouchableOpacity
               style={styles.alternativesButton}
               onPress={() => setShowAlternatives(prev => !prev)}
               activeOpacity={0.8}>
               <Text style={styles.alternativesButtonText}>
-                {showAlternatives ? 'Hide' : 'Open'}
+                {showAlternatives ? t('onboarding.squad.hide') : t('onboarding.squad.open')}
               </Text>
               <ChevronForwardIcon
                 size={14}
@@ -242,10 +250,8 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
       {/* Member count */}
       <Text style={styles.memberInfo}>
         {members.length === 2
-          ? 'Matched to both your vibes'
-          : `Based on ${members.length} ${
-              members.length === 1 ? 'person' : 'people'
-            }'s preferences`}
+          ? t('onboarding.squad.matchedToBoth')
+          : t('onboarding.squad.basedOnPreferences', {count: members.length})}
       </Text>
     </ScrollView>
   );
@@ -258,6 +264,7 @@ const VenueCardContent: React.FC<{
   compact?: boolean;
   handleConfirm?: (arg: string) => void;
 }> = ({venue, compact, handleConfirm}) => {
+  const { t } = useTranslation();
   const matchPct = Math.round(venue.match_score * 100);
   const capacityPct = Math.round(venue.estimated_capacity_pct * 100);
 
@@ -286,25 +293,25 @@ const VenueCardContent: React.FC<{
               <View style={styles.statusRow}>
                 {venue.current_status?.vibeshift_state && (
                   <StatusChip
-                    label={formatVibeState(
-                      venue.current_status?.vibeshift_state,
-                    )}
+                    label={t(`onboarding.squad.vibeState.${venue.current_status?.vibeshift_state}`, {defaultValue: venue.current_status?.vibeshift_state})}
                     color={colors.vibeIndicator}
                   />
                 )}
                 <StatusChip
-                  label={`${capacityPct}% full`}
+                  label={t('onboarding.squad.capacityFull', {pct: capacityPct})}
                   color={capacityColor}
                 />
                 {venue.distance_from_center != null && (
                   <StatusChip
-                    label={formatDistance(venue.distance_from_center)}
+                    label={venue.distance_from_center < 1000
+                      ? t('onboarding.squad.mAway', {m: Math.round(venue.distance_from_center)})
+                      : t('onboarding.squad.kmAway', {km: (venue.distance_from_center / 1000).toFixed(1)})}
                     color={colors.textMuted}
                   />
                 )}
                 {venue.attraction_window_min != null && (
                   <StatusChip
-                    label={`Peak in ~${venue.attraction_window_min}min`}
+                    label={t('onboarding.squad.peakIn', {min: venue.attraction_window_min})}
                     color={colors.gold}
                   />
                 )}
@@ -320,7 +327,7 @@ const VenueCardContent: React.FC<{
                   </View>
                 ))}
                 {venue.venue_tags.length > 3 && (
-                  <Text style={styles.moreTagsText}>+{venue.venue_tags.length - 3}</Text>
+                  <Text style={styles.moreTagsText}>{t('onboarding.squad.moreTags', {count: venue.venue_tags.length - 3})}</Text>
                 )}
               </View>
             )}
@@ -377,7 +384,7 @@ const VenueCardContent: React.FC<{
         <Text style={!compact ? styles.matchText : styles.compactMatchText}>
           {matchPct}%
         </Text>
-        {!compact && <Text style={styles.matchTextSub}>MATCH</Text>}
+        {!compact && <Text style={styles.matchTextSub}>{t('onboarding.squad.match')}</Text>}
       </View>
     </TouchableOpacity>
   );
@@ -414,38 +421,6 @@ const StatusChip: React.FC<{label: string; color: string}> = ({
 );
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-
-function getVetoMessage(reason: string): string {
-  switch (reason) {
-    case 'too_far':
-      return "We'll look for something closer.";
-    case 'not_my_vibe':
-      return "We'll try a different kind of venue.";
-    case 'been_recently':
-      return "We'll find somewhere fresh.";
-    default:
-      return "We'll find a new spot.";
-  }
-}
-
-function formatVibeState(state: string): string {
-  const map: Record<string, string> = {
-    surge: 'Buzzing',
-    crowd_moving: 'Crowd moving in',
-    attracting: 'Attracting crowd',
-    heating_up: 'Heating up',
-    stable: 'Steady',
-    cooling_down: 'Cooling down',
-    contradicting: 'Mixed signals',
-    suppressed: 'Quiet',
-  };
-  return map[state] || state;
-}
-
-function formatDistance(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters)}m away`;
-  return `${(meters / 1000).toFixed(1)}km away`;
-}
 
 function formatTagName(tag: string): string {
   // Convert snake_case to readable format

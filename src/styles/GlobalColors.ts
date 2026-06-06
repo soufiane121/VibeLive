@@ -542,6 +542,10 @@ export const GlobalColors = {
     openPillBorder: premiumDark.successBorder || 'rgba(76, 175, 80, 0.18)',
     openPillDot: premiumDark.successPrimary || '#4CAF50',
     openPillText: premiumDark.successPrimary || '#4CAF50',
+    closedPillBackground: 'rgba(255, 68, 68, 0.12)',
+    closedPillBorder: 'rgba(255, 68, 68, 0.25)',
+    closedPillDot: '#FF4444',
+    closedPillText: '#FF6666',
     iconContainerBg: premiumDark.primarySurface,
     iconContainerBorder: premiumDark.primaryBorder,
     closeButtonBg: premiumDark.primarySurface,
@@ -582,6 +586,11 @@ export const GlobalColors = {
     actionButtonBg: premiumDark.accentPrimary,
     actionButtonText: premiumDark.primaryText,
     linkText: premiumDark.accentPrimary,
+    secondaryBorder: premiumDark.secondaryBorder,
+    photoPlaceholder: premiumDark.secondarySurface,
+    photoBorder: premiumDark.secondaryBorder,
+    thumbnailBorder: premiumDark.primaryBorder,
+    thumbnailPlaceholder: premiumDark.primarySurface,
   },
 
   // Stream Player

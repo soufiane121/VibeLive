@@ -5,6 +5,7 @@
 #import <AVFoundation/AVFoundation.h>
 
 #import <React/RCTBundleURLProvider.h>
+#import <React/RCTLinkingManager.h>
 
 @implementation AppDelegate
 
@@ -53,6 +54,14 @@
     // <-- Add this section -->
 
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+// TODO:: added FOR LINKING
+// Deep linking support — forwards vibelive:// URLs to React Navigation
+- (BOOL)application:(UIApplication *)application
+   openURL:(NSURL *)url
+   options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+{
+  return [RCTLinkingManager application:application openURL:url options:options];
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge

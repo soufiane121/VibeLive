@@ -21,6 +21,7 @@ import {
   CommonMaterialIcons,
 } from '../../UIComponents/Icons';
 import { GlobalColors, ColorUtils } from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const colors = GlobalColors.EventsListScreen;
 
@@ -44,10 +45,11 @@ interface EventItemProps {
 }
 
 const EventItem: React.FC<EventItemProps> = ({event, onPress, currentUserId}) => {
+  const { t } = useTranslation();
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
+    if (isToday(date)) return t('eventsList.today');
+    if (isTomorrow(date)) return t('eventsList.tomorrow');
     return format(date, 'EEEE');
   };
 
@@ -80,7 +82,7 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress, currentUserId}) =>
             styles.reviewStatusText,
             event.reviewStatus === 'pending' ? styles.reviewStatusTextPending : styles.reviewStatusTextRejected
           ]}>
-            {event.reviewStatus === 'pending' ? 'Under Review' : 'Rejected'}
+            {event.reviewStatus === 'pending' ? t('eventsList.underReview') : t('eventsList.rejected')}
           </Text>
         </View>
       )}
@@ -103,7 +105,7 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress, currentUserId}) =>
               styles.eventTypeText,
               {color: isMusic ? colors.primary : colors.textSecondary},
             ]}>
-            {event?.eventType ? event.eventType.toUpperCase() : 'OTHER'}
+            {event?.eventType ? event.eventType.toUpperCase() : t('eventsList.other')}
           </Text>
         </View>
 
@@ -154,7 +156,7 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress, currentUserId}) =>
           <View style={styles.eventFooter}>
             {event.ticketing?.isFree ? (
               <View style={styles.priceBadge}>
-                <Text style={styles.priceText}>Free</Text>
+                <Text style={styles.priceText}>{t('eventsList.free')}</Text>
               </View>
             ) : (
               <Text style={styles.paidPriceText}>
@@ -166,7 +168,7 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress, currentUserId}) =>
             <View style={styles.rsvpInfo}>
               <View style={styles.interestedCircle} />
               <Text style={styles.rsvpCount}>
-                {event.rsvpCount || 0} interested
+                {event.rsvpCount || 0} {t('eventsList.interested')}
               </Text>
             </View>
 
@@ -190,7 +192,7 @@ const EventsListScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const coordinates = useCoordinates();
   const currentUser = useSelector((state: any) => state.currentUser.currentUser);
-  
+  const { t } = useTranslation();
 
   const {
     data: eventsResponse,
@@ -216,17 +218,17 @@ const EventsListScreen: React.FC = () => {
   }
 
   const eventFilters: FilterItem[] = [
-    {key: 'all', label: 'All Events', icon: 'animation-play'},
-    {key: 'music', label: 'Music', icon: 'music-note'},
-    {key: 'nightlife', label: 'Nightlife', icon: 'glass-cocktail'},
-    {key: 'festival', label: 'Festivals', icon: 'tent'},
-    {key: 'conference', label: 'Conference', icon: 'domain'},
-    {key: 'comedy', label: 'Comedy', icon: 'drama-masks'},
-    {key: 'theater', label: 'Theater', icon: 'theater'},
-    {key: 'art', label: 'Art', icon: 'palette'},
-    {key: 'happyhour', label: 'Happy Hour', icon: 'glass-mug-variant'},
-    {key: 'food', label: 'Food', icon: 'silverware-fork-knife'},
-    {key: 'other', label: 'Other', icon: 'dots-horizontal'},
+    {key: 'all', label: t('eventsList.allEvents'), icon: 'animation-play'},
+    {key: 'music', label: t('eventsList.music'), icon: 'music-note'},
+    {key: 'nightlife', label: t('eventsList.nightlife'), icon: 'glass-cocktail'},
+    {key: 'festival', label: t('eventsList.festivals'), icon: 'tent'},
+    {key: 'happyhour', label: t('eventsList.happyHour'), icon: 'glass-mug-variant'},
+    // {key: 'conference', label: 'Conference', icon: 'domain'},
+    {key: 'comedy', label: t('eventsList.comedy'), icon: 'drama-masks'},
+    // {key: 'theater', label: 'Theater', icon: 'theater'},
+    // {key: 'art', label: 'Art', icon: 'palette'},
+    // {key: 'food', label: 'Food', icon: 'silverware-fork-knife'},
+    {key: 'other', label: t('eventsList.otherFilter'), icon: 'dots-horizontal'},
   ];
 
   const sortedEvents = useMemo(() => {
@@ -321,11 +323,11 @@ const EventsListScreen: React.FC = () => {
         size={64}
         color={colors.textMuted}
       />
-      <Text style={styles.emptyStateTitle}>No Events Found</Text>
+      <Text style={styles.emptyStateTitle}>{t('eventsList.noEventsFound')}</Text>
       <Text style={styles.emptyStateText}>
         {selectedFilter === 'all'
-          ? 'There are no upcoming events in your area.'
-          : `No ${selectedFilter} events found.`}
+          ? t('eventsList.noEventsInArea')
+          : t('eventsList.noEventsType', {type: selectedFilter})}
       </Text>
     </View>
   );
@@ -337,12 +339,12 @@ const EventsListScreen: React.FC = () => {
         size={64}
         color={colors.error}
       />
-      <Text style={styles.errorTitle}>Unable to Load Events</Text>
+      <Text style={styles.errorTitle}>{t('eventsList.unableToLoad')}</Text>
       <Text style={styles.errorText}>
-        Please check your connection and try again.
+        {t('eventsList.checkConnection')}
       </Text>
       <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
-        <Text style={styles.retryButtonText}>Retry</Text>
+        <Text style={styles.retryButtonText}>{t('eventsList.retry')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -357,7 +359,7 @@ const EventsListScreen: React.FC = () => {
       <View style={styles.header}>
         <View>
           {/* <Text style={styles.headerSubtitle}>CHARLOTTE, NC</Text> */}
-          <Text style={styles.headerTitle}>Events</Text>
+          <Text style={styles.headerTitle}>{t('eventsList.events')}</Text>
         </View>
         <TouchableOpacity
           style={styles.createButton}
