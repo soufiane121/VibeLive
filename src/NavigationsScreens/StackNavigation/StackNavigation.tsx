@@ -13,6 +13,7 @@ import {locationStore} from '../../CustomHooks/useGetLocation';
 import StreamPlayer from '../../WatchStream/StreamPlayer';
 import CarrouselContainer from '../../Carrousel/CarrouselContainer';
 import SignUpContainer from '../../FeatureComponents/Auth/SignUp/SignUpContainer';
+import SignUpEmailScreen from '../../FeatureComponents/Auth/SignUp/SignUpEmailScreen';
 import EmailVerificationScreen from '../../FeatureComponents/Auth/EmailVerificationScreen';
 // Onboarding Screens
 import OnboardingAccountCreation from '../../FeatureComponents/Auth/Onboarding/OnboardingAccountCreation';
@@ -135,6 +136,11 @@ const StackNavigation = () => {
         <Stack.Screen
           name="sign-up"
           component={SignUpContainer}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="sign-up-email"
+          component={SignUpEmailScreen}
           options={{headerShown: false}}
         />
         <Stack.Screen

@@ -44,7 +44,7 @@ const EditProfile = () => {
     `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim(),
   );
   const [userName, setUserName] = useState(currentUser?.userName || '');
-  const [email, setEmail] = useState(currentUser?.email || '');
+  const [email, setEmail] = useState(currentUser?.userEmail || '');
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(
     currentUser?.profilePicture || null,
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: colors.inputBackground,
-    borderWidth: 1,
+    // borderWidth: 0,
     borderColor: colors.inputBorder,
     borderRadius: 14,
     paddingHorizontal: 16,

@@ -108,12 +108,20 @@ const EventDetailsScreen: React.FC = () => {
   const handleGetDirections = () => {
     if (!event) return;
 
-    const [lng, lat] = event.location.coordinates;
-    const url = Platform.OS === 'ios' 
-      ? `maps:0,0?q=${lat},${lng}`
-      : `geo:0,0?q=${lat},${lng}`;
-    
-    Linking.openURL(url);
+    const address = event.location.address;
+    if (address) {
+      const encoded = encodeURIComponent(address);
+      const url = Platform.OS === 'ios'
+        ? `maps:0,0?q=${encoded}`
+        : `geo:0,0?q=${encoded}`;
+      Linking.openURL(url);
+    } else {
+      const [lng, lat] = event.location.coordinates;
+      const url = Platform.OS === 'ios'
+        ? `maps:0,0?q=${lat},${lng}`
+        : `geo:0,0?q=${lat},${lng}`;
+      Linking.openURL(url);
+    }
   };
 
   const handleBuyTickets = () => {
@@ -170,7 +178,6 @@ const EventDetailsScreen: React.FC = () => {
           <CommonMaterialCommunityIcons name="share-variant" size={22} color={colors.headerIconText} />
         </TouchableOpacity> */}
       </View>
-
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}

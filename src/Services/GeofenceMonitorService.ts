@@ -2,6 +2,7 @@ import {AppState, AppStateStatus} from 'react-native';
 import * as Location from 'expo-location';
 import {baseUrl} from '../../baseUrl';
 import {getLocalData, setLocalData, removeLocalData} from '../Utils/LocalStorageHelper';
+import locationSuppressionService from './LocationSuppressionService';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Configuration Constants
@@ -694,6 +695,8 @@ class GeofenceMonitorService {
       const token = await getLocalData({key: 'token'});
       if (!token) return;
 
+      const batteryPct = Math.round(locationSuppressionService.getBatteryLevel() * 100);
+
       const response = await fetch(`${baseUrl}/voting/location-update`, {
         method: 'POST',
         headers: {
@@ -704,6 +707,7 @@ class GeofenceMonitorService {
         body: JSON.stringify({
           latitude: lat,
           longitude: lon,
+          batteryLevel: batteryPct,
         }),
       });
 

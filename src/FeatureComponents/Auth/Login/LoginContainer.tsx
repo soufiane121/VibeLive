@@ -10,26 +10,64 @@ import {
   Keyboard,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import {useNavigation, PartialState} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useLoginMutation} from '../../../../features/registrations/LoginSliceApi';
+import {useLoginMutation, useAppleAuthMutation} from '../../../../features/registrations/LoginSliceApi';
 import {setLocalData} from '../../../Utils/LocalStorageHelper';
 import {useDispatch} from 'react-redux';
 import {setCurrentUser} from '../../../../features/registrations/CurrentUser';
 import useTranslation from '../../../Hooks/useTranslation';
 import {GlobalColors} from '../../../styles/GlobalColors';
+import { AppleIcon } from '../../../UIComponents/Icons';
 
 const LoginContainer = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [verifyLogin, {isLoading}] = useLoginMutation();
+  const [appleAuth, {isLoading: isAppleLoading}] = useAppleAuthMutation();
   const navigation =
     useNavigation<NativeStackNavigationProp<PartialState<any>>>();
   const dispatch = useDispatch();
   const {t} = useTranslation();
+
+  const handleAppleSignIn = useCallback(async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const result = await appleAuth({
+        identityToken: credential.identityToken,
+        user: credential.user,
+        email: credential.email,
+        fullName: credential.fullName,
+        phone: null,
+      }).unwrap();
+
+      if (result?.data) {
+        await setLocalData({key: 'token', value: result.data.email});
+        await setLocalData({key: 'isAuthenticated', value: 'true'});
+        dispatch(setCurrentUser(result.data));
+        navigation.replace('Bottom');
+      }
+    } catch (err: any) {
+      if (err?.code === 'ERR_REQUEST_CANCELED') {
+        return;
+      }
+      Alert.alert(
+        t('auth.login.appleSignInError'),
+        t('auth.login.appleSignInErrorDesc'),
+      );
+    }
+  }, [appleAuth, dispatch, navigation, t]);
 
   const handleLogin = useCallback(async () => {
     if (email && password) {
@@ -66,9 +104,32 @@ const LoginContainer = () => {
 
           {/* Title */}
           <Text style={styles.title}>{t('auth.login.title')}</Text>
-          <Text style={styles.subtitle}>
-            {t('auth.login.subtitle')}
-          </Text>
+          <Text style={styles.subtitle}>{t('auth.login.subtitle')}</Text>
+
+          {/* Sign in with Apple */}
+          <TouchableOpacity
+            style={styles.appleButton}
+            onPress={handleAppleSignIn}
+            activeOpacity={0.85}
+            disabled={isAppleLoading}>
+            {isAppleLoading ? (
+              <ActivityIndicator color={GlobalColors.Onboarding.background} />
+            ) : (
+              <View style={styles.buttonContent}>
+                <AppleIcon  style={styles.appleIcon}/>
+                <Text style={styles.appleButtonText}>
+                  {t('auth.login.loginWithApple')}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {/* OR Divider */}
+          <View style={styles.orRow}>
+            <View style={styles.orLine} />
+            <Text style={styles.orText}>{t('auth.login.or')}</Text>
+            <View style={styles.orLine} />
+          </View>
 
           {/* Email Field */}
           <Text style={styles.label}>{t('auth.login.emailLabel')}</Text>
@@ -171,7 +232,7 @@ const LoginContainer = () => {
           </TouchableOpacity>
 
           {/* Privacy Note */}
-          <View style={styles.privacyContainer}>
+          {/* <View style={styles.privacyContainer}>
             <MaterialCommunityIcons
               name="shield-check-outline"
               size={12}
@@ -181,7 +242,7 @@ const LoginContainer = () => {
             <Text style={styles.privacyText}>
               {t('auth.login.privacyNote')}
             </Text>
-          </View>
+          </View> */}
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -301,6 +362,39 @@ const styles = StyleSheet.create({
   privacyText: {
     fontSize: 11,
     color: GlobalColors.Onboarding.textMuted,
+  },
+  appleButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GlobalColors.Onboarding.text,
+    borderRadius: 12,
+    height: 50,
+    marginBottom: 20,
+  },
+  appleIcon: {
+    fontSize: 18,
+    color: GlobalColors.Onboarding.background,
+    marginRight: 8,
+  },
+  appleButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: GlobalColors.Onboarding.background,
+  },
+  orRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: GlobalColors.Onboarding.border,
+  },
+  orText: {
+    fontSize: 12,
+    color: GlobalColors.Onboarding.textMuted,
+    marginHorizontal: 12,
   },
 });
 

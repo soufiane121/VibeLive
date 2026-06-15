@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {CircleLayer, ShapeSource} from '@rnmapbox/maps';
+import {CircleLayer, ShapeSource, SymbolLayer} from '@rnmapbox/maps';
 import {VenueData} from '../../../features/voting/VotingApi';
 import GlobalColors from '../../styles/GlobalColors';
 
@@ -42,6 +42,7 @@ const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
           vibeScore: v.vibeScore,
           isBoostedValue: v.isBoosted ? 1 : 0,
           intensity: Math.min(Math.abs(v.vibeScore) / 100, 1),
+          name: v.name,
         },
       })),
     };
@@ -66,6 +67,23 @@ const MapHeatmapLayer: React.FC<MapHeatmapLayerProps> = ({
       shape={heatmapGeoJSON}
       onPress={handlePress}>
       {/* Outer glow — large soft ring showing area activity */}
+      <SymbolLayer
+        id="vibe-heatmap-labels"
+        minZoomLevel={11}
+        style={{
+          textField: ['get', 'name'],
+          textSize: 11,
+          textColor: GlobalColors.Heatmap.labelText,
+          textHaloColor: GlobalColors.Heatmap.labelHalo,
+          textHaloWidth: 1.2,
+          textOffset: [0, 1.8],
+          textAnchor: 'top',
+          textMaxWidth: 8,
+          textAllowOverlap: false,
+          textIgnorePlacement: false,
+          textOptional: true,
+        }}
+      />
       <CircleLayer
         id="vibe-heatmap-glow"
         style={{

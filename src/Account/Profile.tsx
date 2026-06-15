@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  Image,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation, CommonActions } from '@react-navigation/native';
@@ -128,6 +129,7 @@ const Profile = () => {
     ? `${profile.firstName} ${profile.lastName}`
     : `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || 'User';
   const username = profile?.userName || currentUser?.userName || 'user';
+  const profilePicture = profile?.profilePicture || currentUser?.profilePicture;
   const initials = (displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()).slice(0, 2);
   const joinDate = profile?.createdAt || currentUser?.createdAt;
   const joinLabel = joinDate
@@ -214,22 +216,34 @@ const Profile = () => {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.headerIconBtn}
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
+            onPress={() => navigation.navigate('Settings')}>
+            <Ionicons
+              name="settings-outline"
+              size={22}
+              color={colors.textSecondary}
+            />
           </TouchableOpacity>
         </View>
       </View>
-
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{paddingBottom: 40}}>
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.profileCardRow}>
             {/* Avatar */}
             <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials}</Text>
-              </View>
+              {profilePicture ? (
+                <Image
+                  source={{uri: profilePicture}}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{initials}</Text>
+                </View>
+              )}
               <View style={styles.onlineDot} />
             </View>
 
@@ -247,25 +261,39 @@ const Profile = () => {
           {/* Top Up Button */}
           <TouchableOpacity
             style={styles.topUpBtn}
-            onPress={() => navigation.navigate('BuyMinutes')}
-          >
+            onPress={() => navigation.navigate('BuyMinutes')}>
             <Text style={styles.topUpText}>{t('account.topUp')}</Text>
           </TouchableOpacity>
 
           {/* Stats Row */}
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-              <Feather name="tv" size={14} color={colors.textSecondary} style={{ marginBottom: 4 }} />
+              <Feather
+                name="tv"
+                size={14}
+                color={colors.textSecondary}
+                style={{marginBottom: 4}}
+              />
               <Text style={styles.statNumber}>{streamsCount}</Text>
               <Text style={styles.statLabel}>{t('account.streams')}</Text>
             </View>
             <View style={styles.statBox}>
-              <Feather name="clock" size={14} color={colors.textSecondary} style={{ marginBottom: 4 }} />
+              <Feather
+                name="clock"
+                size={14}
+                color={colors.textSecondary}
+                style={{marginBottom: 4}}
+              />
               <Text style={styles.statNumber}>{hoursCount}</Text>
               <Text style={styles.statLabel}>{t('account.hours')}</Text>
             </View>
             <View style={styles.statBox}>
-              <Feather name="users" size={14} color={colors.textSecondary} style={{ marginBottom: 4 }} />
+              <Feather
+                name="users"
+                size={14}
+                color={colors.textSecondary}
+                style={{marginBottom: 4}}
+              />
               <Text style={styles.statNumber}>{referredCount}</Text>
               <Text style={styles.statLabel}>{t('account.referred')}</Text>
             </View>
@@ -274,10 +302,16 @@ const Profile = () => {
           {/* Edit Profile Button */}
           <TouchableOpacity
             style={styles.editProfileBtn}
-            onPress={() => navigation.navigate('EditProfile')}
-          >
-            <Feather name="edit-2" size={16} color={colors.accent} style={{ marginRight: 8 }} />
-            <Text style={styles.editProfileText}>{t('account.editProfile')}</Text>
+            onPress={() => navigation.navigate('EditProfile')}>
+            <Feather
+              name="edit-2"
+              size={16}
+              color={colors.accent}
+              style={{marginRight: 8}}
+            />
+            <Text style={styles.editProfileText}>
+              {t('account.editProfile')}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -285,10 +319,16 @@ const Profile = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
             <SectionHeader label={t('account.myInterests')} />
-            <TouchableOpacity onPress={() => navigation.navigate('MyInterests')}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('MyInterests')}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 <Text style={styles.editLink}>{t('common.edit')}</Text>
-                <Feather name="external-link" size={12} color={colors.accent} style={{ marginLeft: 4 }} />
+                <Feather
+                  name="external-link"
+                  size={12}
+                  color={colors.accent}
+                  style={{marginLeft: 4}}
+                />
               </View>
             </TouchableOpacity>
           </View>
@@ -302,16 +342,14 @@ const Profile = () => {
             ) : (
               <TouchableOpacity
                 style={styles.addChip}
-                onPress={() => navigation.navigate('MyInterests')}
-              >
+                onPress={() => navigation.navigate('MyInterests')}>
                 <Text style={styles.addChipText}>+ {t('common.add')}</Text>
               </TouchableOpacity>
             )}
             {interests.length > 0 && (
               <TouchableOpacity
                 style={styles.addChip}
-                onPress={() => navigation.navigate('MyInterests')}
-              >
+                onPress={() => navigation.navigate('MyInterests')}>
                 <Text style={styles.addChipText}>+ {t('common.add')}</Text>
               </TouchableOpacity>
             )}
@@ -325,7 +363,7 @@ const Profile = () => {
             <MenuRow
               icon="time-outline"
               title={t('account.buyMinutes')}
-              subtitle={t('account.minutesRemaining', { count: minutes })}
+              subtitle={t('account.minutesRemaining', {count: minutes})}
               badge={t('account.topUpBadge')}
               badgeColor={colors.gaugeActive}
               onPress={() => navigation.navigate('BuyMinutes')}
@@ -344,12 +382,12 @@ const Profile = () => {
         <View style={styles.section}>
           <SectionHeader label={t('account.accountSection')} />
           <View style={styles.menuCard}>
-            <MenuRow
+            {/* <MenuRow
               icon="notifications-outline"
               title={t('account.notifications')}
               subtitle={t('account.notificationsSubtitle')}
               onPress={() => navigation.navigate('NotificationSettings')}
-            />
+            /> */}
             <View style={styles.menuDivider} />
             <MenuRow
               icon="gift-outline"
@@ -357,7 +395,12 @@ const Profile = () => {
               subtitle={t('account.referFriendSubtitle')}
               badge={t('account.referFriendBadge')}
               badgeColor={colors.success}
-              onPress={() => Alert.alert(t('account.referFriend'), t('account.referFriendComingSoon'))}
+              onPress={() =>
+                Alert.alert(
+                  t('account.referFriend'),
+                  t('account.referFriendComingSoon'),
+                )
+              }
             />
           </View>
         </View>
@@ -466,6 +509,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+  },
   avatarText: {
     fontSize: 22,
     fontWeight: '800',
@@ -508,7 +556,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    marginTop: -20,
+    marginTop: 3,
     marginBottom: 16,
   },
   topUpText: {

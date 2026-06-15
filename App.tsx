@@ -29,6 +29,8 @@ function App() {
       console.log('i18nInit resolved, language:', i18n.language);
       console.log('Translation exists:', i18n.exists('event.readyToGoLive'));
       setI18nReady(true);
+    }).catch(() => {
+      setI18nReady(true);
     });
   }, [])
 

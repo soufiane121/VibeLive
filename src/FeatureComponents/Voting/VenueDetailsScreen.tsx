@@ -219,7 +219,7 @@ const VenueDetailsScreen = () => {
                 <View style={styles.imageThumbnails}>
                   {displayPhotos.slice(1, 5).map((photoUrl: string, index: number) => (
                     <TouchableOpacity
-                      key={photoUrl}
+                      key={photoUrl + index}
                       activeOpacity={0.7}
                       onPress={() => handleThumbnailPress(index)}>
                       <Image

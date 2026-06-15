@@ -1,11 +1,10 @@
 import { premiumColors } from './premuimColors';
 
-import { getLocalData } from '../Utils/LocalStorageHelper';
+import { Appearance } from 'react-native';
 
-let isDarkMode, premiumDark;
-(async () => {
-  isDarkMode = await getLocalData({ key: 'isDarkMode' }) === 'true';
-})()
+const colorScheme = Appearance.getColorScheme();
+const isDarkMode = colorScheme === 'dark' || colorScheme === null;
+const premiumDark = isDarkMode ? premiumColors.dark : premiumColors.light;
 
 // Global Colors Configuration for VibeLive
 // Centralized color management with screen-specific organization
@@ -74,13 +73,6 @@ const baseColors = {
 baseColors.deepBlack = baseColors.newBackGroundColor;
 
 
-if (isDarkMode) {
-  premiumDark = premiumColors.dark;
-} else {
-  premiumDark = premiumColors.light;
-}
-
-
 // Type definitions for color schemes
 export interface ColorScheme {
   // Background and surfaces
@@ -126,6 +118,8 @@ export const GlobalColors = {
     hot: premiumDark.heatmap.hot,
     boostBorder: premiumDark.hotPrimary,
     ring: premiumDark.heatmap.ring,
+    labelText: premiumDark.primaryText,
+    labelHalo: premiumDark.primaryBackground,
   },
   // Events List Screen
   EventsListScreen: {
@@ -262,18 +256,23 @@ export const GlobalColors = {
 
   // Password Settings
   PasswordSettings: {
-    background: baseColors.deepBlack,
-    surface: baseColors.darkGray,
-    text: baseColors.white,
-    textSecondary: baseColors.offWhite,
-    textMuted: baseColors.mutedWhite,
-    border: baseColors.mediumGray,
-    inputBackground: baseColors.gray,
-    inputBorder: baseColors.lightGray,
-    inputFocused: baseColors.cyan,
-    saveButton: baseColors.cyan,
-    twoFactorToggle: baseColors.success,
-    chevronColor: baseColors.lightGray,
+    background: premiumDark.primaryBackground,
+    surface: premiumDark.primarySurface,
+    text: premiumDark.primaryText,
+    textSecondary: premiumDark.secondaryText,
+    textMuted: premiumDark.tertiaryText,
+    border: premiumDark.primaryBorder,
+    inputBackground: premiumDark.secondaryBackground,
+    inputBorder: premiumDark.primaryBorder,
+    inputFocused: premiumDark.accentPrimary,
+    saveButton: premiumDark.accentPrimary,
+    disabledButton: premiumDark.secondarySurface,
+    chevronColor: premiumDark.secondaryText,
+    infoBackground: premiumDark.accentSurface,
+    infoBorder: premiumDark.accentBorder,
+    infoText: premiumDark.accentPrimary,
+    success: premiumDark.successPrimary,
+    error: premiumDark.hotPrimary,
   },
 
   // Email Settings

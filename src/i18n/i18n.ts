@@ -10,10 +10,17 @@ const resources = {
   es: { translation: es },
 };
 
-const getDeviceLanguage = () => {
-  const locales = RNLocalize.getLocales();
-  if (locales && locales.length > 0) {
-    return locales[0].languageCode;
+const getDeviceLanguage = (): string => {
+  try {
+    const locales = RNLocalize.getLocales();
+    if (locales && locales.length > 0) {
+      // languageCode is already the ISO 639-1 code (e.g. "en", "fr", "ar")
+      // languageTag may include a region (e.g. "fr-FR") — strip it as fallback
+      const code = locales[0].languageCode || locales[0].languageTag?.split('-')[0];
+      if (code) return code.toLowerCase();
+    }
+  } catch {
+    // Native module unavailable — fall through to default
   }
   return 'en';
 };
@@ -38,6 +45,9 @@ export const i18nInit = i18n
   .then(() => {
     console.log('i18n initialized, resources loaded:', !!i18n.store.data);
     console.log('Has event.readyToGoLive:', i18n.exists('event.readyToGoLive'));
+  })
+  .catch((err) => {
+    console.warn('i18n init failed, falling back to English:', err);
   });
 
 export default i18n;

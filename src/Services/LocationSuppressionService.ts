@@ -146,6 +146,11 @@ class LocationSuppressionService {
     return this._nightlyNotificationCount;
   }
 
+  /** Read current battery level as 0–1 float. */
+  getBatteryLevel(): number {
+    return this._batteryLevel;
+  }
+
   // ────────────────────────────────────────────────────────────────────
   // Private — battery hysteresis
   // ────────────────────────────────────────────────────────────────────

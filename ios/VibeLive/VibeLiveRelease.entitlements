@@ -4,10 +4,14 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.org.reactjs.native.example.VibeLive.onesignal</string>
 		<string>group.com.onesignal.VibeLive.onesignal</string>
+		<string>group.org.reactjs.native.example.VibeLive.onesignal</string>
 	</array>
 </dict>
 </plist>

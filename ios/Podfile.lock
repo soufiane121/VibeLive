@@ -12,6 +12,8 @@ PODS:
     - ExpoModulesCore
   - Expo (51.0.39):
     - ExpoModulesCore
+  - ExpoAppleAuthentication (6.4.2):
+    - ExpoModulesCore
   - ExpoAsset (10.0.10):
     - ExpoModulesCore
   - ExpoBattery (8.0.1):
@@ -1917,6 +1919,7 @@ DEPENDENCIES:
   - EXImageLoader (from `../node_modules/expo-image-loader/ios`)
   - EXLocation (from `../node_modules/expo-location/ios`)
   - Expo (from `../node_modules/expo`)
+  - ExpoAppleAuthentication (from `../node_modules/expo-apple-authentication/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoBattery (from `../node_modules/expo-battery/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
@@ -2050,6 +2053,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-location/ios"
   Expo:
     :path: "../node_modules/expo"
+  ExpoAppleAuthentication:
+    :path: "../node_modules/expo-apple-authentication/ios"
   ExpoAsset:
     :path: "../node_modules/expo-asset/ios"
   ExpoBattery:
@@ -2240,6 +2245,7 @@ SPEC CHECKSUMS:
   EXImageLoader: 1fe96c70cdc78bedc985ec4b1fab5dd8e67dc38b
   EXLocation: c52e800875ce2a5974b3b796ff2f3a8b978e0b28
   Expo: ed0a748eb6be0efd2c3df7f6de3f3158a14464c9
+  ExpoAppleAuthentication: 8a661b6f4936affafd830f983ac22463c936dad5
   ExpoAsset: 286fee7ba711ce66bf20b315e68106b13b8629fc
   ExpoBattery: 9575fe12e063206275013cf0dfc1583e8e7fd00c
   ExpoFileSystem: 2988caaf68b7cb706e36d382829d99811d9d76a5

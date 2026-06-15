@@ -37,7 +37,7 @@ const EventCreationFlow: React.FC = () => {
   const currentUser = useSelector((state: any) => state.currentUser.currentUser);
   const myVenue = currentUser?.operatorVenue ?? null;
   const isOperator = !!myVenue;
-  const totalSteps = isOperator ? 5 : 3;
+  const totalSteps = isOperator ? 5 : 4;
   const { t } = useTranslation();
   
   const [currentStep, setCurrentStep] = useState(1);
@@ -101,7 +101,7 @@ const EventCreationFlow: React.FC = () => {
         if (!formData.location.city.trim()) newErrors.city = t('eventCreation.cityRequired');
         break;
       case 4:
-        if (isOperator && !formData.ticketing.isFree && formData.ticketing.price <= 0) {
+        if (!formData.ticketing.isFree && formData.ticketing.price <= 0) {
           newErrors.price = t('eventCreation.priceGreaterThanZero');
         }
         break;
@@ -310,7 +310,7 @@ const EventCreationFlow: React.FC = () => {
               venue={myVenue}
             />
           )}
-          {isOperator && currentStep === 4 && (
+          {currentStep === 4 && (
             <EventTicketing
               formData={formData}
               errors={errors}

@@ -234,7 +234,7 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <Text style={styles.purchaseBtnText}>
-              {t('account.buyButtonLabel', { minutes: currentTier.minutes, price: currentTier.price.toFixed(2) })}
+              {t('account.buyButtonLabel', { minutes: currentTier?.minutes, price: currentTier?.price?.toFixed(2) })}
             </Text>
           )}
         </TouchableOpacity>

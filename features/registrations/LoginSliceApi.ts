@@ -100,9 +100,29 @@ export const loginApi = createApi({
         body,
       }),
     }),
+    appleAuth: builder.mutation({
+      query: (body: {
+        identityToken: string | null;
+        user: string;
+        email: string | null;
+        fullName: {givenName: string | null; familyName: string | null} | null;
+        phone: string | null;
+      }) => ({
+        url: 'users/apple-auth',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: async (response: any) => {
+        if (response?.data?.email) {
+          await setLocalData({key: 'isAuthenticated', value: 'true'});
+          await setLocalData({key: 'token', value: response.data.email});
+        }
+        return response;
+      },
+    }),
   }),
 });
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const {useLoginMutation, useAutoLoginMutation, useSignUpMutation, useSingOutMutation, useBoostStreamMutation, useValidateFieldsMutation, useSendVerificationCodeMutation, useVerifyEmailCodeMutation} = loginApi;
+export const {useLoginMutation, useAutoLoginMutation, useSignUpMutation, useSingOutMutation, useBoostStreamMutation, useValidateFieldsMutation, useSendVerificationCodeMutation, useVerifyEmailCodeMutation, useAppleAuthMutation} = loginApi;
