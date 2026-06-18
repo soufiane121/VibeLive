@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import {
   useGetAccountProfileQuery,
@@ -70,7 +71,7 @@ const MyInterests = () => {
   const handleSave = async () => {
     try {
       await updateInterests({ userId, interests: selected }).unwrap();
-      trackEvent('interests_updated', {
+      trackEvent(AnalyticsEventType.INTERESTS_UPDATED, {
         user_id: userId,
         count: selected.length,
       });

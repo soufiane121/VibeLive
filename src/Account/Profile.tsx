@@ -17,6 +17,7 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useGetAccountProfileQuery } from '../../features/settings/SettingsSliceApi';
@@ -144,7 +145,7 @@ const Profile = () => {
   const referredCount = 0; // No referral system yet
 
   React.useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'AccountHub',
       user_id: userId,
     });

@@ -14,6 +14,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon, ChevronForwardIcon, MailIcon, MailOutlineIcon, NotificationsIcon, ShieldCheckmarkIcon, CheckmarkIcon } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import {
   useChangeEmailMutation,
@@ -36,7 +37,7 @@ const EmailSettings = () => {
   const [verificationSent, setVerificationSent] = useState(false);
 
   React.useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'EmailSettings',
       user_id: currentUser?._id,
     });
@@ -64,7 +65,7 @@ const EmailSettings = () => {
       
       setVerificationSent(true);
       
-      trackEvent('email_verification_sent', {
+      trackEvent(AnalyticsEventType.EMAIL_VERIFICATION_SENT, {
         user_id: currentUser?._id,
       });
 
@@ -103,7 +104,7 @@ const EmailSettings = () => {
         Alert.alert(t('common.success'), t('email.verifySuccess'));
         setVerificationCode('');
         
-        trackEvent('email_verified', {
+        trackEvent(AnalyticsEventType.EMAIL_VERIFIED, {
           user_id: currentUser?._id,
         });
       } else {
@@ -137,7 +138,7 @@ const EmailSettings = () => {
         setNewEmail('');
         setPassword('');
         
-        trackEvent('email_change_requested', {
+        trackEvent(AnalyticsEventType.EMAIL_CHANGE_REQUESTED, {
           user_id: currentUser?._id,
           new_email: newEmail,
         });

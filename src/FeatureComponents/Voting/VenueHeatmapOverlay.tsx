@@ -13,6 +13,8 @@ import {
   useCastVoteMutation,
   VenueData,
 } from '../../../features/voting/VotingApi';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {AnalyticsEventType} from '../../types/AnalyticsEnums';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.7;
@@ -31,6 +33,7 @@ const VenueHeatmapOverlay: React.FC<VenueHeatmapOverlayProps> = ({
   visible = true,
 }) => {
   const navigation = useNavigation<any>();
+  const {trackEvent} = useAnalytics({screenName: 'VenueHeatmapOverlay'});
   const [selectedVenue, setSelectedVenue] = useState<VenueData | null>(null);
   const [castVote, {isLoading: isVoting}] = useCastVoteMutation();
   const slideAnim = useState(new Animated.Value(0))[0];
@@ -70,8 +73,13 @@ const VenueHeatmapOverlay: React.FC<VenueHeatmapOverlayProps> = ({
   }, [selectedVenue, slideAnim]);
 
   const handleVenuePress = useCallback((venue: VenueData) => {
+    trackEvent(AnalyticsEventType.VENUE_CARD_OPENED, {
+      venue_id: venue.id,
+      venue_name: venue.name,
+      vibe_score: venue.vibeScore,
+    });
     setSelectedVenue(prev => (prev?.id === venue.id ? null : venue));
-  }, []);
+  }, [trackEvent]);
 
   const handleVote = useCallback(
     async (voteType: 'hot' | 'dead') => {
@@ -82,12 +90,18 @@ const VenueHeatmapOverlay: React.FC<VenueHeatmapOverlayProps> = ({
           voteType,
           source: 'in_app',
         }).unwrap();
+        trackEvent(AnalyticsEventType.VENUE_VOTE_CAST, {
+          venue_id: selectedVenue.id,
+          venue_name: selectedVenue.name,
+          vote_type: voteType,
+          source: 'heatmap_overlay',
+        });
         refetch();
       } catch (err) {
         console.log('[HeatmapOverlay] Vote error:', err);
       }
     },
-    [selectedVenue, castVote, refetch],
+    [selectedVenue, castVote, refetch, trackEvent],
   );
 
   const handleViewDashboard = useCallback(() => {

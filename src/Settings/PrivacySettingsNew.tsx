@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import { useRequestDataDownloadMutation } from '../../features/settings/SettingsSliceApi';
 
@@ -77,7 +78,7 @@ const PrivacySettingsNew = () => {
   const [requestDataDownload] = useRequestDataDownloadMutation();
 
   React.useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'PrivacySettingsNew',
       user_id: userId,
     });

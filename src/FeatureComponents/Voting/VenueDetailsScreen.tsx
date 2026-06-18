@@ -14,15 +14,25 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {GlobalColors} from '../../styles/GlobalColors';
 import {useGetVenueDetailQuery, VenueData} from '../../../features/voting/VotingApi';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {AnalyticsEventType} from '../../types/AnalyticsEnums';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 const VenueDetailsScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const {trackEvent} = useAnalytics({screenName: 'VenueDetails'});
   
   // Destructure venueId and venue object passed from MapContainer
   const {venueId, venue: paramsVenue} = route.params || {};
+
+  React.useEffect(() => {
+    trackEvent(AnalyticsEventType.VENUE_DETAILS_VIEWED, {
+      venue_id: venueId,
+      venue_name: paramsVenue?.name,
+    });
+  }, [venueId]);
 
   // We only fetch if venue wasn't provided in params
   const {data: apiData, isLoading} = useGetVenueDetailQuery(venueId, {
@@ -113,6 +123,10 @@ const VenueDetailsScreen = () => {
   // to open the venue in maps
   const handleOpenMaps = () => {
     if (!venue || !venue.coordinates) return;
+    trackEvent(AnalyticsEventType.VENUE_DIRECTIONS_REQUESTED, {
+      venue_id: venueId,
+      venue_name: venue.name,
+    });
     const [longitude, latitude] = venue.coordinates;
     const label = encodeURIComponent(venue.name || 'Venue');
     
@@ -135,12 +149,20 @@ const VenueDetailsScreen = () => {
 
   const handlePhone = () => {
     if (venue?.phone) {
+      trackEvent(AnalyticsEventType.VENUE_PHONE_CALLED, {
+        venue_id: venueId,
+        venue_name: venue?.name,
+      });
       Linking.openURL(`tel:${venue.phone}`);
     }
   };
 
   const handleWebsite = () => {
     if (venue?.website) {
+      trackEvent(AnalyticsEventType.VENUE_WEBSITE_OPENED, {
+        venue_id: venueId,
+        venue_name: venue?.name,
+      });
       const url = venue.website.startsWith('http') ? venue.website : `https://${venue.website}`;
       Linking.openURL(url);
     }

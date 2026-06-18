@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import {
   useGetUserSettingsQuery,
@@ -45,7 +46,7 @@ const NotificationSettingsNew = () => {
   }, [settingsData]);
 
   useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'NotificationSettingsNew',
       user_id: userId,
     });

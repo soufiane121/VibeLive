@@ -23,6 +23,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import * as ImagePicker from 'expo-image-picker';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import {
   useUpdateProfileMutation,
@@ -62,7 +63,7 @@ const EditProfile = () => {
     uploadedImageUrl !== (currentUser?.profilePicture || null);
 
   useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'EditProfile',
       user_id: currentUser?._id,
     });
@@ -190,7 +191,7 @@ const EditProfile = () => {
             profilePicture: uploadedImageUrl || currentUser.profilePicture,
           }),
         );
-        trackEvent('profile_updated', { user_id: currentUser._id });
+        trackEvent(AnalyticsEventType.PROFILE_UPDATED, { user_id: currentUser._id });
         navigation.goBack();
       }
     } catch (err) {

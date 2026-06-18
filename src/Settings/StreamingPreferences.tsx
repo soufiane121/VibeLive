@@ -29,6 +29,7 @@ const getIconComponent = (iconName: string) => {
   }
 };
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import {
   useGetUserSettingsQuery,
@@ -118,7 +119,7 @@ const StreamingPreferences = () => {
   };
 
   const handleSave = async () => {
-    trackEvent('streaming_preferences_save', {
+    trackEvent(AnalyticsEventType.STREAMING_PREFERENCES_SAVED, {
       user_id: currentUser?._id,
       settings: settings,
     });

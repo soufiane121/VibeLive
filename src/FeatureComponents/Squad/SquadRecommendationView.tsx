@@ -26,6 +26,8 @@ import type {
   VenueRecommendation,
 } from '../../../features/squad/SquadApi';
 import useTranslation from '../../Hooks/useTranslation';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {AnalyticsEventType} from '../../types/AnalyticsEnums';
 
 const colors = GlobalColors.SquadMode;
 
@@ -47,6 +49,7 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
   creatorFinalSayOptions,
 }) => {
   const { t } = useTranslation();
+  const {trackEvent} = useAnalytics({screenName: 'SquadRecommendation'});
   const [castVeto, {isLoading: isVetoing}] = useCastVetoMutation();
   const [confirmVenue, {isLoading: isConfirming}] = useConfirmVenueMutation();
   const [showAlternatives, setShowAlternatives] = useState(false);
@@ -70,6 +73,11 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
             onPress: async () => {
               try {
                 await castVeto({squad_code: squadCode, reason}).unwrap();
+                trackEvent(AnalyticsEventType.SQUAD_VETO_CAST, {
+                  squad_code: squadCode,
+                  reason,
+                  venue_name: primary?.venue_name,
+                });
               } catch (err: any) {
                 Alert.alert(t('common.error'), err?.data?.error || t('onboarding.squad.vetoError'));
               }
@@ -78,7 +86,7 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
         ],
       );
     },
-    [squadCode, castVeto, t],
+    [squadCode, castVeto, t, trackEvent, primary],
   );
 
   // ── Confirm ─────────────────────────────────────────────────────────
@@ -89,11 +97,17 @@ const SquadRecommendationView: React.FC<SquadRecommendationViewProps> = ({
           squad_code: squadCode,
           venue_id: venueId,
         }).unwrap();
+        trackEvent(AnalyticsEventType.SQUAD_RECOMMENDATION_CONFIRMED, {
+          squad_code: squadCode,
+          venue_id: venueId || primary?.venue_id,
+          venue_name: primary?.venue_name,
+          is_creator_final_say: !!venueId && venueId !== primary?.venue_id,
+        });
       } catch (err: any) {
         Alert.alert(t('common.error'), err?.data?.error || t('onboarding.squad.confirmError'));
       }
     },
-    [squadCode, confirmVenue, t],
+    [squadCode, confirmVenue, t, trackEvent, primary],
   );
 
   // ── Creator Final Say (after 2 vetoes) ──────────────────────────────

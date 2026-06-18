@@ -13,6 +13,8 @@ import {GlobalColors} from '../../styles/GlobalColors';
 import {NavigateIcon, ShareIcon, CheckmarkIcon, ClockIcon} from '../../UIComponents/Icons';
 import type {ConfirmedVenue, SquadMember} from '../../../features/squad/SquadApi';
 import useTranslation from '../../Hooks/useTranslation';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {AnalyticsEventType} from '../../types/AnalyticsEnums';
 
 const colors = GlobalColors.SquadMode;
 
@@ -28,9 +30,14 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
   venueAlert,
 }) => {
   const { t } = useTranslation();
+  const {trackEvent} = useAnalytics({screenName: 'SquadConfirmed'});
   // ── Open Maps Navigation ────────────────────────────────────────────
   const handleNavigate = useCallback(() => {
     if (venue.lat == null || venue.lng == null) return;
+    trackEvent(AnalyticsEventType.SQUAD_VENUE_NAVIGATED, {
+      venue_id: venue.venue_id,
+      venue_name: venue.venue_name,
+    });
 
     const encodedName = encodeURIComponent(venue.venue_name);
     const url = Platform.select({
@@ -49,7 +56,7 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
         );
       }
     });
-  }, [venue]);
+  }, [venue, trackEvent]);
 
   // ── Share Venue ─────────────────────────────────────────────────────
   const handleShare = useCallback(async () => {
@@ -63,10 +70,14 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
         message: t('onboarding.squad.shareMessageConfirmed', { venueName: venue.venue_name, mapsUrl }),
         title: venue.venue_name,
       });
+      trackEvent(AnalyticsEventType.SQUAD_VENUE_SHARED, {
+        venue_id: venue.venue_id,
+        venue_name: venue.venue_name,
+      });
     } catch {
       // User cancelled
     }
-  }, [venue]);
+  }, [venue, trackEvent]);
 
   const confirmedTime = venue.confirmed_at
     ? new Date(venue.confirmed_at).toLocaleTimeString([], {

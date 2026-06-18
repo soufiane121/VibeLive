@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import { useGetAccountProfileQuery } from '../../features/settings/SettingsSliceApi';
 import { useBoostStreamMutation } from '../../features/registrations/LoginSliceApi';
@@ -107,7 +108,7 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
   const currentTier = MINUTES_TIERS.find(tier => tier.id === selectedTier)!;
 
   const handlePurchase = async () => {
-    trackEvent('boost_tier_selected', {
+    trackEvent(AnalyticsEventType.BOOST_TIER_SELECTED, {
       tier: selectedTier,
       price: currentTier.price,
       user_id: userId,
@@ -124,7 +125,7 @@ const BuyMinutesContent = ({ embedded, onPurchaseComplete, balanceOverride }: Bu
         title: t('account.minutesPack', { minutes: currentTier.minutes }),
       }).unwrap();
 
-      trackEvent('boost_purchased', {
+      trackEvent(AnalyticsEventType.BOOST_PURCHASED, {
         tier: selectedTier,
         price: currentTier.price,
         minutes: currentTier.minutes,

@@ -18,6 +18,7 @@ import { setCurrentUser } from '../../features/registrations/CurrentUser';
 import { ChevronBackIcon, NotificationsIcon, MailIcon, RadioIcon, PersonAddIcon, ChatbubbleIcon, InformationCircleIcon } from '../UIComponents/Icons';
 // import Ionicons from 'react-native-vector-icons/Ionicons';
 import useAnalytics from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import {
   useGetUserSettingsQuery,
@@ -100,7 +101,7 @@ const NotificationSettings = () => {
   });
 
   useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'NotificationSettings',
       user_id: currentUser?._id,
     });
@@ -128,7 +129,7 @@ const NotificationSettings = () => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
 
-    trackEvent('notification_setting_changed', {
+    trackEvent(AnalyticsEventType.NOTIFICATION_SETTING_CHANGED, {
       setting: key,
       value,
       user_id: currentUser?._id,
@@ -136,7 +137,7 @@ const NotificationSettings = () => {
   };
 
   const handleSave = async () => {
-    trackEvent('notification_settings_save', {
+    trackEvent(AnalyticsEventType.NOTIFICATION_SETTINGS_SAVED, {
       user_id: currentUser?._id,
       settings: settings,
     });

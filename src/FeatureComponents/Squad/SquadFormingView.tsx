@@ -18,6 +18,8 @@ import {
 import type {SquadMember, SquadState} from '../../../features/squad/SquadApi';
 import {baseUrl} from '../../../baseUrl';
 import useTranslation from '../../Hooks/useTranslation';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {AnalyticsEventType} from '../../types/AnalyticsEnums';
 
 const colors = GlobalColors.SquadMode;
 
@@ -41,6 +43,7 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
   onReset,
 }) => {
   const { t } = useTranslation();
+  const {trackEvent} = useAnalytics({screenName: 'SquadForming'});
   const [triggerRecommendation, {isLoading: isGenerating}] =
     useTriggerRecommendationMutation();
   const [cancelSquad, {isLoading: isCancelling}] = useCancelSquadMutation();
@@ -56,10 +59,14 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
         message: t('onboarding.squad.shareMessage', { creatorName, webJoinUrl }),
         title: t('onboarding.squad.shareTitle'),
       });
+      trackEvent(AnalyticsEventType.SQUAD_INVITE_SHARED, {
+        squad_code: squadCode,
+        member_count: members.length,
+      });
     } catch (err) {
       // User cancelled share — no action needed
     }
-  }, [squadCode, squadData, webJoinUrl]);
+  }, [squadCode, squadData, webJoinUrl, members, trackEvent]);
 
   // ── Find Our Spot ───────────────────────────────────────────────────
   const handleFindSpot = useCallback(async () => {
@@ -73,13 +80,17 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
 
     try {
       await triggerRecommendation(squadCode).unwrap();
+      trackEvent(AnalyticsEventType.SQUAD_FIND_SPOT_TRIGGERED, {
+        squad_code: squadCode,
+        member_count: members.length,
+      });
     } catch (err: any) {
       Alert.alert(
         t('common.error'),
         err?.data?.error || t('onboarding.squad.failedRecommendation'),
       );
     }
-  }, [squadCode, members, triggerRecommendation]);
+  }, [squadCode, members, triggerRecommendation, trackEvent]);
 
   // ── Cancel ──────────────────────────────────────────────────────────
   const handleCancel = useCallback(() => {
@@ -94,6 +105,10 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
           onPress: async () => {
             try {
               await cancelSquad(squadCode).unwrap();
+              trackEvent(AnalyticsEventType.SQUAD_CANCELLED, {
+                squad_code: squadCode,
+                member_count: members.length,
+              });
               onReset();
             } catch (err: any) {
               Alert.alert(t('common.error'), err?.data?.error || t('onboarding.squad.failedCancel'));
@@ -102,7 +117,7 @@ const SquadFormingView: React.FC<SquadFormingViewProps> = ({
         },
       ],
     );
-  }, [squadCode, cancelSquad, onReset]);
+  }, [squadCode, cancelSquad, onReset, trackEvent, members]);
 
   return (
     <ScrollView

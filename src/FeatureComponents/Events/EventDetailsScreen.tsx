@@ -19,6 +19,7 @@ import { format, isThisWeek, isToday, isTomorrow } from 'date-fns';
 import { useGetEventByIdQuery, useRemoveRSVPMutation, useRsvpEventMutation } from '../../../features/Events/EventsApi';
 import { ChevronBackIcon, CommonMaterialCommunityIcons, CommonMaterialIcons } from '../../UIComponents/Icons';
 import { useAnalytics } from '../../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../../types/AnalyticsEnums';
 import { GlobalColors, ColorUtils } from '../../styles/GlobalColors';
 import { Linking } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -41,6 +42,15 @@ const EventDetailsScreen: React.FC = () => {
   
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   const { t } = useTranslation();
+  const { trackEvent } = useAnalytics({ screenName: 'EventDetails' });
+
+  useEffect(() => {
+    trackEvent(AnalyticsEventType.EVENT_DETAILS_VIEWED, {
+      event_id: eventId,
+      user_id: currentUser?._id,
+      from_creation: fromEventCreation || false,
+    });
+  }, [eventId]);
   
   const [selectedRsvpStatus, setSelectedRsvpStatus] = useState<'interested' | 'going'>('interested');
 
@@ -73,6 +83,11 @@ const EventDetailsScreen: React.FC = () => {
     
     try {
       await rsvpEvent({ eventId: event._id, status }).unwrap();
+      trackEvent(AnalyticsEventType.EVENT_RSVP, {
+        event_id: event._id,
+        event_title: event.title,
+        rsvp_status: status,
+      });
       refetch();
     } catch (error: any) {
       console.log("error 11111111",error);
@@ -86,6 +101,10 @@ const EventDetailsScreen: React.FC = () => {
 
     try {
       await removeRSVP(event._id).unwrap();
+      trackEvent(AnalyticsEventType.EVENT_RSVP_REMOVED, {
+        event_id: event._id,
+        event_title: event.title,
+      });
       refetch();
     } catch (error: any) {
       Alert.alert('Error', error?.data?.message || 'Failed to remove RSVP');

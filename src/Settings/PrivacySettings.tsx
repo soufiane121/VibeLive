@@ -27,6 +27,7 @@ const getIconComponent = (iconName: string) => {
   }
 };
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import {
   useGetUserSettingsQuery,
@@ -70,7 +71,7 @@ const PrivacySettings = () => {
   const [updatePrivacySettings, {isLoading: updateLoading}] = useUpdatePrivacySettingsMutation();
 
   useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'PrivacySettings',
       user_id: currentUser?._id,
     });
@@ -96,7 +97,7 @@ const PrivacySettings = () => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
 
-    trackEvent('privacy_setting_changed', {
+    trackEvent(AnalyticsEventType.PRIVACY_SETTING_CHANGED, {
       setting: key,
       value,
       user_id: currentUser?._id,
@@ -104,7 +105,7 @@ const PrivacySettings = () => {
   };
 
   const handleSave = async () => {
-    trackEvent('privacy_settings_save', {
+    trackEvent(AnalyticsEventType.PRIVACY_SETTINGS_SAVED, {
       user_id: currentUser?._id,
       settings: settings,
     });

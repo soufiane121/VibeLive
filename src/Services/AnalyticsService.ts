@@ -1,6 +1,7 @@
 // Mock Analytics Service - Lightweight version without native dependencies
 // This prevents app registration errors while maintaining analytics API compatibility
 import { Platform } from 'react-native';
+import { AnalyticsEventType, AnalyticsEventCategory, getEventCategory } from '../types/AnalyticsEnums';
 
 // Types for analytics events
 export interface AnalyticsEvent {
@@ -153,11 +154,11 @@ class AnalyticsService {
   // Track session start
   public async trackSessionStart(): Promise<void> {
     try {
-      await this.trackEvent('session_started', {
+      await this.trackEvent(AnalyticsEventType.SESSION_STARTED, {
         sessionId: this.sessionId,
         deviceInfo: this.deviceInfo,
         userContext: this.userContext
-      }, 'user_engagement');
+      }, AnalyticsEventCategory.USER_ENGAGEMENT);
     } catch (error) {
       console.error('Failed to track session start:', error);
     }
@@ -168,11 +169,11 @@ class AnalyticsService {
     try {
       const sessionDuration = Date.now() - this.sessionStartTime.getTime();
       
-      await this.trackEvent('session_ended', {
+      await this.trackEvent(AnalyticsEventType.SESSION_ENDED, {
         sessionId: this.sessionId,
         sessionDuration: Math.floor(sessionDuration / 1000),
         eventsTracked: this.eventQueue.length
-      }, 'user_engagement');
+      }, AnalyticsEventCategory.USER_ENGAGEMENT);
 
       // Final flush before ending session
       await this.flushEvents();
@@ -231,16 +232,16 @@ class AnalyticsService {
 
   // Track screen views
   public async trackScreenView(screenName: string, duration?: number): Promise<void> {
-    await this.trackEvent('app_opened', {
+    await this.trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screenName,
       duration,
       timestamp: new Date().toISOString()
-    }, 'user_engagement');
+    }, AnalyticsEventCategory.USER_ENGAGEMENT);
   }
 
   // Track location changes
   public async trackLocationChange(coordinates: [number, number], accuracy?: number): Promise<void> {
-    await this.trackEvent('location_changed', {
+    await this.trackEvent(AnalyticsEventType.LOCATION_CHANGED, {
       coordinates,
       accuracy,
       timestamp: new Date().toISOString()
@@ -295,39 +296,9 @@ class AnalyticsService {
     return undefined;
   }
 
-  // Categorize events
+  // Categorize events using centralized enum helper
   private categorizeEvent(eventType: string): string {
-    const categories: Record<string, string[]> = {
-      'user_engagement': [
-        'app_opened', 'app_closed', 'app_backgrounded', 'app_foregrounded',
-        'map_marker_clicked', 'map_moved', 'map_zoomed', 'location_changed',
-        'screen_viewed', 'category_filter_applied', 'search_performed'
-      ],
-      'stream_interaction': [
-        'stream_discovered', 'stream_preview_viewed', 'stream_joined', 'stream_left',
-        'stream_watched', 'go_live_started', 'stream_started', 'stream_ended',
-        'viewer_count_updated'
-      ],
-      'monetization': [
-        'boost_intro_viewed', 'boost_tier_selected', 'boost_purchased', 'boost_activated',
-        'boost_skipped', 'payment_initiated', 'payment_completed', 'payment_failed',
-        'payment_cancelled'
-      ],
-      'social': [
-        'message_sent', 'reaction_sent', 'emoji_used', 'user_followed', 'user_unfollowed'
-      ],
-      'technical': [
-        'error_occurred', 'crash_reported', 'network_error', 'permission_denied'
-      ]
-    };
-
-    for (const [category, events] of Object.entries(categories)) {
-      if (events.includes(eventType)) {
-        return category;
-      }
-    }
-
-    return 'user_engagement';
+    return getEventCategory(eventType as AnalyticsEventType);
   }
 
   // Start periodic flush

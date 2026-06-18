@@ -13,6 +13,8 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {useCastVoteMutation} from '../../../features/voting/VotingApi';
 import {premiumColors} from '../../styles/premuimColors';
 import useTranslation from '../../Hooks/useTranslation';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {AnalyticsEventType} from '../../types/AnalyticsEnums';
 
 const data = [
   {
@@ -119,15 +121,26 @@ const VenueSelectionScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const {trackEvent} = useAnalytics({screenName: 'VenueSelection'});
   const venues: VenueItem[] = route.params?.venues || data || [];
 
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [votingVenueId, setVotingVenueId] = useState<string | null>(null);
   const [castVote, {isLoading}] = useCastVoteMutation();
 
-  const handleSelectVenue = useCallback((venueId: string) => {
-    setSelectedVenueId(venueId);
+  React.useEffect(() => {
+    trackEvent(AnalyticsEventType.VENUE_HEATMAP_VIEWED, {
+      venues_count: venues.length,
+    });
   }, []);
+
+  const handleSelectVenue = useCallback((venueId: string) => {
+    trackEvent(AnalyticsEventType.VENUE_SELECTED, {
+      venue_id: venueId,
+      venue_name: venues.find(v => v.id === venueId)?.name,
+    });
+    setSelectedVenueId(venueId);
+  }, [venues, trackEvent]);
 
   const handleVote = useCallback(
     async (voteType: 'hot' | 'dead') => {
@@ -149,6 +162,11 @@ const VenueSelectionScreen = () => {
         }).unwrap();
 
         if (result.success) {
+          trackEvent(AnalyticsEventType.VENUE_VOTE_CAST, {
+            venue_id: selectedVenueId,
+            vote_type: voteType,
+            source: 'venue_selection',
+          });
           const emoji = voteType === 'hot' ? '🔥' : '💀';
           const venueName =
             venues.find(v => v.id === selectedVenueId)?.name || t('voting.venue');

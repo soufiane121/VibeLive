@@ -351,9 +351,9 @@ class RTKAnalyticsService {
     await this.trackEvent(errorType, errorData, AnalyticsEventCategory.TECHNICAL);
   }
 
-  // Track screen views (using app_opened since backend doesn't support screen_view events)
+  // Track screen views
   public async trackScreenView(screenName: string, duration?: number): Promise<void> {
-    await this.trackEvent(AnalyticsEventType.APP_OPENED, {
+    await this.trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screenName,
       duration,
       timestamp: new Date().toISOString()
@@ -440,44 +440,9 @@ class RTKAnalyticsService {
     }
   }
 
-  // Categorize events
+  // Categorize events using centralized enum helper
   private categorizeEvent(eventType: string): string {
-    const categories: Record<string, string[]> = {
-      [ANALYTICS_CONFIG.categories.userEngagement]: [
-        'app_opened', 'app_closed', 'app_backgrounded', 'app_foregrounded',
-        'map_marker_clicked', 'map_moved', 'map_zoomed', 'location_changed',
-        'category_filter_applied', 'search_performed'
-      ],
-      [ANALYTICS_CONFIG.categories.streamInteraction]: [
-        'stream_discovered', 'stream_preview_viewed', 'stream_joined', 'stream_left',
-        'stream_watched', 'go_live_started', 'stream_started', 'stream_ended',
-        'viewer_count_updated'
-      ],
-      [ANALYTICS_CONFIG.categories.monetization]: [
-        'boost_intro_viewed', 'boost_tier_selected', 'boost_purchased', 'boost_activated',
-        'boost_skipped', 'payment_initiated', 'payment_completed', 'payment_failed',
-        'payment_cancelled'
-      ],
-      [ANALYTICS_CONFIG.categories.social]: [
-        'message_sent', 'reaction_sent', 'emoji_used', 'user_followed', 'user_unfollowed'
-      ],
-      [ANALYTICS_CONFIG.categories.technical]: [
-        'error_occurred', 'crash_reported', 'network_error', 'permission_denied'
-      ],
-      squad: [
-        'squad_created', 'squad_joined', 'squad_cancelled', 'squad_expired',
-        'squad_recommendation_generated', 'squad_recommendation_confirmed',
-        'squad_veto_cast', 'squad_outcome_submitted', 'squad_invite_link_opened'
-      ]
-    };
-
-    for (const [category, events] of Object.entries(categories)) {
-      if (events.includes(eventType)) {
-        return category;
-      }
-    }
-
-    return ANALYTICS_CONFIG.categories.userEngagement;
+    return getEventCategory(eventType as AnalyticsEventType);
   }
 
   // Start periodic flush

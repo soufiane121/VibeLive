@@ -15,6 +15,7 @@ import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon, BanIcon, PersonIcon, CheckmarkIcon, InformationCircleIcon } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import {
   useGetBlockedUsersQuery,
@@ -35,7 +36,7 @@ const BlockedUsers = () => {
   const blockedUsers = blockedUsersData?.blockedUsers || [];
 
   useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'BlockedUsers',
       user_id: currentUser?._id,
     });
@@ -65,7 +66,7 @@ const BlockedUsers = () => {
         Alert.alert(t('common.success'), t('blockedUsers.unblockSuccess'));
         refetch(); // Refresh the blocked users list
         
-        trackEvent('user_unblocked', {
+        trackEvent(AnalyticsEventType.USER_UNBLOCKED, {
           unblocked_user_id: userId,
           user_id: currentUser?._id,
         });

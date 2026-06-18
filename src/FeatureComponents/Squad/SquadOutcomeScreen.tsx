@@ -10,6 +10,8 @@ import {
 import {GlobalColors} from '../../styles/GlobalColors';
 import {useSubmitOutcomeMutation} from '../../../features/squad/SquadApi';
 import useTranslation from '../../Hooks/useTranslation';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {AnalyticsEventType} from '../../types/AnalyticsEnums';
 
 const colors = GlobalColors.SquadMode;
 
@@ -25,6 +27,7 @@ const SquadOutcomeScreen: React.FC<SquadOutcomeScreenProps> = ({
   onDismiss,
 }) => {
   const { t } = useTranslation();
+  const {trackEvent} = useAnalytics({screenName: 'SquadOutcome'});
   const [submitOutcome, {isLoading}] = useSubmitOutcomeMutation();
   const [submitted, setSubmitted] = useState(false);
 
@@ -32,6 +35,11 @@ const SquadOutcomeScreen: React.FC<SquadOutcomeScreenProps> = ({
     async (rating: 'positive' | 'negative') => {
       try {
         await submitOutcome({squad_code: squadCode, rating}).unwrap();
+        trackEvent(AnalyticsEventType.SQUAD_OUTCOME_SUBMITTED, {
+          squad_code: squadCode,
+          venue_name: venueName,
+          rating,
+        });
         setSubmitted(true);
       } catch (err: any) {
         if (err?.status === 409) {
@@ -41,7 +49,7 @@ const SquadOutcomeScreen: React.FC<SquadOutcomeScreenProps> = ({
         }
       }
     },
-    [squadCode, submitOutcome],
+    [squadCode, submitOutcome, trackEvent, venueName],
   );
 
   if (submitted) {

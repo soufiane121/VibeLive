@@ -18,6 +18,7 @@ import {useCoordinates, useLocationPermission} from '../CustomHooks/useGetLocati
 import {useLazyGetNearbyVenuesQuery, NearbyVenue} from '../../features/LiveStream/LiveStream';
 import {IAPAdapter, TIER_TO_PRODUCT_ID} from '../Payment/adapters/IAPAdapter';
 import {AnalyticsEventType} from '../types/AnalyticsEnums';
+import {useAnalytics} from '../Hooks/useAnalytics';
 import useTranslation from '../Hooks/useTranslation';
 import {
   BarIcon,
@@ -121,6 +122,7 @@ type FlowStep =
 
 const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
   const { t } = useTranslation();
+  const {trackEvent} = useAnalytics({screenName: 'EventSelections'});
 
   const eventsList = [
     {
@@ -337,10 +339,6 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
     }
   };
 
-  // Analytics tracking (mock implementation)
-  const trackEvent = (eventName: string, properties: any) => {
-    console.log(`Analytics: ${eventName}`, properties);
-  };
 
   const handleCategorySelection = (
     category: string,

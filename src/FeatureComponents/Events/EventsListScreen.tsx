@@ -22,6 +22,8 @@ import {
 } from '../../UIComponents/Icons';
 import { GlobalColors, ColorUtils } from '../../styles/GlobalColors';
 import useTranslation from '../../Hooks/useTranslation';
+import { useAnalytics } from '../../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../../types/AnalyticsEnums';
 
 const colors = GlobalColors.EventsListScreen;
 
@@ -193,6 +195,14 @@ const EventsListScreen: React.FC = () => {
   const coordinates = useCoordinates();
   const currentUser = useSelector((state: any) => state.currentUser.currentUser);
   const { t } = useTranslation();
+  const { trackEvent } = useAnalytics({ screenName: 'EventsList' });
+
+  React.useEffect(() => {
+    trackEvent(AnalyticsEventType.EVENT_LIST_VIEWED, {
+      user_id: currentUser?._id,
+      filter: selectedFilter,
+    });
+  }, []);
 
   const {
     data: eventsResponse,
@@ -245,10 +255,19 @@ const EventsListScreen: React.FC = () => {
   }, [refetch]);
 
   const handleEventPress = (event: Event) => {
+    trackEvent(AnalyticsEventType.EVENT_DETAILS_VIEWED, {
+      event_id: event._id,
+      event_title: event.title,
+      event_type: event.eventType,
+    });
     navigation.navigate('EventDetails', {eventId: event._id});
   };
 
   const handleCreateEvent = () => {
+    trackEvent(AnalyticsEventType.BUTTON_PRESSED, {
+      button_name: 'create_event',
+      screen_name: 'EventsList',
+    });
     navigation.navigate('EventCreationFlow');
   };
 

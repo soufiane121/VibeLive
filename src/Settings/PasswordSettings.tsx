@@ -14,6 +14,7 @@ import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronBackIcon, PasswordIcons } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import { GlobalColors } from '../styles/GlobalColors';
 import {
@@ -35,7 +36,7 @@ const PasswordSettings = () => {
   const [changePassword, {isLoading: changePasswordLoading}] = useChangePasswordMutation();
 
   React.useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'PasswordSettings',
       user_id: currentUser?._id,
     });
@@ -88,7 +89,7 @@ const PasswordSettings = () => {
         setNewPassword('');
         setConfirmPassword('');
         
-        trackEvent('password_changed', {
+        trackEvent(AnalyticsEventType.PASSWORD_CHANGED, {
           user_id: currentUser?._id,
         });
       } else {

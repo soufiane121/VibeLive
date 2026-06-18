@@ -24,7 +24,7 @@ import SquadConfirmedView from './SquadConfirmedView';
 import SquadOutcomeScreen from './SquadOutcomeScreen';
 import useSquadSocket from '../../Hooks/useSquadSocket';
 import {useAnalytics} from '../../Hooks/useAnalytics';
-import {AnalyticsEventType} from '../../types/AnalyticsEnums';
+import {AnalyticsEventType, AnalyticsEventCategory} from '../../types/AnalyticsEnums';
 import useTranslation from '../../Hooks/useTranslation';
 import type {
   SquadMember,
@@ -176,14 +176,14 @@ const SquadScreen: React.FC = () => {
       Alert.alert(t('onboarding.squad.expired'), t('onboarding.squad.expiredDesc'));
       trackEvent(AnalyticsEventType.SQUAD_EXPIRED, {
         squadCode: activeSquadCode,
-      }, 'squad');
+      }, AnalyticsEventCategory.SQUAD);
     },
     onCancelled: () => {
       setSquadStatus('cancelled');
       Alert.alert(t('onboarding.squad.cancelled'), t('onboarding.squad.cancelledDesc'));
       trackEvent(AnalyticsEventType.SQUAD_CANCELLED, {
         squadCode: activeSquadCode,
-      }, 'squad');
+      }, AnalyticsEventCategory.SQUAD);
     },
     onError: ({message}) => {
       console.warn('[SquadScreen] Socket error:', message);
@@ -218,7 +218,7 @@ const SquadScreen: React.FC = () => {
       trackEvent(AnalyticsEventType.SQUAD_CREATED, {
         squadCode: result.squad_code,
         squadId: result.squad_id,
-      }, 'squad');
+      }, AnalyticsEventCategory.SQUAD);
 
       // Store the guest token from the first member (creator)
       // We'll get it from the squad state after refetch

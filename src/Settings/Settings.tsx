@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { GlobalColors } from '../styles/GlobalColors';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 import useTranslation from '../Hooks/useTranslation';
 import { useSingOutMutation } from '../../features/registrations/LoginSliceApi';
 import { setCurrentUser } from '../../features/registrations/CurrentUser';
@@ -94,7 +95,7 @@ const Settings = () => {
   const [signOut] = useSingOutMutation();
 
   useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'SettingsNew',
       user_id: currentUser?._id,
     });

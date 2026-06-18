@@ -21,6 +21,7 @@ import StepIndicator from './components/StepIndicator';
 import { useCreateEventMutation } from '../../../features/Events/EventsApi';
 import { useSelector } from 'react-redux';
 import { useAnalytics } from '../../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../../types/AnalyticsEnums';
 import { GlobalColors } from '../../styles/GlobalColors';
 import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import useTranslation from '../../Hooks/useTranslation';
@@ -35,6 +36,7 @@ const EventCreationFlow: React.FC = () => {
   const [createEvent, { isLoading }] = useCreateEventMutation();
   const coordinates = useCoordinates();
   const currentUser = useSelector((state: any) => state.currentUser.currentUser);
+  const { trackEvent } = useAnalytics({ screenName: 'EventCreationFlow' });
   const myVenue = currentUser?.operatorVenue ?? null;
   const isOperator = !!myVenue;
   const totalSteps = isOperator ? 5 : 4;
@@ -241,6 +243,13 @@ const EventCreationFlow: React.FC = () => {
       };
 
       const result = await createEvent(eventData).unwrap();
+
+      trackEvent(AnalyticsEventType.EVENT_CREATED, {
+        event_id: result?.data?._id,
+        event_type: formData.eventType,
+        is_promoted: formData.promotion?.isPromoted || false,
+        is_operator: isOperator,
+      });
 
       const successMessage = isOperator
         ? t('eventCreation.eventCreatedSuccess')
