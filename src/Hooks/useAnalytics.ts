@@ -3,6 +3,8 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRTKAnalytics } from './useRTKAnalytics';
 import { 
+  AnalyticsEventType,
+  AnalyticsEventCategory,
   MapInteractionType, 
   StreamAction, 
   SocialInteractionType, 
@@ -56,16 +58,16 @@ export const useAnalytics = (props: UseAnalyticsProps = {}): AnalyticsHook => {
     useCallback(() => {
       if (trackFocus && screenName) {
         screenStartTime.current = new Date();
-        analytics.trackEvent('app_foregrounded', { screenName }, 'user_engagement');
+        analytics.trackEvent(AnalyticsEventType.APP_FOREGROUNDED, { screenName }, AnalyticsEventCategory.USER_ENGAGEMENT);
       }
 
       return () => {
         if (trackFocus && screenName && screenStartTime.current) {
           const duration = Date.now() - screenStartTime.current.getTime();
-          analytics.trackEvent('app_backgrounded', { 
+          analytics.trackEvent(AnalyticsEventType.APP_BACKGROUNDED, { 
             screenName, 
             duration: Math.floor(duration / 1000) 
-          }, 'user_engagement');
+          }, AnalyticsEventCategory.USER_ENGAGEMENT);
         }
       };
     }, [trackFocus, screenName])

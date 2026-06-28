@@ -9,6 +9,7 @@ import {
 import { CommonMaterialCommunityIcons } from '../../../UIComponents/Icons';
 import DateTimePicker from 'react-native-ui-datepicker';
 import { GlobalColors } from '../../../styles/GlobalColors';
+import useTranslation from '../../../Hooks/useTranslation';
 
 const colors = GlobalColors.EventCreationFlow;
 const commonColors = GlobalColors.Common;
@@ -32,6 +33,7 @@ const EventDateTime: React.FC<EventDateTimeProps> = ({
   onShowStartDatePicker,
   onShowEndDatePicker,
 }) => {
+  const { t } = useTranslation();
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
@@ -63,10 +65,10 @@ const EventDateTime: React.FC<EventDateTimeProps> = ({
 
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Date & Time</Text>
+      <Text style={styles.stepTitle}>{t('eventDateTime.dateAndTime')}</Text>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Start Date & Time *</Text>
+        <Text style={styles.label}>{t('eventDateTime.startDateTime')}</Text>
         <TouchableOpacity
           style={[styles.dateInput, errors.startDate && styles.inputError]}
           onPress={handleShowStartPicker}
@@ -80,7 +82,7 @@ const EventDateTime: React.FC<EventDateTimeProps> = ({
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>End Date & Time *</Text>
+        <Text style={styles.label}>{t('eventDateTime.endDateTime')}</Text>
         <TouchableOpacity
           style={[styles.dateInput, errors.endDate && styles.inputError]}
           onPress={handleShowEndPicker}
@@ -106,7 +108,7 @@ const EventDateTime: React.FC<EventDateTimeProps> = ({
               styles={getDatePickerStyles()}
             />
             <TouchableOpacity style={styles.doneButton} onPress={() => setShowStartPicker(false)}>
-              <Text style={styles.doneButtonText}>Done</Text>
+              <Text style={styles.doneButtonText}>{t('common.done')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -125,7 +127,7 @@ const EventDateTime: React.FC<EventDateTimeProps> = ({
               styles={getDatePickerStyles()}
             />
             <TouchableOpacity style={styles.doneButton} onPress={() => setShowEndPicker(false)}>
-              <Text style={styles.doneButtonText}>Done</Text>
+              <Text style={styles.doneButtonText}>{t('common.done')}</Text>
             </TouchableOpacity>
           </View>
         </View>

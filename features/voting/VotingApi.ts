@@ -2,6 +2,20 @@ import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
 import {baseUrl} from '../../baseUrl';
 import {getLocalData} from '../../src/Utils/LocalStorageHelper';
 
+export interface VenueAddress {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+}
+
+export interface BusinessHour {
+  day: number;
+  open: string;
+  close: string;
+}
+
 export interface VenueData {
   id: string;
   name: string;
@@ -15,6 +29,17 @@ export interface VenueData {
   boostMultiplier: number;
   lastVoteAt: string | null;
   distance?: number;
+  // Venue detail fields
+  address?: VenueAddress | null;
+  phone?: string | null;
+  website?: string | null;
+  googleRating?: number | null;
+  googleReviewCount?: number | null;
+  priceLevel?: number | null;
+  venueDescription?: string | null;
+  businessHours?: BusinessHour[];
+  coverPhotoUrl?: string | null;
+  photos?: string[];
 }
 
 export interface VoteResult {
@@ -47,6 +72,8 @@ export interface VenueVibeData {
     totalVotesTonight: number;
     lastVoteAt: string | null;
     isBoosted: boolean;
+    photos?: string[]
+    businessHours?: any[]
   };
   recentVotes: Array<{type: string; at: string; source: string}>;
   velocity: VoteVelocity;
@@ -169,7 +196,7 @@ export const votingApi = createApi({
     }),
 
     // Venue endpoints
-    getNearbyVenues: builder.query<{venues: VenueData[]; count: number}, {latitude: number; longitude: number; radius?: number}>({
+    getNearbyVenues: builder.query<{venues: VenueData[]; count: number}, {latitude: number; longitude: number; radius?: number, photos?: string[]}>({
       query: ({latitude, longitude, radius}) => ({
         url: `voting/venues/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius || 2}`,
       }),

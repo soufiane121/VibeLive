@@ -28,6 +28,15 @@ export const premiumColors = {
     lightGreenBG: 'rgba(74, 99, 76, 0.22)',
 
     separator: 'rgba(255, 255, 255, 0.05)',
+
+    heatmap: {
+      coldest: '#E6EBF5', // Very light blue
+      cold: '#C0D1EE', // Light blue
+      neutral: '#8CAAE0', // Mid blue
+      warm: '#5E88D6', // Darker mid blue
+      hot: '#5985ed', // accentPrimary
+      ring: '#cbd0e0ff',
+    },
   },
 
   light: {
@@ -60,5 +69,14 @@ export const premiumColors = {
     separator: 'rgba(0, 0, 0, 0.05)',
 
     lightGreenBG: 'rgba(208, 241, 210, 0.22)',
+
+    heatmap: {
+      coldest: '#E6EBF5', // Very light blue
+      cold: '#C0D1EE', // Light blue
+      neutral: '#8CAAE0', // Mid blue
+      warm: '#5E88D6', // Darker mid blue
+      hot: '#5985ed', // accentPrimary
+      ring: '#cbd0e0ff',
+    },
   },
 };

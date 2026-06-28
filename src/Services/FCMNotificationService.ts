@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import votingNotificationHandler, {
   VenueNotificationData,
 } from './VotingNotificationHandler';
+import locationSuppressionService from './LocationSuppressionService';
 
 const FCM_TOKEN_KEY = '@vibelive_fcm_token';
 
@@ -188,6 +189,9 @@ const handleForegroundMessage = async (
   console.log('[FCM] Foreground message:', data?.type || 'unknown');
 
   if (data?.type && VOTING_NOTIFICATION_TYPES.includes(data.type)) {
+    // Track for background-location suppression (nightly cap)
+    locationSuppressionService.incrementNightlyNotificationCount();
+
     // Silent logging only — the push notification banner with action buttons
     // is already displayed by the system. No Alert, no in-app UI.
     votingNotificationHandler.handleNotificationReceived(
@@ -250,9 +254,14 @@ const handleBackgroundMessage = async (
   const data = remoteMessage.data as FCMNotificationData | undefined;
   console.log('[FCM] Background message:', data?.type || 'unknown');
 
+  // Track voting notifications for background-location suppression (nightly cap)
+  if (data?.type && VOTING_NOTIFICATION_TYPES.includes(data.type)) {
+    await locationSuppressionService.incrementNightlyNotificationCount();
+  }
+
   // Background voting messages: the notification with action buttons is
   // already displayed by the system. When user taps an action,
-  // handleNotificationOpen will fire. Nothing to do here.
+  // handleNotificationOpen will fire. Nothing else to do here.
 };
 
 // =============================================================================

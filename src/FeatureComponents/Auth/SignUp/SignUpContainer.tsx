@@ -1,268 +1,145 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import {useSignUpMutation, useValidateFieldsMutation} from '../../../../features/registrations/LoginSliceApi';
-import {useDispatch} from 'react-redux';
-import {setCurrentUser} from '../../../../features/registrations/CurrentUser';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Button from '../../../UIComponents/Button';
-
-const COLORS = {
-  primary: '#FF2D55',
-  background: '#181818',
-  input: '#222',
-  text: '#fff',
-  accent: '#FFD600',
-  error: '#FF2D55',
-};
-
-const requiredFields = [
-  'userName',
-  'email',
-  'password',
-  'confirmPassword',
-  'phoneNumber',
-];
+import * as AppleAuthentication from 'expo-apple-authentication';
+import {useAppleAuthMutation} from '../../../../features/registrations/LoginSliceApi';
+import {setLocalData} from '../../../Utils/LocalStorageHelper';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import useTranslation from '../../../Hooks/useTranslation';
+import {GlobalColors} from '../../../styles/GlobalColors';
+import { AppleIcon } from '../../../UIComponents/Icons';
 
 const SignUpContainer = ({navigation}) => {
-  const [form, setForm] = useState({
-    userName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phoneNumber: '',
-    coordinates: [0, 0], // Default, replace with real location if available
-  });
-  const [loading, setLoading] = useState(false);
-  const [signUp, {isLoading}] = useSignUpMutation();
-  const [validateFields, {isLoading: isValidationPass}] = useValidateFieldsMutation();
-  const dispatch = useDispatch();
-  const [missingFields, setMissingFields] = useState<string[]>([]);
-  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [appleAuth, {isLoading: isAppleLoading}] = useAppleAuthMutation();
+  const {t} = useTranslation();
 
-  const handleChange = (key, value) => {
-    setForm({...form, [key]: value});
-    if (missingFields.includes(key)) {
-      setMissingFields(missingFields.filter(f => f !== key));
-    }
-    // Clear field-specific errors when user starts typing
-    if (fieldErrors[key]) {
-      setFieldErrors(prev => {
-        const newErrors = {...prev};
-        delete newErrors[key];
-        return newErrors;
-      });
-    }
-  };
-
-  const handleSignUp = async () => {
-    const emptyFields = requiredFields.filter(field => !form[field]);
-    setMissingFields(emptyFields);
-
-    if (emptyFields.length > 0) {
-      return;
-    }
-    if (form.password !== form.confirmPassword) {
-      setMissingFields(prev => [
-        ...new Set([...prev, 'password', 'confirmPassword']),
-      ]);
-      setFieldErrors(prev => ({
-        ...prev,
-        confirmPassword: 'Passwords do not match'
-      }));
-      return;
-    }
-
-    // Validate unique fields before proceeding
+  const handleAppleSignIn = async () => {
     try {
-      const validationResult = await validateFields({
-        userName: form.userName,
-        email: form.email,
-        phoneNumber: form.phoneNumber,
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const result = await appleAuth({
+        identityToken: credential.identityToken,
+        user: credential.user,
+        email: credential.email,
+        fullName: credential.fullName,
+        phone: null,
       }).unwrap();
 
-      if (!validationResult.isValid) {
-        const errors = validationResult.errors || {};
-        const errorFields = Object.keys(errors);
-        setMissingFields(errorFields);
-        setFieldErrors(errors);
-        return;
-      } else {
-        // If validation passes, navigate to onboarding flow
+      if (result?.data?.email) {
+        await setLocalData({key: 'token', value: result.data.email});
+        await setLocalData({key: 'isAuthenticated', value: 'true'});
         navigation.navigate('OnboardingAccountCreation', {
           signupData: {
-            userName: form.userName,
-            email: form.email,
-            password: form.password,
-            phoneNumber: form.phoneNumber,
-            coordinates: form.coordinates,
+            userName: result.data.userName || '',
+            email: result.data.email,
+            phoneNumber: result.data.phoneNumber || '',
+            appleAuth: true,
           },
         });
-
       }
-
-
-    } catch (error: any) {
-      console.log('Validation error:', error);
-      // Handle validation error response
-      if (error?.data?.errors) {
-        const errors = error.data.errors;
-        const errorFields = Object.keys(errors);
-        setMissingFields(errorFields);
-        setFieldErrors(errors);
-      } else {
-        setFieldErrors(prev => ({
-          ...prev,
-          general: 'Failed to validate account information. Please try again.'
-        }));
+    } catch (err: any) {
+      if (err?.code === 'ERR_REQUEST_CANCELED') {
+        return;
       }
+      Alert.alert(
+        t('auth.signup.appleSignInError'),
+        t('auth.signup.appleSignInErrorDesc'),
+      );
     }
   };
 
-  const getInputStyle = (field: string) => [
-    styles.input,
-    (missingFields.includes(field) || fieldErrors[field]) && {
-      borderColor: '#FF2D55',
-      borderWidth: 2,
-    },
-  ];
-
   return (
-    <View
-      style={styles.container}
-      className="flex-1 bg-gray-900 justify-center px-8">
-      <Text style={styles.title} className="text-yellow-500">
-        Create Account
-      </Text>
-      {/* Username and Email in the same row */}
-      <View style={styles.row}>
-        <View style={styles.halfContainer}>
-          <TextInput
-            style={[getInputStyle('userName'), styles.halfInput]}
-            placeholder="Username"
-            placeholderTextColor="#888"
-            value={form.userName}
-            onChangeText={text => handleChange('userName', text)}
-            autoCapitalize="none"
+    <View style={styles.container}>
+      <View style={styles.inner}>
+        {/* Icon */}
+        <View style={styles.iconCircle}>
+          <MaterialCommunityIcons
+            name="account-plus"
+            size={24}
+            color={GlobalColors.Onboarding.accent}
           />
-          {fieldErrors.userName && (
-            <Text style={styles.errorText}>{fieldErrors.userName}</Text>
-          )}
         </View>
-        <View style={styles.halfContainer}>
-          <TextInput
-            style={[getInputStyle('email'), styles.halfInput]}
-            placeholder="Email"
-            placeholderTextColor="#888"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={form.email}
-            onChangeText={text => handleChange('email', text)}
-          />
-          {fieldErrors.email && (
-            <Text style={styles.errorText}>{fieldErrors.email}</Text>
+
+        {/* Title */}
+        <Text style={styles.title}>{t('auth.signup.title')}</Text>
+        <Text style={styles.subtitle}>{t('auth.signup.subtitle')}</Text>
+
+        {/* Sign in with Apple */}
+        <TouchableOpacity
+          style={styles.appleButton}
+          onPress={handleAppleSignIn}
+          activeOpacity={0.85}
+          disabled={isAppleLoading}>
+          {isAppleLoading ? (
+            <ActivityIndicator color={GlobalColors.Onboarding.background} />
+          ) : (
+            <View style={styles.buttonContent}>
+              {/* <Text style={styles.appleIcon}></Text> */}
+              <AppleIcon style={styles.appleIcon}  />
+              <Text style={styles.appleButtonText}>
+                {t('auth.signup.signInWithApple')}
+              </Text>
+            </View>
           )}
+        </TouchableOpacity>
+
+        {/* OR Divider */}
+        <View style={styles.orRow}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>{t('auth.signup.or')}</Text>
+          <View style={styles.orLine} />
+        </View>
+
+        {/* Sign up with Email */}
+        <TouchableOpacity
+          style={styles.emailButton}
+          onPress={() => navigation.navigate('sign-up-email')}
+          activeOpacity={0.85}>
+          <View style={styles.buttonContent}>
+            <MaterialCommunityIcons
+              name="email-outline"
+              size={18}
+              color={GlobalColors.Onboarding.text}
+              style={styles.emailIcon}
+            />
+            <Text style={styles.emailButtonText}>
+              {t('auth.signup.signUpWithEmail')}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Login Link */}
+        <TouchableOpacity
+          style={styles.loginContainer}
+          onPress={() => navigation.navigate('Login')}
+          activeOpacity={0.7}>
+          <Text style={styles.loginText}>
+            {t('auth.signup.hasAccount')}{' '}
+            <Text style={styles.loginLink}>{t('auth.signup.loginLink')}</Text>
+          </Text>
+        </TouchableOpacity>
+
+        {/* Terms note */}
+        <View style={styles.termsNoteContainer}>
+          <Text style={styles.termsNoteText}>
+            {t('auth.signup.continueAgreement')}{' '}
+            <Text style={styles.termsNoteLink}>{t('auth.signup.termsOfService')}</Text>
+            {' '}{t('auth.signup.and')}{' '}
+            <Text style={styles.termsNoteLink}>{t('auth.signup.privacyPolicy')}</Text>
+          </Text>
         </View>
       </View>
-      {/* The rest in column */}
-      <TextInput
-        style={[getInputStyle('phoneNumber'), styles.fullInput]}
-        className="bg-gray-800 text-white p-4 rounded-lg mb-4"
-        placeholder="Phone Number"
-        placeholderTextColor="#888"
-        keyboardType="phone-pad"
-        value={form.phoneNumber}
-        onChangeText={text => handleChange('phoneNumber', text)}
-      />
-      {fieldErrors.phoneNumber && (
-        <Text style={styles.errorText}>{fieldErrors.phoneNumber}</Text>
-      )}
-      {/* Password with eye icon */}
-      <View style={[
-        styles.passwordContainer,
-        (missingFields.includes('password') || fieldErrors.password) && {
-          borderColor: '#FF2D55',
-          borderWidth: 2,
-        }
-      ]}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Password"
-          placeholderTextColor="#888"
-          secureTextEntry={!showPassword}
-          value={form.password}
-          onChangeText={text => handleChange('password', text)}
-        />
-        <TouchableOpacity
-          style={styles.eyeIcon}
-          onPress={() => setShowPassword(!showPassword)}>
-          <Icon
-            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-            size={22}
-            color="#888"
-          />
-        </TouchableOpacity>
-      </View>
-      {fieldErrors.password && (
-        <Text style={styles.errorText}>{fieldErrors.password}</Text>
-      )}
-      <View style={[
-        styles.passwordContainer,
-        (missingFields.includes('confirmPassword') || fieldErrors.confirmPassword) && {
-          borderColor: '#FF2D55',
-          borderWidth: 2,
-        }
-      ]}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Confirm Password"
-          placeholderTextColor="#888"
-          secureTextEntry={!showConfirmPassword}
-          value={form.confirmPassword}
-          onChangeText={text => handleChange('confirmPassword', text)}
-        />
-        <TouchableOpacity
-          style={styles.eyeIcon}
-          onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-          <Icon
-            name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-            size={22}
-            color="#888"
-          />
-        </TouchableOpacity>
-      </View>
-      {fieldErrors.confirmPassword && (
-        <Text style={styles.errorText}>{fieldErrors.confirmPassword}</Text>
-      )}
-      {fieldErrors.general && (
-        <Text style={[styles.errorText, {textAlign: 'center', marginVertical: 10}]}>
-          {fieldErrors.general}
-        </Text>
-      )}
-      <Button
-        btnText="Sign Up"
-        btnStyle="disabled:bg-slate-50 bg-yellow-500 p-4 rounded-lg items-center w-full"
-        textStyle="text-black font-bold text-lg"
-        onPress={handleSignUp}
-        disabled={isValidationPass}
-      />
-      <TouchableOpacity
-        className="mt-6"
-        onPress={() => navigation.navigate('Login')}>
-        <Text className="text-gray-500 text-center">
-          You have an account already?{' '}
-          <Text className="text-yellow-500">Login</Text>
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -270,100 +147,115 @@ const SignUpContainer = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: GlobalColors.Onboarding.background,
+    justifyContent: 'center',
+  },
+  inner: {
+    paddingHorizontal: 24,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: GlobalColors.Onboarding.accentSurface,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    marginBottom: 24,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: GlobalColors.Onboarding.text,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: GlobalColors.Onboarding.textSecondary,
+    marginBottom: 32,
+    lineHeight: 20,
+  },
+  appleButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GlobalColors.Onboarding.text,
+    borderRadius: 12,
+    height: 50,
+    marginBottom: 20,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  appleIcon: {
+    fontSize: 18,
+    color: GlobalColors.Onboarding.background,
+    marginRight: 8,
+  },
+  appleButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: GlobalColors.Onboarding.background,
+  },
+  orRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: GlobalColors.Onboarding.border,
+  },
+  orText: {
+    fontSize: 12,
+    color: GlobalColors.Onboarding.textMuted,
+    marginHorizontal: 12,
+  },
+  emailButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GlobalColors.Onboarding.inputBackground,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.inputBorder,
+    borderRadius: 12,
+    height: 50,
     marginBottom: 32,
   },
-  row: {
-    flexDirection: 'row',
-    width: '95%',
-    marginBottom: 16,
+  emailIcon: {
+    marginRight: 8,
   },
-  halfInput: {
-    // flex: 1,
-    borderRadius: 8,
-    padding: 14,
-    backgroundColor: '#1f2937',
-    color: '#ffffff',
-    // marginBottom: 16,
-    marginLeft: 0
+  emailButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: GlobalColors.Onboarding.text,
   },
-  fullInput: {
-    width: '95%',
-    borderRadius: 8,
-    padding: 14,
-    backgroundColor: '#1f2937',
-    color: '#ffffff',
-    marginBottom: 16,
+  loginContainer: {
+    alignSelf: 'center',
   },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '95%',
-    marginBottom: 16,
-    borderRadius: 8,
+  loginText: {
+    fontSize: 13,
+    color: GlobalColors.Onboarding.textSecondary,
   },
-  passwordInput: {
-    flex: 1,
-    padding: 14,
-    color: '#ffffff',
-    backgroundColor: '#1f2937',
-    borderRadius: 8,
+  loginLink: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: GlobalColors.Onboarding.accent,
   },
-  eyeIcon: {
-    paddingHorizontal: 10,
+  termsNoteContainer: {
+    alignSelf: 'center',
+    marginTop: 16,
+    paddingHorizontal: 12,
   },
-  button: {
-    width: '95%',
-    backgroundColor: COLORS.primary,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+  termsNoteText: {
+    fontSize: 11,
+    color: GlobalColors.Onboarding.textMuted,
+    textAlign: 'center',
+    lineHeight: 16,
   },
-  buttonText: {
-    color: COLORS.text,
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  linkText: {
-    color: COLORS.accent,
-    marginTop: 12,
-    fontSize: 16,
-    paddingTop: 18,
-  },
-  input: {
-    borderRadius: 8,
-    marginBottom: 0,
-    borderWidth: 0,
-    backgroundColor: '#1f2937',
-    color: '#ffffff',
-    padding: 14,
-  },
-  linkContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    color: COLORS.text,
-    justifyContent: 'center',
-    // marginTop: 16,
-    fontSize: 16,
-  },
-  errorText: {
-    color: '#ff4444',
-    fontSize: 12,
-    marginTop: 4,
-    marginBottom: 8,
-    paddingLeft: 4,
-  },
-  halfContainer: {
-    flex: 1,
-    marginHorizontal: 5,
+  termsNoteLink: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: GlobalColors.Onboarding.accent,
   },
 });
 

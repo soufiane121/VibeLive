@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import AnalyticsService from './AnalyticsService';
+import { AnalyticsEventType, AnalyticsEventCategory } from '../types/AnalyticsEnums';
 
 class SocketAnalyticsService {
   private static instance: SocketAnalyticsService;
@@ -47,18 +48,18 @@ class SocketAnalyticsService {
     this.socket.on('connect', () => {
       console.log('Socket connected for analytics');
       this.isConnected = true;
-      this.analytics.trackEvent('socket_connected', {
+      this.analytics.trackEvent(AnalyticsEventType.SOCKET_CONNECTED, {
         socketId: this.socket?.id,
         timestamp: new Date().toISOString()
-      }, 'technical');
+      }, AnalyticsEventCategory.TECHNICAL);
     });
 
     this.socket.on('disconnect', () => {
       console.log('Socket disconnected');
       this.isConnected = false;
-      this.analytics.trackEvent('socket_disconnected', {
+      this.analytics.trackEvent(AnalyticsEventType.SOCKET_DISCONNECTED, {
         timestamp: new Date().toISOString()
-      }, 'technical');
+      }, AnalyticsEventCategory.TECHNICAL);
     });
 
     this.socket.on('connect_error', (error) => {
@@ -71,75 +72,75 @@ class SocketAnalyticsService {
 
     // Stream events
     this.socket.on('stream-counts', (data) => {
-      this.analytics.trackEvent('viewer_count_updated', {
+      this.analytics.trackEvent(AnalyticsEventType.VIEWER_COUNT_UPDATED, {
         streamId: data.data?.liveDetails?.streamId,
         viewerCount: data.data?.liveDetails?.liveViewrsCount,
         timestamp: new Date().toISOString()
-      }, 'stream_interaction');
+      }, AnalyticsEventCategory.STREAM_INTERACTION);
     });
 
     this.socket.on('add-to-map', (data) => {
-      this.analytics.trackEvent('stream_discovered', {
+      this.analytics.trackEvent(AnalyticsEventType.STREAM_DISCOVERED, {
         streamId: data.data?.streamId,
         streamerId: data.data?.mapItem?.properties?.userId,
         discoveryMethod: 'map_notification',
         nearbyUsers: data.data?.users?.length || 0,
         timestamp: new Date().toISOString()
-      }, 'stream_interaction');
+      }, AnalyticsEventCategory.STREAM_INTERACTION);
     });
 
     this.socket.on('get-chat', (data) => {
-      this.analytics.trackEvent('message_received', {
+      this.analytics.trackEvent(AnalyticsEventType.MESSAGE_RECEIVED, {
         streamId: data.data?.streamId,
         messageId: data.data?.newMessage?.id,
         messageLength: data.data?.newMessage?.message?.length || 0,
         timestamp: new Date().toISOString()
-      }, 'social');
+      }, AnalyticsEventCategory.SOCIAL);
     });
 
     this.socket.on('get-reaction', (data) => {
-      this.analytics.trackEvent('reaction_received', {
+      this.analytics.trackEvent(AnalyticsEventType.REACTION_RECEIVED, {
         streamId: data.data?.streamId,
         reactionType: data.data?.reactionType,
         emojiType: data.data?.emoji,
         timestamp: new Date().toISOString()
-      }, 'social');
+      }, AnalyticsEventCategory.SOCIAL);
     });
 
     // Boost events
     this.socket.on('stream-boosted', (data) => {
-      this.analytics.trackEvent('boost_notification_received', {
+      this.analytics.trackEvent(AnalyticsEventType.BOOST_NOTIFICATION_RECEIVED, {
         streamerId: data.streamerId,
         tier: data.tier,
         priority: data.priority,
         boostedUntil: data.boostedUntil,
         timestamp: new Date().toISOString()
-      }, 'monetization');
+      }, AnalyticsEventCategory.MONETIZATION);
     });
 
     this.socket.on('stream-metadata-updated', (data) => {
-      this.analytics.trackEvent('stream_metadata_updated', {
+      this.analytics.trackEvent(AnalyticsEventType.STREAM_METADATA_UPDATED, {
         streamerId: data.streamerId,
         metadata: data.metadata,
         timestamp: new Date().toISOString()
-      }, 'stream_interaction');
+      }, AnalyticsEventCategory.STREAM_INTERACTION);
     });
 
     this.socket.on('viewer-count-updated', (data) => {
-      this.analytics.trackEvent('viewer_count_received', {
+      this.analytics.trackEvent(AnalyticsEventType.VIEWER_COUNT_UPDATED, {
         streamerId: data.streamerId,
         viewerCount: data.viewerCount,
         timestamp: new Date().toISOString()
-      }, 'stream_interaction');
+      }, AnalyticsEventCategory.STREAM_INTERACTION);
     });
 
     this.socket.on('streams-in-bounds', (data) => {
-      this.analytics.trackEvent('streams_loaded', {
+      this.analytics.trackEvent(AnalyticsEventType.STREAMS_LOADED, {
         streamsCount: data.streams?.length || 0,
         bounds: data.bounds,
         category: data.category,
         timestamp: new Date().toISOString()
-      }, 'user_engagement');
+      }, AnalyticsEventCategory.STREAM_INTERACTION);
     });
 
     // Error events
@@ -194,7 +195,7 @@ class SocketAnalyticsService {
     }
 
     // Also track locally
-    this.analytics.trackStreamInteraction('left', {
+    this.analytics.trackStreamInteraction('leave', {
       ...streamData,
       watchDuration
     });
@@ -247,7 +248,7 @@ class SocketAnalyticsService {
     }
 
     // Also track locally
-    this.analytics.trackEvent('category_filter_applied', {
+    this.analytics.trackEvent(AnalyticsEventType.CATEGORY_FILTER_APPLIED, {
       filterCategory: category,
       coordinates,
       resultsCount
@@ -267,7 +268,7 @@ class SocketAnalyticsService {
     }
 
     // Also track locally
-    this.analytics.trackEvent('search_performed', {
+    this.analytics.trackEvent(AnalyticsEventType.SEARCH_PERFORMED, {
       searchQuery: query,
       coordinates,
       resultsCount,
@@ -335,7 +336,7 @@ class SocketAnalyticsService {
     }
 
     // Also track locally
-    this.analytics.trackEvent('stream_metadata_updated', metadataData, 'stream_interaction');
+    this.analytics.trackEvent(AnalyticsEventType.STREAM_METADATA_UPDATED, metadataData, AnalyticsEventCategory.STREAM_INTERACTION);
   }
 
   // Track viewer count updates
@@ -348,7 +349,7 @@ class SocketAnalyticsService {
     }
 
     // Also track locally
-    this.analytics.trackEvent('viewer_count_updated', { viewerCount }, 'stream_interaction');
+    this.analytics.trackEvent(AnalyticsEventType.VIEWER_COUNT_UPDATED, { viewerCount }, AnalyticsEventCategory.STREAM_INTERACTION);
   }
 
   // Track map bounds changes
@@ -362,10 +363,10 @@ class SocketAnalyticsService {
     }
 
     // Also track locally
-    this.analytics.trackEvent('map_bounds_changed', {
+    this.analytics.trackEvent(AnalyticsEventType.MAP_BOUNDS_CHANGED, {
       bounds,
       category
-    }, 'user_engagement');
+    }, AnalyticsEventCategory.USER_ENGAGEMENT);
   }
 
   // Get socket connection status

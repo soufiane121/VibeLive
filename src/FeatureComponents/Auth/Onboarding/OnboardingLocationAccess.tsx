@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,12 @@ import {
   Linking,
   Platform,
 } from 'react-native';
+import * as Location from 'expo-location';
 import {GlobalColors} from '../../../styles/GlobalColors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 // import Button from '../../UIComponents/Button';
-import useGetLocation from '../../../CustomHooks/useGetLocation';
+import {useCoordinates, useLocationPermission} from '../../../CustomHooks/useGetLocation';
+import useTranslation from '../../../Hooks/useTranslation';
 
 interface OnboardingLocationAccessProps {
   navigation: any;
@@ -22,43 +24,77 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
   navigation,
   route,
 }) => {
-  const {coordinates, hasPermission, requestLocationPermission} = useGetLocation();
+  const { t } = useTranslation();
+  const coordinates = useCoordinates();
+  const {hasPermission, requestLocationPermission} = useLocationPermission();
   const [isLoading, setIsLoading] = useState(false);
-  const [isLocationSkipped, setIsLocationSkipped] = useState(false);
+  const isLocationGranted = hasPermission;
 
   const handleRequestLocation = async () => {
     if (!requestLocationPermission) return;
-    
+
     setIsLoading(true);
     try {
       const granted = await requestLocationPermission();
       if (!granted) {
         Alert.alert(
-          'Location Access Required',
-          'VibeLive needs location access to show you nearby events and streams. Please enable location in your device settings.',
+          t('onboarding.locationAccessRequired'),
+          t('onboarding.locationAccessDesc'),
           [
-            {text: 'Cancel', style: 'cancel'},
-            {text: 'Open Settings', onPress: () => Linking.openSettings()},
+            {text: t('common.cancel'), style: 'cancel'},
+            {text: t('onboarding.openSettings'), onPress: () => Linking.openSettings()},
+          ]
+        );
+        return;
+      }
+
+      // Validate precise location (not approximate)
+      const permissions = await Location.getForegroundPermissionsAsync();
+      const isAndroidCoarse = Platform.OS === 'android' && permissions.android?.accuracy === 'coarse';
+
+      if (isAndroidCoarse) {
+        Alert.alert(
+          t('onboarding.preciseLocationRequired'),
+          t('onboarding.preciseLocationDesc'),
+          [
+            {text: t('common.cancel'), style: 'cancel'},
+            {text: t('onboarding.openSettings'), onPress: () => Linking.openSettings()},
+          ]
+        );
+        return;
+      }
+
+      // Cross-platform accuracy check: fetch current position and verify horizontal accuracy
+      const current = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const horizontalAccuracy = current.coords.accuracy;
+      const isLowAccuracy = horizontalAccuracy == null || horizontalAccuracy > 100;
+
+      if (isLowAccuracy) {
+        Alert.alert(
+          t('onboarding.preciseLocationRequired'),
+          t('onboarding.preciseLocationDesc'),
+          [
+            {text: t('common.cancel'), style: 'cancel'},
+            {text: t('onboarding.openSettings'), onPress: () => Linking.openSettings()},
           ]
         );
       }
     } catch (error) {
       console.log('Permission request error:', error);
-      Alert.alert('Error', 'Failed to request location permission');
+      Alert.alert(t('common.error'), t('onboarding.locationPermissionFailed'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const validateAndContinue = () => {
-    // Validation: Check if location permission is granted or user explicitly skipped
-    if (!hasPermission && !isLocationSkipped) {
+  const handleContinue = () => {
+    if (!hasPermission) {
       Alert.alert(
-        'Location Access Required',
-        'Please enable location access or choose to skip this step to continue.',
-        [
-          {text: 'OK', style: 'default'}
-        ]
+        t('onboarding.locationAccessRequired'),
+        t('onboarding.locationEnableOrSkip'),
+        [{text: t('common.ok'), style: 'default'}]
       );
       return;
     }
@@ -73,127 +109,101 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
     });
   };
 
-  const handleSkip = () => {
-    Alert.alert(
-      'Skip Location Access?',
-      'Without location access, you\'ll miss out on discovering hot events and streams happening right around you. Are you sure?',
-      [
-        {text: 'Go Back', style: 'cancel'},
-        {text: 'Skip Anyway', onPress: () => {
-          setIsLocationSkipped(true);
-          validateAndContinue();
-        }, style: 'destructive'},
-      ]
-    );
-  };
-
-  const isLocationGranted = hasPermission;
-
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color={GlobalColors.Settings.text} />
-        </TouchableOpacity>
-      </View>
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.8}>
+        <Icon name="arrow-left" size={20} color={GlobalColors.Onboarding.textSecondary} />
+      </TouchableOpacity>
 
       {/* Progress Indicator */}
       <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, {width: '50%'}]} />
+        <View style={styles.progressBarsRow}>
+          <View style={[styles.progressBar, styles.progressBarFilled]} />
+          <View style={[styles.progressBar, styles.progressBarActive]} />
+          <View style={styles.progressBar} />
+          <View style={styles.progressBar} />
         </View>
-        <Text style={styles.progressText}>Step 2 of 4</Text>
+        <Text style={styles.progressText}>{t('onboarding.step2Of4')}</Text>
       </View>
 
-      {/* Main Content */}
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <View style={styles.iconBackground}>
-            <Icon 
-              name="map-marker-radius" 
-              size={60} 
-              color={GlobalColors.Settings.accent} 
-            />
-          </View>
+      {/* Location Icon */}
+      <View style={styles.iconContainer}>
+        <View style={styles.iconBackground}>
+          <Icon
+            name="map-marker"
+            size={28}
+            color={GlobalColors.Onboarding.accent}
+          />
         </View>
+      </View>
 
-        <Text style={styles.title}>Don't miss what's happening nearby</Text>
+      {/* Title */}
+      <View style={styles.titleSection}>
+        <Text style={styles.title}>{t('onboarding.dontMissNearby')}</Text>
         <Text style={styles.subtitle}>
-          We need your location to show you the hottest events and live streams in your area
+          {t('onboarding.locationSubtitle')}
         </Text>
-
-        {/* FOMO Stats */}
-        <View style={styles.fomoContainer}>
-          <View style={styles.fomoStat}>
-            <Text style={styles.fomoNumber}>47</Text>
-            <Text style={styles.fomoLabel}>Events near you right now</Text>
-          </View>
-          <View style={styles.fomoStat}>
-            <Text style={styles.fomoNumber}>2.3k</Text>
-            <Text style={styles.fomoLabel}>People streaming nearby</Text>
-          </View>
-        </View>
-
-        {/* Benefits */}
-        <View style={styles.benefitsContainer}>
-          <View style={styles.benefit}>
-            <Icon name="lightning-bolt" size={20} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Discover events happening around you</Text>
-          </View>
-          <View style={styles.benefit}>
-            <Icon name="account-group" size={20} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Connect with people in your area</Text>
-          </View>
-          <View style={styles.benefit}>
-            <Icon name="bell-ring" size={20} color={GlobalColors.Settings.accent} />
-            <Text style={styles.benefitText}>Get notified about nearby activities</Text>
-          </View>
-        </View>
-
-        {/* Location Status */}
-        {isLocationGranted && (
-          <View style={styles.successContainer}>
-            <Icon name="check-circle" size={24} color={GlobalColors.Common.successIcon} />
-            <Text style={styles.successText}>Location access granted!</Text>
-          </View>
-        )}
       </View>
+
+      {/* Stats Cards */}
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>47</Text>
+          <Text style={styles.statLabel}>{t('onboarding.eventsNearYou')}</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>2.3k</Text>
+          <Text style={styles.statLabel}>{t('onboarding.peopleStreamingNearby')}</Text>
+        </View>
+      </View>
+
+      {/* Info Card */}
+      <View style={styles.infoCard}>
+        <View style={styles.infoIconBox}>
+          <Icon name="compass" size={18} color={GlobalColors.Onboarding.accent} />
+        </View>
+        <Text style={styles.infoCardText}>
+          {t('onboarding.discoverEventsRealtime')}
+        </Text>
+      </View>
+
+      {/* Spacer */}
+      <View style={styles.spacer} />
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
         {!isLocationGranted ? (
-          <>
-            <TouchableOpacity
-              style={[styles.enableButton, isLoading && styles.enableButtonDisabled]}
-              onPress={handleRequestLocation}
-              disabled={isLoading}>
-              <Text style={styles.enableButtonText}>
-                {isLoading ? "Requesting Access..." : "Enable Location Access"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipButtonText}>Skip for now</Text>
-            </TouchableOpacity>
-          </>
+          <TouchableOpacity
+            style={[styles.primaryButton, isLoading && styles.primaryButtonDisabled]}
+            onPress={handleRequestLocation}
+            disabled={isLoading}
+            activeOpacity={0.9}>
+            <Text style={styles.primaryButtonText}>
+              {isLoading ? t('onboarding.requestingAccess') : t('onboarding.allowLocationAccess')}
+            </Text>
+            {!isLoading && (
+              <Icon name="arrow-right" size={18} color={GlobalColors.Onboarding.background} style={styles.buttonArrow} />
+            )}
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={styles.continueButton}
-            onPress={validateAndContinue}>
-            <Text style={styles.continueButtonText}>Continue</Text>
+            style={styles.primaryButton}
+            onPress={handleContinue}
+            activeOpacity={0.9}>
+            <Text style={styles.primaryButtonText}>{t('common.continue')}</Text>
+            <Icon name="arrow-right" size={18} color={GlobalColors.Onboarding.background} style={styles.buttonArrow} />
           </TouchableOpacity>
         )}
       </View>
 
       {/* Privacy Note */}
-      <View style={styles.privacyContainer}>
-        <Icon name="shield-check" size={16} color={GlobalColors.Settings.textMuted} />
-        <Text style={styles.privacyText}>
-          Your location is only used to show nearby content and is never shared with other users
-        </Text>
-      </View>
+      <Text style={styles.privacyText}>
+        {t('onboarding.locationPrivacy')}
+      </Text>
     </View>
   );
 };
@@ -201,169 +211,162 @@ const OnboardingLocationAccess: React.FC<OnboardingLocationAccessProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: GlobalColors.Settings.background,
+    backgroundColor: GlobalColors.Onboarding.background,
     paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-  header: {
-    marginBottom: 20,
+    paddingTop: 24,
+    paddingBottom: 32,
   },
   backButton: {
-    padding: 8,
-    alignSelf: 'flex-start',
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
   },
   progressContainer: {
-    marginBottom: 40,
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  progressBarsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+    width: '100%',
   },
   progressBar: {
-    height: 4,
-    backgroundColor: GlobalColors.Settings.border,
+    flex: 1,
+    height: 3,
+    backgroundColor: GlobalColors.Onboarding.surfaceSecondary,
     borderRadius: 2,
-    marginBottom: 8,
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: GlobalColors.Settings.accent,
-    borderRadius: 2,
+  progressBarFilled: {
+    backgroundColor: GlobalColors.Onboarding.accent,
+    opacity: 0.5,
+  },
+  progressBarActive: {
+    backgroundColor: GlobalColors.Onboarding.accent,
   },
   progressText: {
-    fontSize: 14,
-    color: GlobalColors.Settings.textMuted,
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
+    fontSize: 12,
+    fontWeight: '500',
+    color: GlobalColors.Onboarding.accent,
+    letterSpacing: 0.5,
   },
   iconContainer: {
-    marginBottom: 32,
+    alignItems: 'center',
+    marginBottom: 28,
   },
   iconBackground: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: GlobalColors.Settings.surface,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.accentBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: GlobalColors.Settings.accent + '20',
+  },
+  titleSection: {
+    marginBottom: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.text,
-    textAlign: 'center',
-    marginBottom: 16,
+    fontSize: 26,
+    fontWeight: '700',
+    color: GlobalColors.Onboarding.text,
+    marginBottom: 8,
+    lineHeight: 32,
   },
   subtitle: {
-    fontSize: 16,
-    color: GlobalColors.Settings.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
+    fontSize: 14,
+    color: GlobalColors.Onboarding.textSecondary,
+    lineHeight: 20,
   },
-  fomoContainer: {
+  statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 32,
-    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 16,
   },
-  fomoStat: {
-    alignItems: 'center',
+  statCard: {
+    flex: 1,
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.border,
+    borderRadius: 14,
+    padding: 16,
   },
-  fomoNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.accent,
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: GlobalColors.Onboarding.accent,
     marginBottom: 4,
   },
-  fomoLabel: {
-    fontSize: 14,
-    color: GlobalColors.Settings.textSecondary,
-    textAlign: 'center',
+  statLabel: {
+    fontSize: 12,
+    color: GlobalColors.Onboarding.textMuted,
+    lineHeight: 16,
   },
-  benefitsContainer: {
-    width: '100%',
-    marginBottom: 32,
-  },
-  benefit: {
+  infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  benefitText: {
-    fontSize: 16,
-    color: GlobalColors.Settings.text,
-    marginLeft: 12,
-    flex: 1,
-  },
-  successContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: GlobalColors.Settings.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  successText: {
-    fontSize: 16,
-    color: GlobalColors.Common.successText,
-    marginLeft: 12,
-    fontWeight: '600',
-  },
-  buttonContainer: {
-    paddingTop: 20,
-  },
-  enableButton: {
-    backgroundColor: GlobalColors.Settings.accent,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+    backgroundColor: GlobalColors.Onboarding.surface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.border,
+    borderRadius: 14,
+    padding: 14,
     marginBottom: 16,
   },
-  enableButtonDisabled: {
-    backgroundColor: GlobalColors.Settings.border,
-  },
-  enableButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.background,
-  },
-  continueButton: {
-    backgroundColor: GlobalColors.Settings.accent,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  continueButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: GlobalColors.Settings.background,
-  },
-  skipButton: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  skipButtonText: {
-    fontSize: 16,
-    color: GlobalColors.Settings.textMuted,
-  },
-  privacyContainer: {
-    flexDirection: 'row',
+  infoIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: GlobalColors.Onboarding.accentSurface,
+    borderWidth: 1,
+    borderColor: GlobalColors.Onboarding.accentBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
-    paddingHorizontal: 20,
+    marginRight: 12,
+  },
+  infoCardText: {
+    flex: 1,
+    fontSize: 13,
+    color: GlobalColors.Onboarding.text,
+    lineHeight: 18,
+  },
+  spacer: {
+    flex: 1,
+  },
+  buttonContainer: {
+    marginTop: 8,
+  },
+  primaryButton: {
+    backgroundColor: GlobalColors.Onboarding.accent,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.6,
+  },
+  primaryButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: GlobalColors.Onboarding.background,
+  },
+  buttonArrow: {
+    marginLeft: 6,
   },
   privacyText: {
-    fontSize: 12,
-    color: GlobalColors.Settings.textMuted,
-    marginLeft: 8,
+    fontSize: 11,
+    color: GlobalColors.Onboarding.textMuted,
     textAlign: 'center',
-    flex: 1,
+    marginTop: 8,
     lineHeight: 16,
   },
 });

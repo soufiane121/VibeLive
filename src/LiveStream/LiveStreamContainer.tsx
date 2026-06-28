@@ -4,6 +4,7 @@ import {
   Button,
   StyleSheet,
   Platform,
+  StatusBar,
   Text,
   Alert,
   TouchableOpacity,
@@ -26,6 +27,27 @@ import { GlobalColors } from '../styles/GlobalColors';
 
 const colors = GlobalColors.LiveStreamContainer;
 
+// ─────────────────────────────────────────────────────────────
+// Responsive helpers — scale values relative to a baseline
+// iPhone 14 Pro (393 × 852) is the design baseline.
+// ─────────────────────────────────────────────────────────────
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const BASE_WIDTH = 393;
+const BASE_HEIGHT = 852;
+
+/** Scale a value horizontally (width-relative) */
+const sw = (size: number) => (SCREEN_WIDTH / BASE_WIDTH) * size;
+/** Scale a value vertically (height-relative) */
+const sh = (size: number) => (SCREEN_HEIGHT / BASE_HEIGHT) * size;
+/** Scale font sizes — clamped between 80% and 120% of original */
+const sf = (size: number) => {
+  const scale = SCREEN_WIDTH / BASE_WIDTH;
+  return Math.round(size * Math.min(Math.max(scale, 0.8), 1.2));
+};
+
+// Bottom safe area inset for home indicator (iPhone X+)
+const BOTTOM_INSET = Platform.OS === 'ios' && SCREEN_HEIGHT >= 812 ? 34 : 0;
+
 import EndStreamModal from './EndStreamModal';
 import MonthlyLimitModal from './MonthlyLimitModal';
 import FreeStreamLimitModal from './FreeStreamLimitModal';
@@ -38,11 +60,13 @@ import {useStartStreamingMutation} from '../../features/LiveStream/LiveStream';
 import {useBoostStreamMutation} from '../../features/registrations/LoginSliceApi';
 import {NodeMediaClient, NodePublisher} from 'react-native-nodemediaclient';
 import {useSelector} from 'react-redux';
-import useGetLocation from '../CustomHooks/useGetLocation';
+import {useCoordinates} from '../CustomHooks/useGetLocation';
 import RTMPStreamingHelper from './RTMPStreamingHelper';
 import {useNavigation, CommonActions} from '@react-navigation/native';
 import ChatList from '../WatchStream/ChatList';
 import {useSocketInstance} from '../CustomHooks/useSocketInstance';
+import useTranslation from '../Hooks/useTranslation';
+import {FREE_STREAM_WARNING_SECONDS, FREE_STREAM_MAX_SECONDS} from '@env';
 
 interface BoostPurchaseData {
   tier: 'basic' | 'premium' | 'ultimate' | 'visibility' | 'prime' | 'viral';
@@ -69,6 +93,7 @@ interface LiveStreamContainerProps {
   onBackToEventSelections?: () => void;
 }
 export default function LiveStreamContainer(props: LiveStreamContainerProps) {
+  const { t } = useTranslation();
   const {
     streamEventType,
     streamTitle,
@@ -82,7 +107,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   const navigation = useNavigation();
   const {socket} = useSocketInstance();
 
-  const {coordinates} = useGetLocation();
+  const coordinates = useCoordinates();
   const [fetchStartStream, {data, isLoading, isSuccess}] =
     useStartStreamingMutation();
   const [isStreaming, setIsStreaming] = useState(false);
@@ -398,8 +423,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
 
         // Show alert to user
         Alert.alert(
-          'Streaming Stopped',
-          `Streaming has been stopped: ${data.message}`,
+          t('streaming.stopped'),
+          t('streaming.stoppedMessage', { message: data.message }),
         );
       });
 
@@ -449,9 +474,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         setStreamKey(null);
 
         // Show alert to user
-        Alert.alert('Boost Limit Reached', `${data.message}`, [
+        Alert.alert(t('streaming.boostLimitReached'), t('streaming.boostLimitMessage', { message: data.message }), [
           {
-            text: 'OK',
+            text: t('common.ok'),
             onPress: () => {
               // Navigate back or show upgrade options
             },
@@ -518,11 +543,33 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       // Handle stream-start-blocked event
       socket.on('stream-start-blocked', data => {
         Alert.alert(
-          'Cannot Start Streaming',
-          `Cannot start streaming: ${data.message}`,
+          t('streaming.cannotStart'),
+          t('streaming.cannotStartMessage', { message: data.message }),
         );
         setIsStreaming(false);
         setStreamHealth('disconnected');
+      });
+
+      // Handle stream-stopped-confirmed — backend confirms stream fully ended
+      socket.on('stream-stopped-confirmed', data => {
+        console.log('✅ Stream stopped confirmed by server:', data);
+        // Ensure all streaming state is cleared
+        userEndedStreamRef.current = true;
+        setUserEndedStream(true);
+        setIsStreaming(false);
+        setStreamHealth('disconnected');
+        setStreamKey(null);
+        setStreamStartTime(null);
+
+        // Navigate back to Map after a brief delay for UI feedback
+        setTimeout(() => {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Map' }],
+            }),
+          );
+        }, 500);
       });
     }
   }, [socket]); // Removed isStreaming dependency to prevent reconnection
@@ -552,15 +599,17 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
     try {
       // Send stream metadata to backend for boost timeout tracking
       const streamRequestData = {
-        streamEventType: streamEventType || 'general',
-        streamTitle: streamTitle || 'Live Stream',
+        streamEventType: streamEventType || t('streaming.defaultType'),
+        streamTitle: streamTitle || t('streaming.defaultTitle'),
         subcategoriesTags: subcategoriesTags || [],
         parentCategory: parentCategory || '',
-        // Include boost data if available
+        // Include boost data if available so backend can verify the purchase
+        // and skip limit enforcement for this user.
         ...(boostData && {
           boostTier: boostData.tier,
           boostDuration: boostData.duration,
           boostTransactionId: boostData.transactionId,
+          boostPurchaseTime: boostData.purchaseTime,
         }),
         // Include venue tag if available
         ...(venueTag && {
@@ -582,7 +631,13 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       }
     } catch (error) {
       console.log('from error side', error);
-      if (error?.data?.code === 'MONTHLY_LIMIT_REACHED') {
+      // CRITICAL (Issue 2): If the user has just purchased minutes (boostData is
+      // present), do NOT re-set the limit flags. The backend may still return a
+      // limit error if the boost hasn't fully propagated yet, but the purchase
+      // receipt is valid and the user should be allowed to proceed.
+      if (boostData) {
+        console.log('⏩ Ignoring limit error — user has active boostData:', boostData.tier);
+      } else if (error?.data?.code === 'MONTHLY_LIMIT_REACHED') {
         setIsMonthlyLimitReached(true);
       } else if (error?.data?.code === 'FREE_STREAMING_LIMIT_REACHED') {
         setIsWeeklyLimitReached(true);
@@ -696,8 +751,8 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             streamId: streamId, // Send MUX stream ID for proper tracking
             playbackId: playbackId, // Send MUX playback ID for streaming
             coordinates,
-            streamEventType: streamEventType || 'default',
-            streamTitle: streamTitle || 'Untitled Stream',
+            streamEventType: streamEventType || t('streaming.defaultType'),
+            streamTitle: streamTitle || t('streaming.untitled'),
             muxStreamKey: streamKey,
             quality: 'production',
             dataFlowValidated: true,
@@ -735,7 +790,22 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       // CRITICAL: Clear all reconnect attempts and timers first
       setReconnectAttempts(0);
 
-      // CRITICAL: Stop the NodePublisher directly to prevent any reconnection
+      // Capture stream identifiers before clearing state
+      const currentStreamId = streamId;
+      const currentPlaybackId = playbackId;
+      const streamDuration = streamStartTime 
+        ? Math.floor((Date.now() - streamStartTime) / 1000 / 60)
+        : 0;
+
+      // CRITICAL: Clear stream key FIRST so NodePublisher URL becomes empty
+      // This prevents NodePublisher from having a valid RTMP endpoint to reconnect to
+      setStreamKey(null);
+      setIsStreaming(false);
+      setStreamHealth('disconnected');
+      setDataFlowActive(false);
+      setStreamStartTime(null);
+
+      // THEN stop the NodePublisher — it can no longer reconnect (URL is empty)
       if (rtmp.current) {
         try {
           rtmp.current.stop();
@@ -747,37 +817,22 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       // Use streaming helper to stop
       await streamingHelper.stopStreaming();
 
-      setIsStreaming(false);
-      setStreamHealth('disconnected');
-      setDataFlowActive(false);
-
-      // Notify backend with playback retention preference
+      // Notify backend with playback retention preference (using saved values)
       if (socket) {
-        const streamDuration = streamStartTime 
-          ? Math.floor((Date.now() - streamStartTime) / 1000 / 60)
-          : 0;
-          
         socket.emit('stop-streaming', {
           token: currentUser?.email,
-          streamId: streamId, // Send MUX stream ID for proper termination
-          playbackId: playbackId,
+          streamId: currentStreamId,
+          playbackId: currentPlaybackId,
           keepPlayback: keepPlayback,
           isBoosted: !!boostData || currentUser?.isBoosted,
-          reason: reason || 'USER_INITIATED', // Include the reason
-          streamDuration: streamDuration, // Include actual duration
+          reason: reason || 'USER_INITIATED',
+          streamDuration: streamDuration,
         });
       }
-
-      setStreamStartTime(null); // Stop the duration timer when stream stops
-      
-      // CRITICAL: Clear stream key AFTER notifying backend so NodePublisher URL becomes empty
-      // This prevents NodePublisher from having a valid RTMP endpoint to reconnect to
-      setStreamKey(null);
     } catch (error) {
       setIsStreaming(false);
       setStreamHealth('disconnected');
-      setReconnectAttempts(0); // Ensure no restart even on error
-      // Still clear the stream key on error to prevent reconnection
+      setReconnectAttempts(0);
       userEndedStreamRef.current = true;
       setUserEndedStream(true);
       setStreamKey(null);
@@ -792,7 +847,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         {!device && (
           <View style={styles.cameraPlaceholder}>
             <CameraIcon size={80} color="rgba(255,255,255,0.3)" />
-            <Text style={styles.placeholderText}>Live Camera Feed</Text>
+            <Text style={styles.placeholderText}>{t('streaming.liveCameraFeed')}</Text>
           </View>
         )}
 
@@ -845,6 +900,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
                 smoothSkinEnable={false} // Disable beauty filters for speed
                 videoPreviewMirror={false} // No mirror for streaming
                 audioEnable={isMuted ? false : true} // Ensure audio capture
+                volume={isMuted ? 0.0 : 1.0} // Control microphone mute state
                 videoEnable={true} // Ensure video capture
                 lowLatencyMode={true} // Enable low latency mode if available
                 onStatus={(status: any) => {
@@ -894,11 +950,11 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
             <View style={styles.headerLeft}>
               <View style={styles.liveIndicator}>
                 <View style={styles.liveDot} />
-                <Text style={styles.liveText}>LIVE</Text>
+                <Text style={styles.liveText}>{t('streaming.liveIndicator')}</Text>
               </View>
               <View style={styles.viewerPill}>
                 <CommonMaterialCommunityIcons name="account-group" size={14} color={colors.text} style={{marginRight: 4}} />
-                <Text style={styles.viewerCount}>{viewerCount} viewers</Text>
+                <Text style={styles.viewerCount}>{t('streaming.viewersCount', { count: viewerCount })}</Text>
               </View>
             </View>
 
@@ -922,7 +978,7 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
         <View style={styles.locationPillContainer}>
           <View style={styles.locationPill}>
             <View style={styles.locationDot} />
-                <Text style={styles.locationText}>{`Streaming from ${venueTag}`}</Text>
+                <Text style={styles.locationText}>{t('streaming.fromVenue', { venue: venueTag })}</Text>
           </View>
         </View>
         
@@ -935,17 +991,16 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
           ]}
           disabled={isMonthlyLimitReached}
           onPress={() => {
-            // if (isStreaming) {
-            //   handleClosePress(); // Show confirmation modal
-            // } else {
-            //   startStreaming();
-            // }
-            if (!isMonthlyLimitReached) {
-              startStreaming();
+            if (isStreaming) {
+              handleClosePress(); // Show confirmation modal
+            } else {
+              if (!isMonthlyLimitReached) {
+                startStreaming();
+              }
             }
           }}>
-              <CommonMaterialCommunityIcons name="bullseye" size={24} color={colors.text} style={{marginRight: 8}} />
-          <Text style={styles.streamButtonText}>{isStreaming ? 'Stop Streaming' : 'Go Live'}</Text>
+          <CommonMaterialCommunityIcons name="bullseye" size={24} color={colors.text} style={{marginRight: 8}} />
+          <Text style={styles.streamButtonText}>{isStreaming ? t('streaming.stopStreaming') : t('streaming.goLive')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -999,11 +1054,10 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       {/* Monthly Limit Modal */}
       <MonthlyLimitModal
         labelsData={{
-          title: "You're Missing Out on Live Viewers!",
-          subTitle: `Your spotlight just dimmed, the audience is still watching. 
-  Boost now to jump back in before the moment slips away.`,
-          boostButtonLabel: 'Boost Now & Reclaim Your Spot 🚀',
-          cancelButtonLabel: 'Wait… I’ll Miss Out',
+          title: t('streaming.freeMinutesUp'),
+          subTitle: t('streaming.freeMinutesReset'),
+          boostButtonLabel: t('streaming.getMoreMinutes'),
+          cancelButtonLabel: t('streaming.maybeLater'),
         }}
         visible={isMonthlyLimitReached || isWeeklyLimitReached}
         onBoostAndGoLive={handleBoostAndGoLive}
@@ -1022,10 +1076,9 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
       {showSevenMinuteWarning && (
         <View style={styles.warningOverlay}>
           <View style={styles.warningContainer}>
-            <Text style={styles.warningTitle}>⚠️ Stream Ending Soon</Text>
+            <Text style={styles.warningTitle}>{t('streaming.streamEndingSoon')}</Text>
             <Text style={styles.warningMessage}>
-              Your free stream will end in 3 minutes. Boost your stream to
-              continue streaming unlimited!
+              {t('streaming.streamEndingMessage')}
             </Text>
             <View style={styles.warningActions}>
               <TouchableOpacity
@@ -1034,12 +1087,12 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
                   dismissSevenMinuteWarning();
                   handleBoostAndGoLive();
                 }}>
-                <Text style={styles.boostWarningButtonText}>Boost Stream</Text>
+                <Text style={styles.boostWarningButtonText}>{t('streaming.boostStream')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.continueWarningButton}
                 onPress={dismissSevenMinuteWarning}>
-                <Text style={styles.continueWarningButtonText}>Continue</Text>
+                <Text style={styles.continueWarningButtonText}>{t('common.continue')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1049,7 +1102,6 @@ export default function LiveStreamContainer(props: LiveStreamContainerProps) {
   );
 }
 
-const {width} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -1058,7 +1110,7 @@ const styles = StyleSheet.create({
   },
   overlayWrapper: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
+    zIndex: 3, // Increased to 3 to sit above ChatList (zIndex: 2)
   },
   overlayInner: {
     flex: 1,
@@ -1066,9 +1118,9 @@ const styles = StyleSheet.create({
   },
   header: {
     position: 'absolute',
-    top: 10,
-    left: 20,
-    right: 20,
+    top: sh(10),
+    left: sw(20),
+    right: sw(20),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1086,51 +1138,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#EF4444',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: sw(8),
+    paddingVertical: sh(4),
     borderRadius: 16,
-    marginRight: 8,
+    marginRight: sw(8),
   },
   liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: sw(6),
+    height: sw(6),
+    borderRadius: sw(3),
     backgroundColor: colors.text,
-    marginRight: 4,
+    marginRight: sw(4),
   },
   liveText: {
     color: colors.text,
-    fontSize: 12,
+    fontSize: sf(12),
     fontWeight: 'bold',
   },
   viewerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.controls,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: sw(12),
+    paddingVertical: sh(6),
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
   },
   viewerCount: {
     color: colors.text,
-    fontSize: 12,
+    fontSize: sf(12),
     fontWeight: '600',
   },
   timer: {
     color: colors.text,
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '700',
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: sw(36),
+    height: sw(36),
+    borderRadius: sw(18),
     backgroundColor: colors.controls,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 16,
+    marginLeft: sw(16),
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -1166,14 +1218,14 @@ const styles = StyleSheet.create({
   },
   controlPanel: {
     position: 'absolute',
-    bottom: 40,
-    left: 20,
-    right: 20,
+    bottom: sh(40),
+    left: sw(20),
+    right: sw(20),
     zIndex: 1,
   },
   streamButton: {
     width: '100%',
-    height: 56,
+    height: sh(56),
     borderRadius: 16,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1187,51 +1239,52 @@ const styles = StyleSheet.create({
   },
   streamButtonText: {
     color: colors.text,
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '800',
   },
   locationPillContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: sh(16),
   },
   locationPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.controls,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: sw(16),
+    paddingVertical: sh(8),
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
   },
   locationDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: sw(6),
+    height: sw(6),
+    borderRadius: sw(3),
     backgroundColor: '#EF4444',
-    marginRight: 8,
+    marginRight: sw(8),
   },
   locationText: {
     color: colors.text,
-    fontSize: 13,
+    fontSize: sf(13),
     fontWeight: '600',
   },
   sideControls: {
     position: 'absolute',
-    right: 20,
-    top: '30%',
+    right: sw(20),
+    top: SCREEN_HEIGHT * 0.3,
     zIndex: 1,
   },
   controlButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: sw(48),
+    height: sw(48),
+    borderRadius: sw(24),
     backgroundColor: colors.controls,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: sh(16),
     borderWidth: 1,
     borderColor: colors.border,
+    zIndex: 9999,
   },
   controlButtonActive: {
     backgroundColor: colors.controlsActive,
@@ -1251,8 +1304,8 @@ const styles = StyleSheet.create({
   },
   warningContainer: {
     backgroundColor: '#1F2937',
-    margin: 20,
-    padding: 20,
+    margin: sw(20),
+    padding: sw(20),
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#F59E0B',
@@ -1267,39 +1320,39 @@ const styles = StyleSheet.create({
   },
   warningTitle: {
     color: '#F59E0B',
-    fontSize: 18,
+    fontSize: sf(18),
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: sh(12),
   },
   warningMessage: {
     color: 'white',
-    fontSize: 16,
+    fontSize: sf(16),
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 20,
+    lineHeight: sh(24),
+    marginBottom: sh(20),
   },
   warningActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: sw(12),
   },
   boostWarningButton: {
     flex: 1,
     backgroundColor: '#FFD700',
-    paddingVertical: 12,
+    paddingVertical: sh(12),
     borderRadius: 8,
     alignItems: 'center',
   },
   boostWarningButtonText: {
     color: '#000',
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: 'bold',
   },
   continueWarningButton: {
     flex: 1,
     backgroundColor: 'transparent',
-    paddingVertical: 12,
+    paddingVertical: sh(12),
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
@@ -1307,7 +1360,7 @@ const styles = StyleSheet.create({
   },
   continueWarningButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '500',
   },
 });
@@ -1320,6 +1373,10 @@ interface StreamTimerProps {
   onSevenMinuteWarning: () => void;
   onTenMinuteLimit: () => void;
 }
+
+// Read from env, fall back to 7min/10min defaults
+const WARNING_SECONDS = parseInt(FREE_STREAM_WARNING_SECONDS || '420', 10);
+const MAX_SECONDS = parseInt(FREE_STREAM_MAX_SECONDS || '600', 10);
 
 const StreamTimer = React.memo(
   ({
@@ -1347,14 +1404,14 @@ const StreamTimer = React.memo(
 
         // Only enforce limits for non-boosted users
         if (!isBoosted && isStreaming) {
-          // 7-minute warning (420 seconds)
-          if (elapsed >= 60 && !sevenMinWarningShown.current) {
+          // Warning threshold (default 420 seconds = 7 minutes)
+          if (elapsed >= WARNING_SECONDS && !sevenMinWarningShown.current) {
             sevenMinWarningShown.current = true;
             onSevenMinuteWarning();
           }
 
-          // 10-minute limit (600 seconds)
-          if (elapsed >= 120 && !tenMinLimitReached.current) {
+          // Hard limit threshold (default 600 seconds = 10 minutes)
+          if (elapsed >= MAX_SECONDS && !tenMinLimitReached.current) {
             tenMinLimitReached.current = true;
             onTenMinuteLimit();
           }
@@ -1381,8 +1438,8 @@ const StreamTimer = React.memo(
     // Color coding for free streaming limits
     const getTimerColor = (): string => {
       if (isBoosted) return 'white'; // Normal color for boosted users
-      if (duration >= 600) return '#EF4444'; // Red when limit reached
-      if (duration >= 420) return '#F59E0B'; // Amber when warning shown
+      if (duration >= MAX_SECONDS) return '#EF4444'; // Red when limit reached
+      if (duration >= WARNING_SECONDS) return '#F59E0B'; // Amber when warning shown
       return 'white'; // Normal color
     };
 

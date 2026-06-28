@@ -5,6 +5,7 @@
 #import <AVFoundation/AVFoundation.h>
 
 #import <React/RCTBundleURLProvider.h>
+#import <React/RCTLinkingManager.h>
 
 @implementation AppDelegate
 
@@ -54,6 +55,14 @@
 
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
 }
+// TODO:: added FOR LINKING
+// Deep linking support — forwards vibelive:// URLs to React Navigation
+- (BOOL)application:(UIApplication *)application
+   openURL:(NSURL *)url
+   options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+{
+  return [RCTLinkingManager application:application openURL:url options:options];
+}
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
@@ -63,7 +72,7 @@
 - (NSURL *)bundleURL
 {
 #if DEBUG
-  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
+  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@".expo/.virtual-metro-entry"];
 #else
   return [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
 #endif

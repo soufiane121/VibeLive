@@ -16,6 +16,8 @@ import {
   useGetInviteMetadataQuery,
   useJoinSquadMutation,
 } from '../../../features/squad/SquadApi';
+import useTranslation from '../../Hooks/useTranslation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 
 const colors = GlobalColors.SquadMode;
 
@@ -43,6 +45,7 @@ const TIMING_OPTIONS = [
 ];
 
 const SquadJoinScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute();
   const squadCode = (route.params as any)?.squad_code || '';
@@ -53,6 +56,9 @@ const SquadJoinScreen: React.FC = () => {
   const [timingPreference, setTimingPreference] = useState('anytime');
   const [conviction, setConviction] = useState<'important_to_me' | 'flexible' | null>(null);
   const [step, setStep] = useState<'preview' | 'preferences'>('preview');
+
+  // Location — [lng, lat] from the singleton LocationStore
+  const coordinates = useCoordinates();
 
   // RTK Query
   const {
@@ -73,27 +79,31 @@ const SquadJoinScreen: React.FC = () => {
   // ── Handle Join ─────────────────────────────────────────────────────
   const handleJoin = useCallback(async () => {
     if (!displayName.trim()) {
-      Alert.alert('Name Required', 'Enter a display name so your squad knows who you are.');
+      Alert.alert(t('onboarding.squad.nameRequired'), t('onboarding.squad.nameRequiredDesc'));
       return;
     }
     if (selectedTags.length === 0) {
-      Alert.alert('Pick Your Vibe', 'Select at least one venue type you\'re into tonight.');
+      Alert.alert(t('onboarding.squad.pickYourVibe'), t('onboarding.squad.pickYourVibeDesc'));
       return;
     }
 
     try {
+      const [lng, lat] = coordinates;
+      const hasValidLocation = lat !== 35.160 || lng !== -80.719; // not default
+
       const result = await joinSquad({
         squad_code: squadCode,
         display_name: displayName.trim(),
         venue_type_tags: selectedTags,
         timing_preference: timingPreference,
         conviction: conviction,
+        ...(hasValidLocation && {location: {lat, lng}}),
       }).unwrap();
 
       // Navigate to the squad tab with the joined squad data
-      Alert.alert('You\'re In!', `Joined ${result.creator_display_name}'s squad`, [
+      Alert.alert(t('onboarding.squad.youreIn'), t('onboarding.squad.joinedSquad', { creator: result.creator_display_name }), [
         {
-          text: 'Continue',
+          text: t('common.continue'),
           onPress: () => {
             (navigation as any).navigate('Bottom', {
               screen: 'Squad',
@@ -107,16 +117,16 @@ const SquadJoinScreen: React.FC = () => {
         },
       ]);
     } catch (err: any) {
-      Alert.alert('Error', err?.data?.error || 'Failed to join squad');
+      Alert.alert(t('common.error'), err?.data?.error || t('onboarding.squad.failedJoin'));
     }
-  }, [squadCode, displayName, selectedTags, timingPreference, conviction, joinSquad, navigation]);
+  }, [squadCode, displayName, selectedTags, timingPreference, conviction, coordinates, joinSquad, navigation]);
 
   // ── Loading State ───────────────────────────────────────────────────
   if (isLoadingInvite) {
     return (
       <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading squad info...</Text>
+        <Text style={styles.loadingText}>{t('onboarding.squad.loadingInvite')}</Text>
       </View>
     );
   }
@@ -126,14 +136,14 @@ const SquadJoinScreen: React.FC = () => {
     return (
       <View style={[styles.container, styles.centered]}>
         <SquadIcon size={48} color={colors.textMuted} />
-        <Text style={styles.errorTitle}>Squad Not Found</Text>
+        <Text style={styles.errorTitle}>{t('onboarding.squad.squadNotFound')}</Text>
         <Text style={styles.errorSubtitle}>
-          This squad link may have expired or been cancelled.
+          {t('onboarding.squad.squadNotFoundDesc')}
         </Text>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={styles.backButtonText}>{t('onboarding.squad.goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -144,14 +154,14 @@ const SquadJoinScreen: React.FC = () => {
     return (
       <View style={[styles.container, styles.centered]}>
         <SquadIcon size={48} color={colors.textMuted} />
-        <Text style={styles.errorTitle}>Squad Has Ended</Text>
+        <Text style={styles.errorTitle}>{t('onboarding.squad.squadEnded')}</Text>
         <Text style={styles.errorSubtitle}>
-          {inviteData.creator_name}'s squad has already wrapped up.
+          {t('onboarding.squad.squadEndedDesc', { creator: inviteData.creator_name })}
         </Text>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={styles.backButtonText}>{t('onboarding.squad.goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -178,32 +188,28 @@ const SquadJoinScreen: React.FC = () => {
             <SquadIcon size={40} color={colors.primary} />
           </View>
           <Text style={styles.previewTitle}>
-            {inviteData.creator_name}'s Squad
+            {t('onboarding.squad.creatorSquad', { creator: inviteData.creator_name })}
           </Text>
           <Text style={styles.previewSubtitle}>
-            {inviteData.member_count}{' '}
-            {inviteData.member_count === 1 ? 'person' : 'people'} already in
-            {inviteData.area.neighborhood
-              ? ` — ${inviteData.area.neighborhood}`
-              : inviteData.area.city
-                ? ` — ${inviteData.area.city}`
-                : ''}
+            {t('onboarding.squad.peopleInSquad', { 
+              count: inviteData.member_count,
+              location: inviteData.area.neighborhood || inviteData.area.city || ''
+            })}
           </Text>
         </View>
 
         {/* Info cards */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>What is Squad Mode?</Text>
+          <Text style={styles.infoCardTitle}>{t('onboarding.squad.whatIsSquad')}</Text>
           <Text style={styles.infoCardText}>
-            Everyone picks their vibe, and we find the one spot that works for
-            the whole group. Takes 20 seconds.
+            {t('onboarding.squad.whatIsSquadDesc')}
           </Text>
         </View>
 
         <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>No app needed</Text>
+          <Text style={styles.infoCardTitle}>{t('onboarding.squad.noAppNeeded')}</Text>
           <Text style={styles.infoCardText}>
-            Join right here — no download, no account. Just pick your preferences.
+            {t('onboarding.squad.noAppNeededDesc')}
           </Text>
         </View>
 
@@ -212,7 +218,7 @@ const SquadJoinScreen: React.FC = () => {
           style={styles.primaryButton}
           onPress={() => setStep('preferences')}
           activeOpacity={0.8}>
-          <Text style={styles.primaryButtonText}>Join Squad</Text>
+          <Text style={styles.primaryButtonText}>{t('onboarding.squad.joinSquad')}</Text>
         </TouchableOpacity>
       </ScrollView>
     );
@@ -232,16 +238,16 @@ const SquadJoinScreen: React.FC = () => {
         <ChevronBackIcon size={22} color={colors.textSecondary} />
       </TouchableOpacity>
 
-      <Text style={styles.stepTitle}>Pick Your Vibe</Text>
+      <Text style={styles.stepTitle}>{t('onboarding.squad.pickYourVibeTitle')}</Text>
       <Text style={styles.stepSubtitle}>
-        This helps us find the right spot for everyone
+        {t('onboarding.squad.pickYourVibeSubtitle')}
       </Text>
 
       {/* Display Name */}
-      <Text style={styles.fieldLabel}>Your Name</Text>
+      <Text style={styles.fieldLabel}>{t('onboarding.squad.yourName')}</Text>
       <TextInput
         style={styles.nameInput}
-        placeholder="What should the squad call you?"
+        placeholder={t('onboarding.squad.yourNamePlaceholder')}
         placeholderTextColor={colors.textMuted}
         value={displayName}
         onChangeText={setDisplayName}
@@ -250,7 +256,7 @@ const SquadJoinScreen: React.FC = () => {
       />
 
       {/* Venue Tags */}
-      <Text style={styles.fieldLabel}>What are you into tonight?</Text>
+      <Text style={styles.fieldLabel}>{t('onboarding.squad.whatIntoTonight')}</Text>
       <View style={styles.tagGrid}>
         {VENUE_TAG_OPTIONS.map(tag => {
           const isSelected = selectedTags.includes(tag.id);
@@ -265,7 +271,7 @@ const SquadJoinScreen: React.FC = () => {
                   styles.tagChipText,
                   isSelected && styles.tagChipTextSelected,
                 ]}>
-                {tag.label}
+                {t(`onboarding.squad.venue.${tag.id}`, { defaultValue: tag.label })}
               </Text>
             </TouchableOpacity>
           );
@@ -273,7 +279,7 @@ const SquadJoinScreen: React.FC = () => {
       </View>
 
       {/* Timing Preference */}
-      <Text style={styles.fieldLabel}>When are you going out?</Text>
+      <Text style={styles.fieldLabel}>{t('onboarding.squad.whenGoingOut')}</Text>
       <View style={styles.timingRow}>
         {TIMING_OPTIONS.map(option => {
           const isSelected = timingPreference === option.id;
@@ -291,7 +297,7 @@ const SquadJoinScreen: React.FC = () => {
                   styles.timingChipText,
                   isSelected && styles.timingChipTextSelected,
                 ]}>
-                {option.label}
+                {t(`onboarding.squad.timing.${option.id}`, { defaultValue: option.label })}
               </Text>
             </TouchableOpacity>
           );
@@ -301,9 +307,9 @@ const SquadJoinScreen: React.FC = () => {
       {/* Dealbreaker / Conviction Question */}
       {selectedTags.length > 0 && (
         <>
-          <Text style={styles.fieldLabel}>How important are these choices?</Text>
+          <Text style={styles.fieldLabel}>{t('onboarding.squad.howImportant')}</Text>
           <Text style={styles.convictionHint}>
-            If these are dealbreakers, we'll make sure the recommendation matches.
+            {t('onboarding.squad.howImportantHint')}
           </Text>
           <View style={styles.convictionRow}>
             <TouchableOpacity
@@ -318,7 +324,7 @@ const SquadJoinScreen: React.FC = () => {
                   styles.convictionChipText,
                   conviction === 'important_to_me' && styles.convictionChipTextImportant,
                 ]}>
-                These are dealbreakers
+                {t('onboarding.squad.dealbreakers')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -333,12 +339,20 @@ const SquadJoinScreen: React.FC = () => {
                   styles.convictionChipText,
                   conviction === 'flexible' && styles.convictionChipTextFlexible,
                 ]}>
-                I'm flexible
+                {t('onboarding.squad.imFlexible')}
               </Text>
             </TouchableOpacity>
           </View>
         </>
       )}
+
+      {/* Location hint */}
+      <View style={styles.locationHintRow}>
+        <Text style={styles.locationHintIcon}>📍</Text>
+        <Text style={styles.locationHintText}>
+          {t('onboarding.squad.locationHint')}
+        </Text>
+      </View>
 
       {/* Submit */}
       <TouchableOpacity
@@ -353,12 +367,12 @@ const SquadJoinScreen: React.FC = () => {
         {isJoining ? (
           <ActivityIndicator color={colors.background} />
         ) : (
-          <Text style={styles.primaryButtonText}>Join the Squad</Text>
+          <Text style={styles.primaryButtonText}>{t('onboarding.squad.joinTheSquad')}</Text>
         )}
       </TouchableOpacity>
 
       <Text style={styles.hint}>
-        No account created. Your preferences are only used for tonight.
+        {t('onboarding.squad.noAccountHint')}
       </Text>
     </ScrollView>
   );
@@ -586,6 +600,28 @@ const styles = StyleSheet.create({
   convictionChipTextFlexible: {
     color: colors.gold,
     fontWeight: '600',
+  },
+  // Location hint
+  locationHintRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: colors.surface,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  locationHintIcon: {
+    fontSize: 13,
+    marginTop: 1,
+  },
+  locationHintText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 17,
   },
   // Buttons
   primaryButton: {

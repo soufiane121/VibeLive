@@ -11,60 +11,62 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useGetClaimStatusQuery, ClaimStatus} from '../../../features/venueClaim/VenueClaimApi';
 import GlobalColors from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const C = GlobalColors.VenueClaim;
 
-const STATUS_DISPLAY: Record<ClaimStatus, {icon: string; label: string; color: string; description: string}> = {
-  unclaimed: {
-    icon: '📍',
-    label: 'Unclaimed',
-    color: '#8a827a',
-    description: 'This venue has not been claimed yet.',
-  },
-  pending_verification: {
-    icon: '⏳',
-    label: 'Pending Verification',
-    color: '#f59e0b',
-    description: 'Your evidence is being verified. This usually takes a few minutes.',
-  },
-  manual_review: {
-    icon: '📋',
-    label: 'Under Review',
-    color: '#3b82f6',
-    description: 'Your claim is being reviewed by our admin team. This typically takes 1-2 business days.',
-  },
-  approved: {
-    icon: '✅',
-    label: 'Approved',
-    color: '#2ecc71',
-    description: 'Your claim has been approved! Your venue is now onboarded.',
-  },
-  rejected: {
-    icon: '❌',
-    label: 'Rejected',
-    color: '#e74c3c',
-    description: 'Your claim was not approved. You may be able to resubmit with updated information.',
-  },
-  suspended: {
-    icon: '⚠️',
-    label: 'Suspended',
-    color: '#e74c3c',
-    description: 'This venue has been suspended. Contact support for more information.',
-  },
-};
-
-const REJECTION_REASONS: Record<string, string> = {
-  evidence_does_not_match_venue: 'The evidence provided does not match this venue.',
-  claimant_not_verifiable: 'We were unable to verify your identity as a venue representative.',
-  venue_does_not_meet_criteria: 'This venue does not meet our onboarding criteria.',
-  duplicate_claim_in_review: 'Another claim for this venue is already being reviewed.',
-  fraudulent_submission: 'The submission was flagged as potentially fraudulent.',
-};
-
 export default function VenueClaimStatusScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const venueId: string = route.params?.venueId;
+
+  const STATUS_DISPLAY: Record<ClaimStatus, {icon: string; label: string; color: string; description: string}> = {
+    unclaimed: {
+      icon: t('common.unclaimedIcon'),
+      label: t('venueClaim.unclaimed'),
+      color: '#8a827a',
+      description: t('venueClaim.unclaimedDesc'),
+    },
+    pending_verification: {
+      icon: t('common.pendingIcon'),
+      label: t('venueClaim.pendingVerification'),
+      color: '#f59e0b',
+      description: t('venueClaim.pendingVerificationDesc'),
+    },
+    manual_review: {
+      icon: t('common.reviewIcon'),
+      label: t('venueClaim.underReview'),
+      color: '#3b82f6',
+      description: t('venueClaim.underReviewDesc'),
+    },
+    approved: {
+      icon: t('common.approvedCheckIcon'),
+      label: t('venueClaim.approved'),
+      color: '#2ecc71',
+      description: t('venueClaim.approvedDesc'),
+    },
+    rejected: {
+      icon: t('common.rejectedIcon'),
+      label: t('venueClaim.rejected'),
+      color: '#e74c3c',
+      description: t('venueClaim.rejectedDesc'),
+    },
+    suspended: {
+      icon: t('common.warningIcon'),
+      label: t('venueClaim.suspended'),
+      color: '#e74c3c',
+      description: t('venueClaim.suspendedDesc'),
+    },
+  };
+
+  const REJECTION_REASONS: Record<string, string> = {
+    evidence_does_not_match_venue: t('venueClaim.evidenceNotMatch'),
+    claimant_not_verifiable: t('venueClaim.notVerifiable'),
+    venue_does_not_meet_criteria: t('venueClaim.doesNotMeetCriteria'),
+    duplicate_claim_in_review: t('venueClaim.duplicateClaim'),
+    fraudulent_submission: t('venueClaim.fraudulent'),
+  };
 
   const {data, isLoading, error, refetch} = useGetClaimStatusQuery(venueId, {
     pollingInterval: 30000,
@@ -79,7 +81,7 @@ export default function VenueClaimStatusScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
           <ActivityIndicator color={C.primary} size="large" />
-          <Text style={styles.loadingText}>Loading claim status...</Text>
+          <Text style={styles.loadingText}>{t('venueClaim.loadingClaimStatus')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -90,14 +92,14 @@ export default function VenueClaimStatusScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backText}>←</Text>
+            <Text style={styles.backText}>{t('common.backArrow')}</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Claim Status</Text>
+          <Text style={styles.headerTitle}>{t('venueClaim.claimStatus')}</Text>
         </View>
         <View style={styles.center}>
-          <Text style={styles.errorText}>Failed to load claim status.</Text>
+          <Text style={styles.errorText}>{t('venueClaim.failedLoadClaimStatus')}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={refetch}>
-            <Text style={styles.retryBtnText}>Retry</Text>
+            <Text style={styles.retryBtnText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -110,9 +112,9 @@ export default function VenueClaimStatusScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={styles.backText}>{t('common.backArrow')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Claim Status</Text>
+        <Text style={styles.headerTitle}>{t('venueClaim.claimStatus')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -125,7 +127,7 @@ export default function VenueClaimStatusScreen() {
 
         {/* Venue Info */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoHeading}>Venue</Text>
+          <Text style={styles.infoHeading}>{t('common.venue')}</Text>
           <Text style={styles.infoValue}>{venue.name}</Text>
           {venue.address && (
             <Text style={styles.infoSubvalue}>
@@ -137,26 +139,26 @@ export default function VenueClaimStatusScreen() {
         {/* Claim Details */}
         {claim && (
           <View style={styles.infoCard}>
-            <Text style={styles.infoHeading}>Claim Details</Text>
+            <Text style={styles.infoHeading}>{t('venueClaim.claimDetails')}</Text>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Verification Path</Text>
+              <Text style={styles.detailLabel}>{t('venueClaim.verificationPath')}</Text>
               <Text style={styles.detailValue}>
                 {claim.path?.replace(/_/g, ' ') || '—'}
               </Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Submitted</Text>
+              <Text style={styles.detailLabel}>{t('common.submitted')}</Text>
               <Text style={styles.detailValue}>
                 {claim.submittedAt ? new Date(claim.submittedAt).toLocaleDateString() : '—'}
               </Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Resubmissions</Text>
+              <Text style={styles.detailLabel}>{t('venueClaim.resubmissions')}</Text>
               <Text style={styles.detailValue}>{claim.resubmissionCount}/3</Text>
             </View>
             {claim.subscriptionTierSelected && (
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Plan Selected</Text>
+                <Text style={styles.detailLabel}>{t('venueClaim.planSelected')}</Text>
                 <Text style={styles.detailValue}>
                   {claim.subscriptionTierSelected.charAt(0).toUpperCase() + claim.subscriptionTierSelected.slice(1)}
                 </Text>
@@ -164,7 +166,7 @@ export default function VenueClaimStatusScreen() {
             )}
             {claim.trialStartedAt && (
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Trial Ends</Text>
+                <Text style={styles.detailLabel}>{t('venueClaim.trialEnds')}</Text>
                 <Text style={styles.detailValue}>
                   {claim.trialEndsAt ? new Date(claim.trialEndsAt).toLocaleDateString() : '—'}
                 </Text>
@@ -176,7 +178,7 @@ export default function VenueClaimStatusScreen() {
         {/* Rejection Reason */}
         {claim?.status === 'rejected' && claim.rejectionReason && (
           <View style={styles.rejectionCard}>
-            <Text style={styles.rejectionTitle}>Rejection Reason</Text>
+            <Text style={styles.rejectionTitle}>{t('venueClaim.rejectionReason')}</Text>
             <Text style={styles.rejectionText}>
               {REJECTION_REASONS[claim.rejectionReason] || claim.rejectionReason}
             </Text>
@@ -189,12 +191,12 @@ export default function VenueClaimStatusScreen() {
             style={styles.primaryBtn}
             onPress={() => navigation.navigate('VenueClaimDetails', {venue})}
             activeOpacity={0.8}>
-            <Text style={styles.primaryBtnText}>Resubmit Claim</Text>
+            <Text style={styles.primaryBtnText}>{t('venueClaim.resubmitClaim')}</Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Text style={styles.secondaryBtnText}>Go Back</Text>
+          <Text style={styles.secondaryBtnText}>{t('common.goBack')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

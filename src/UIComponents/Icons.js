@@ -25,6 +25,10 @@ const EyeViewsIcon = props => {
   return <AntDesign  name="eyeo" {...props} />
 }
 
+const AppleIcon = props => {
+  return <FontAwesome name="apple" {...props} />
+}
+
 const CloseIcon = (props)=> {
   return <AntDesign name="close" {...props} />;
 }
@@ -262,4 +266,5 @@ export {
   MicrophoneSlashIcon,
   PlayIcon,
   StopIcon,
+  AppleIcon
 };

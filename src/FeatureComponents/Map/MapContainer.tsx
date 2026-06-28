@@ -19,12 +19,12 @@ import {
   LocationPuck,
   MarkerView,
 } from '@rnmapbox/maps';
-import {View, StyleSheet, Animated, Easing, Text} from 'react-native';
+import {View, StyleSheet, Animated, Easing, Text, Linking, Platform, useColorScheme} from 'react-native';
 import {point} from '@turf/helpers';
 import Supercluster from 'supercluster';
 import {debounce, throttle} from 'lodash';
 import {PUB_MAPBOX_KEY} from '@env';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import {
   createRadarBeam,
   createStaticCircle,
@@ -34,7 +34,7 @@ import ResetLocationButton from './ResetLocationButton';
 import {useGetAllMapPointsMutation} from '../../../features/LiveStream/LiveStream';
 import {useDispatch, useSelector} from 'react-redux';
 import {useSocketInstance} from '../../CustomHooks/useSocketInstance';
-import {PartialState, useNavigation} from '@react-navigation/native';
+import {PartialState, useNavigation, useIsFocused} from '@react-navigation/native';
 import {NativeStackNavigationProp} from 'react-native-screens/lib/typescript/native-stack/types';
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
 import {
@@ -46,16 +46,42 @@ import {
 import {emojis as EMOJIS} from '../../Utils/emojis';
 import {FloatingEmoji} from '../../FloatingAction/FloatEmojiAnimation';
 import {useAnalytics} from '../../Hooks/useAnalytics';
-import {GlobalColors} from '../../styles/GlobalColors';
 import {
   useGetHeatmapQuery,
   VenueData,
 } from '../../../features/voting/VotingApi';
-import HeatMapComponentStyles from './helperMap';
+import { useAppState } from '../../Hooks/useAppState';
+import MapHeatmapLayer from './MapHeatmapLayer';
+import PremiumVenueCard from '../Voting/PremiumVenueCard';
+import EmptyMapState from './EmptyMapState';
+import { TouchableOpacity } from 'react-native';
 
 const twIcon = require('../../../assests/tw.png');
 const inIcon = require('../../../assests/in.jpg');
 const eventIcon = require('../../../assests/yawning.png'); // We'll need to add this icon
+
+// Helper: assign icon key to feature properties so SymbolLayer expressions can resolve it
+const assignFeatureIcon = (feature: any): any => {
+  if (!feature || !feature.properties) return feature;
+  const isLive = feature.properties.cluster === true;
+  const icon = isLive
+    ? `cluster-${feature.properties.id}`
+    : `marker-${feature.properties.id}`;
+  return {
+    ...feature,
+    properties: {
+      ...feature.properties,
+      icon,
+    },
+  };
+};
+
+// Helper: build Mux thumbnail URL from playbackId
+const buildThumbnailUrl = (playbackId: string | undefined): string | null => {
+  if (!playbackId) return null;
+  return `https://image.mux.com/${playbackId}/thumbnail.jpg?width=40&height=40&fit_mode=crop`;
+  // return `https://image.mux.com/${playbackId}/animated.gif?start=20&width=50&height=50&fit_mode=crop`;
+};
 
 setAccessToken(PUB_MAPBOX_KEY);
 
@@ -161,13 +187,11 @@ const LiveIcon = memo(
     const {navigate} =
       useNavigation<NativeStackNavigationProp<PartialState<any>>>();
     if (!feature.isLive) return null;
-
     return (
       <ShapeSource
         key={`marker-${feature.id}`}
         id={`marker-${feature.id}`}
-        shape={point(feature.coordinates)}
-        {...feature}
+        shape={point(feature.coordinates, feature.properties)}
         onPress={e => {
           // Track marker click analytics
           trackMapInteraction('map_marker_clicked', {
@@ -211,17 +235,20 @@ const LiveIcon = memo(
         <CircleLayer
           ref={circleLayerRef} // Reference to directly update properties
           id={`pulse-${feature.id}`}
+          key={`pulse-${feature.id}`}
           style={{
             circleRadius: 70, // Initial radius
             circleColor: 'rgba(255, 0, 0, 0.5)',
             circleOpacity: 0.9, // Initial opacity
           }}
         />
+
         <SymbolLayer
           id={`icon-${feature.id}`}
+          key={`icon-${feature.id}`}
           style={{
-            iconImage: feature.imageUrl || 'tw',
-            iconSize: 0.1,
+            iconImage: ['coalesce', ['get', 'icon'], 'event-icon'],
+            iconSize: 1,
           }}
         />
       </ShapeSource>
@@ -239,68 +266,104 @@ interface EmojisState {
   [key: string]: [{emoji: string; id: string}];
 }
 const MapContainer = () => {
-  const {coordinates} = useGetLocation();
+  const {navigate} = useNavigation<any>();
+  const { isActive } = useAppState();
+  const isFocused = useIsFocused();
+  const coordinates = useCoordinates();
   const [fetchMapFeatures, {data, isSuccess, isLoading}] =
     useGetAllMapPointsMutation();
-  const [featuresPointsData, setFeaturesPointsData] = useState([]);
+  const [featuresPointsData, setFeaturesPointsData] = useState<any[]>([]);
+  const isDarkMode = useColorScheme() === 'dark';
 
   // Fetch events for map
-  const {data: eventsData} = useGetMapEventsQuery({
+  const {data: eventsData, isLoading: eventsLoading} = useGetMapEventsQuery({
     coordinates: `${coordinates[1]},${coordinates[0]}`,
     useDB: true, // Use database for testing
   });
 
-  const [mapEvents, setMapEvents] = useState<Event[]>([]);
+  const {data: heatmapData, isLoading: heatmapLoading} = useGetHeatmapQuery<any>(
+      {
+        latitude: coordinates[1],
+        longitude: coordinates[0],
+        radius: 20,
+      },
+      {
+        skip: coordinates.length < 2,
+        pollingInterval: isActive && isFocused ? 45000 : 0,
+      },
+    );
 
-  // Voting heatmap data
-  const {data: heatmapData, error: heatmapError, isLoading: heatmapLoading} = useGetHeatmapQuery(
-    {
-      latitude: coordinates[1],
-      longitude: coordinates[0],
-      radius: 20,
-    },
-    {
-      skip: coordinates.length < 2,
-      pollingInterval: 45000,
-    },
-  );
+  const mapEvents: Event[] = eventsData?.success && eventsData.data ? eventsData.data : [];
+
+
+  const [selectedHeatmapVenue, setSelectedHeatmapVenue] = useState<VenueData | null>(null);
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    console.log('[Heatmap Debug] coordinates:', coordinates);
-    console.log('[Heatmap Debug] query params:', {latitude: coordinates[1], longitude: coordinates[0], radius: 20});
-    console.log('[Heatmap Debug] skip:', coordinates.length < 2);
-    console.log('[Heatmap Debug] loading:', heatmapLoading);
-    console.log('[Heatmap Debug] error:', heatmapError);
-    console.log('[Heatmap Debug] data:', heatmapData ? `${heatmapData.heatmap?.length || 0} venues` : 'null');
-  }, [coordinates, heatmapData, heatmapError, heatmapLoading]);
+    if (selectedHeatmapVenue) {
+      Animated.spring(slideAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 80,
+        friction: 12,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+    return(()=>(
+      slideAnim.stopAnimation()
+    ))
+  }, [selectedHeatmapVenue, slideAnim]);
 
-  const heatmapGeoJSON = useMemo(() => {
-    const venues = heatmapData?.heatmap || [];
-    if (venues.length === 0) return null;
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [300, 0],
+  });
 
-    return {
-      type: 'FeatureCollection' as const,
-      features: venues.map((v: VenueData) => ({
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: v.coordinates,
-        },
-        properties: {
-          id: v.id,
-          name: v.name,
-          vibeScore: v.vibeScore,
-          hotVotes: v.hotVotes,
-          deadVotes: v.deadVotes,
-          totalVotes: v.totalVotes,
-          isBoosted: v.isBoosted ? 1 : 0,
-          intensity: Math.min(Math.abs(v.vibeScore) / 100, 1),
-        },
-      })),
-    };
-  }, [heatmapData]);
+  const handleHeatmapVenuePress = useCallback((venue: VenueData) => {
+    setSelectedHeatmapVenue(venue);
+  }, []);
 
-  const center = useMemo(() => [...coordinates], [coordinates]); // Center of radar
+  const handleViewVenue = useCallback((venueId: string) => {
+    // Navigate to VenueDetails screen (new screen)
+    navigate('VenueDetails', { venueId, venue: selectedHeatmapVenue });
+  }, [navigate, selectedHeatmapVenue]);
+
+  const handleDirections = useCallback(async (venueId: string) => {
+    if (!selectedHeatmapVenue) return;
+
+    const [longitude, latitude] = selectedHeatmapVenue.coordinates;
+    const label = encodeURIComponent(selectedHeatmapVenue.name);
+    
+    // Construct the URL based on the platform
+    const url = Platform.select({
+      ios: `maps://app?daddr=${latitude},${longitude}&q=${label}`,
+      android: `geo:${latitude},${longitude}?q=${latitude},${longitude}(${label})`,
+    });
+
+    if (url) {
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          // Fallback to Google Maps in browser if native app fails
+          const browserUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+          await Linking.openURL(browserUrl);
+        }
+      } catch (error) {
+        console.log('Error opening map:', error);
+      }
+    }
+  }, [selectedHeatmapVenue]);
+
+
+
+  const center = coordinates; // Stable reference from LocationStore — no spread needed
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
   const angleRef = useRef(0); // Ref to track current angle
@@ -333,40 +396,74 @@ const MapContainer = () => {
   }, [socket]);
 
   useEffect(() => {
-    // socket?.emit('get-updated-user', {}, (resp)=>{
-    //   console.log({resp: resp.data.streamsDetails});
-    //   dispatch(setCurrentUser(resp.data))
-    // });
+    if (!socket) return;
 
-    // add new marker to map
-    socket?.on('add-to-map', data => {
-      console.log({data}, 'add-to-map---------------------');
-      setFeaturesPointsData(prevState => [...prevState, data?.data?.mapItem]);
-    });
-    socket?.on('update-current-user', data => {
+    const handleAddToMap = (data: any) => {
+      const incoming = assignFeatureIcon(data?.data?.mapItem);
+      if (!incoming) return;
+      // Delay 13s to add live stream marker so MUX thumbnail is ready before marker renders on map
+      setTimeout(() => {
+        setFeaturesPointsData(prevState => {
+          // Remove any existing feature with the same ID to prevent duplicates
+          const filtered = prevState.filter(
+            feature => feature.properties?.id !== incoming.properties?.id,
+          );
+          return [...filtered, incoming];
+        });
+      }, 13000);
+    };
+    const handleUpdateUser = (data: any) => {
       console.log('socket new user', {data});
-    });
-    socket?.on('add-reaction-to-map', data => {
+    };
+    const handleReactionToMap = (data: any) => {
       const {id, reactEmogi} = data?.data;
+      console.log('add-reaction-to-map', {id, reactEmogi});
       setEmojis(prevState => ({
         ...prevState,
         [id]: [...(prevState[id] || []), {id: Date.now(), emoji: reactEmogi}],
       }));
-    });
-    socket?.on('stream-stopped', data => {
-      console.log(data, 'stream-stopped---------------------');
-      handleRemoveStoppedStreamFromMap({
-        streamId: data?.playbackId,
-      });
-    });
+    };
+    const handleStreamStopped = (data: any) => {
+      console.log(data, 'stream-stopped');
+      handleRemoveStoppedStreamFromMap({streamId: data?.streamId});
+    };
+
+    socket.on('add-to-map', handleAddToMap);
+    socket.on('update-current-user', handleUpdateUser);
+    socket.on('add-reaction-to-map', handleReactionToMap);
+    socket.on('stream-stopped', handleStreamStopped);
+
+    // CRITICAL: remove listeners on cleanup to prevent accumulation
+    // Without this, each effect run (on socket reconnect) stacks a new listener
+    return () => {
+      socket.off('add-to-map', handleAddToMap);
+      socket.off('update-current-user', handleUpdateUser);
+      socket.off('add-reaction-to-map', handleReactionToMap);
+      socket.off('stream-stopped', handleStreamStopped);
+    };
   }, [socket]);
 
-  const handleRemoveStoppedStreamFromMap = ({streamId}: {streamId: string}) => {
-    const updatedFeaturesPointsData = featuresPointsData.filter(
-      feature => feature?.properties?.liveDetails?.streamId !== streamId,
+  const handleRemoveStoppedStreamFromMap = useCallback(({streamId}: {streamId: string}) => {
+    setFeaturesPointsData(prevFeatures => 
+      prevFeatures
+        .map(feature => {
+          // Clean up nested streams if it's a grouped feature
+          if (feature?.groupedFeatures) {
+            feature.groupedFeatures = feature.groupedFeatures.filter(
+              (f: any) => f?.properties?.liveDetails?.streamId !== streamId
+            );
+          }
+          return feature;
+        })
+        .filter(feature => {
+          // Remove if it's the main feature
+          if (feature?.properties?.liveDetails?.streamId === streamId) {
+            return false;
+          }
+          return true;
+        })
     );
-    setFeaturesPointsData(updatedFeaturesPointsData);
-  };
+  }, []);
 
   // Calculate dynamic bounds based on user location
   const calculateDynamicBounds = useCallback(
@@ -397,28 +494,46 @@ const MapContainer = () => {
     }
   }, [coordinates.length, calculateDynamicBounds]);
 
-  // Update map events when data changes
-  useEffect(() => {
-    if (eventsData?.success && eventsData.data) {
-      setMapEvents(eventsData.data);
-    }
-  }, [eventsData]);
+
+  // Persistent image registry: accumulate all image keys ever seen.
+  // This prevents Mapbox race conditions where a SymbolLayer still references
+  // an image key that was just removed from the registry.
+  const persistentImageRegistry = useRef<Record<string, {uri: string}>>({});
 
   // Register dynamic images using URLs
   const images = useMemo(() => {
-    const imgUrl =
-      'https://fastly.picsum.photos/id/218/20/20.jpg?hmac=pIx-HTJBJRheNaHmhgqsQRX8JbTGvag_zic9NTNWFJU';
     const imageRegistry = {} as any;
+
     if (featuresPointsData.length > 0) {
       featuresPointsData?.forEach(feature => {
-        imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};
+        const playbackId = feature.properties?.liveDetails?.playbackId;
+        const thumbnailUrl = buildThumbnailUrl(playbackId);
+        if (!thumbnailUrl) return;
+
+        const isLive = feature.properties?.cluster === true;
+        const id = isLive
+          ? `cluster-${feature.properties.id}`
+          : `marker-${feature.properties.id}`;
+        imageRegistry[id] = {uri: thumbnailUrl};
       });
     }
-    // Add event icon - using a simple text-based icon for now
-    imageRegistry['event-icon'] = {
-      uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
-    }; // Base64 encoded calendar SVG
-    return imageRegistry;
+
+    // Merge current images into persistent registry so we never unload
+    // an image that a SymbolLayer might still be referencing during a transition
+    Object.assign(persistentImageRegistry.current, imageRegistry);
+
+    return persistentImageRegistry.current;
+// TODO: maybe it was used to show event image
+    // if (featuresPointsData.length > 0) {
+    //   featuresPointsData?.forEach(feature => {
+    //     imageRegistry[feature?.imageUrl] = {uri: feature?.imageUrl};
+    //   });
+    // }
+    // // Add event icon - using a simple text-based icon for now
+    // imageRegistry['event-icon'] = {
+    //   uri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE5IDNIMTVWMUgxM1YzSDExVjFIOVYzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlWNUMyMSAzLjkgMjAuMSAzIDE5IDNaTTE5IDE5SDVWOEgxOVYxOVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
+    // }; // Base64 encoded calendar SVG
+    // return imageRegistry;
   }, [featuresPointsData]);
 
   const handleGetMapsPoints = async () => {
@@ -426,8 +541,9 @@ const MapContainer = () => {
       const {data} = await fetchMapFeatures({
         coordinates,
       }).unwrap();
-      if (data) {
-        setFeaturesPointsData(data.features);
+      if (data?.features) {
+        const enriched = data.features.map(assignFeatureIcon);
+        setFeaturesPointsData(enriched);
       }
     } catch (error) {}
   };
@@ -452,6 +568,8 @@ const MapContainer = () => {
         const newClusters = supercluster.getClusters(bounds, zoomLevel);
 
         setClusters(newClusters);
+      } else {
+        setClusters([]);
       }
     }, 300);
 
@@ -461,6 +579,19 @@ const MapContainer = () => {
       debouncedFetchClusters.cancel();
     };
   }, [bounds, zoomLevel, supercluster, featuresPointsData.length]);
+
+  // check if map is empty, no live no heatmap, show empty screen
+  const isMapEmpty = React.useMemo(() => {
+    const hasLiveFeatures = featuresPointsData.length > 0;
+    const hasHeatmap = (heatmapData?.heatmap?.length ?? 0) > 0;
+    const hasEvents = mapEvents.length > 0;
+
+    return !(hasLiveFeatures || hasHeatmap || hasEvents);
+  }, [featuresPointsData, heatmapData, mapEvents]);
+
+  const isAnyLoading = isLoading || eventsLoading || heatmapLoading;
+
+  
 
   // Pulse animation for live markers without using listeners
   useEffect(() => {
@@ -497,6 +628,7 @@ const MapContainer = () => {
 
     return () => {
       pulseAnimation.stopAnimation();
+      pulseAnimation.removeAllListeners(); // Prevent memory leak
     };
   }, [pulseAnimation]);
 
@@ -534,9 +666,15 @@ const MapContainer = () => {
   const handleRegionChange = useCallback(
     throttle(async map => {
       // const region = await map?.getVisibleBounds();
-      const region = await map?.getBounds()();
-      const {ne, sw} = region;
-      const newBounds = [sw.lng, sw.lat, ne.lng, ne.lat];
+      // const region = await map?.getBounds()();
+      // const {ne, sw} = region;
+      // const newBounds = [sw.lng, sw.lat, ne.lng, ne.lat];
+      // setBounds(newBounds);
+
+      // new ones
+      const bounds = map?.properties?.bounds; 
+      const {ne, sw} = bounds;
+      const newBounds = [...sw, ...ne];
       setBounds(newBounds);
 
       const zoom = await map.getZoom();
@@ -586,9 +724,15 @@ const MapContainer = () => {
             ref={mapRef}
             style={styles.map}
             onCameraChanged={handleRegionChange}
-            styleURL="mapbox://styles/test-121/cmmi3vwu8000901qp6q0554cd" // original dark mode map"mapbox://styles/mapbox/dark-v11"
+            styleURL={
+              isDarkMode
+                ? 'mapbox://styles/test-121/cmmi3vwu8000901qp6q0554cd'
+                : 'mapbox://styles/test-121/cmpa0v9sb007r01s8djrbawri'
+            } // original dark mode map"mapbox://styles/mapbox/dark-v11"
             scaleBarEnabled={false}
-            logoEnabled={false}>
+            logoEnabled={true}
+            // logoPosition={{bottom:730, right: 300}}
+            attributionPosition={{top: -33, right: 1}}>
             <Camera
               zoomLevel={zoomLevel}
               centerCoordinate={coordinates}
@@ -600,6 +744,20 @@ const MapContainer = () => {
             {/* still need to copy radar animation to here
              */}
             <LocationPuck puckBearingEnabled puckBearing="course" />
+            {/* <View
+              pointerEvents= "none"
+              style={{
+                // position: 'absolute',
+                top: 50, // match your previous top: -30 offset
+                right: 1,
+                backgroundColor: '#00C853',
+                opacity: 0.3,
+                borderRadius: 4,
+                paddingHorizontal: 6,
+                paddingVertical: 3,
+              }}>
+              <Text style={{color: '#fff', fontSize: 10}}>© Mapbox</Text>
+            </View> */}
             {radarBeam && (
               <ShapeSource
                 id="radarSource"
@@ -623,8 +781,11 @@ const MapContainer = () => {
             />
 
             {/* Voting heatmap layer */}
-            {heatmapGeoJSON && heatmapGeoJSON.features.length > 0 && (
-              <HeatMapComponentStyles heatmapGeoJSON={heatmapGeoJSON} />
+            {heatmapData?.heatmap?.length > 0 && (
+              <MapHeatmapLayer
+                heatmapData={heatmapData}
+                onVenuePress={handleHeatmapVenuePress}
+              />
             )}
 
             {/* Render event markers */}
@@ -638,7 +799,7 @@ const MapContainer = () => {
               ))}
             {/* Render live stream markers */}
             {shouldRenderMarkers &&
-              clusters.map(cluster => {
+              clusters.map((cluster: any) => {
                 const isCluster = cluster.properties.cluster;
                 const imageUrl = cluster?.properties?.imageUrl || 'in';
                 const coordinates = cluster.geometry.coordinates;
@@ -652,13 +813,12 @@ const MapContainer = () => {
                   <ShapeSource
                     key={id}
                     id={id}
-                    {...cluster.properties}
-                    shape={point(coordinates)}
+                    shape={cluster}
                     clusterRadius={50}>
                     <SymbolLayer
                       id={`cluster-icon-${id}`}
                       style={{
-                        iconImage: imageUrl || 'in',
+                        iconImage: ['coalesce', ['get', 'icon'], 'event-icon'],
                         iconSize: 0.1,
                       }}
                     />
@@ -670,10 +830,13 @@ const MapContainer = () => {
                       feature={{
                         id: cluster.properties.id,
                         isLive: isCluster,
-                        coordinates: cluster.properties.coordinates, // Ensure this is an array [longitude, latitude]
+                        coordinates: cluster.properties.coordinates || cluster.geometry.coordinates,
                         imageUrl: cluster?.properties?.imageUrl,
                         properties: {
                           ...cluster?.properties,
+                          icon: cluster.properties.point_count
+                            ? 'event-icon'
+                            : cluster.properties.icon,
                         },
                         hasNestedMarkers: hasNestedMarkers,
                         groupedFeatures: cluster?.groupedFeatures,
@@ -686,33 +849,43 @@ const MapContainer = () => {
                       trackMapInteraction={trackMapInteraction}
                     />
 
-                    {emojis[cluster?.properties?.streamId] && (
+                    {/* Look up emojis by playbackId (stored in liveDetails.playbackId) */}
+                    {emojis[cluster?.properties?.liveDetails?.playbackId] && (
                       <MarkerView coordinate={cluster?.properties?.coordinates}>
-                        <>
-                          {emojis[cluster?.properties?.streamId]?.map(
-                            (emoji, idx) => {
-                              return (
+                        {/* Fixed anchor: all emojis start from the same point, don't push each other */}
+                        <View style={{width: 1, height: 1}}>
+                          {emojis[
+                            cluster?.properties?.liveDetails?.playbackId
+                          ]?.map(emoji => {
+                            const emojiLookupKey =
+                              cluster?.properties?.liveDetails?.playbackId;
+                            return (
+                              <View
+                                key={emoji.id}
+                                style={{
+                                  position: 'absolute',
+                                  bottom: 0,
+                                  left: -10,
+                                }}>
                                 <FloatingEmoji
-                                  key={idx}
-                                  coordinates={cluster?.properties?.coordinates} // Ensure correct coordinates are passed here
-                                  mapRef={mapRef} // Ensure mapRef is passed here correctly
+                                  coordinates={cluster?.properties?.coordinates}
+                                  mapRef={mapRef}
                                   emoji={
                                     EMOJIS[emoji.emoji.toLocaleLowerCase()]
                                   }
                                   onComplete={() => {
                                     setEmojis(prevState => ({
                                       ...prevState,
-                                      [cluster?.properties?.streamId]:
-                                        prevState[
-                                          cluster?.properties?.streamId
-                                        ]?.filter(e => e.id !== emoji.id),
+                                      [emojiLookupKey]: prevState[
+                                        emojiLookupKey
+                                      ]?.filter(e => e.id !== emoji.id),
                                     }));
                                   }}
                                 />
-                              );
-                            },
-                          )}
-                        </>
+                              </View>
+                            );
+                          })}
+                        </View>
                       </MarkerView>
                     )}
                   </>
@@ -725,7 +898,8 @@ const MapContainer = () => {
         flex
         z-10 
         absolute
-        bottom-0 
+        bottom-5 
+        // mb-1
         right-3 
         justify-end 
         items-end 
@@ -744,6 +918,18 @@ const MapContainer = () => {
               width: 40,
             }}
           />
+          {/* Selected Venue Card Overlay */}
+          {selectedHeatmapVenue && (
+            <PremiumVenueCard
+              venue={selectedHeatmapVenue}
+              onClose={() => setSelectedHeatmapVenue(null)}
+              onViewVenue={handleViewVenue}
+              onDirections={handleDirections}
+              translateY={translateY}
+            />
+          )}
+
+          <EmptyMapState isVisible={!isAnyLoading && isMapEmpty} />
         </>
       )}
     </View>

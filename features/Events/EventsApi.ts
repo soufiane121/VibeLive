@@ -10,10 +10,17 @@ export interface Event {
   endDate: string;
   source?: string;
   externalId?: string;
+  venue?: {
+    _id: string;
+    name: string;
+  };
   location: {
     type: 'Point';
     coordinates: [number, number]; // [longitude, latitude]
     address: string;
+    address1?: string;
+    city?: string;
+    zip?: string;
   };
   eventType: string;
   ticketing: {
@@ -26,6 +33,7 @@ export interface Event {
     url: string;
     publicId: string;
   };
+  coverImageUrl?: string;
   creator: {
     _id: string;
     username: string;
@@ -57,6 +65,8 @@ export interface Event {
   isPromotionActive?: boolean;
   userRSVPStatus?: 'interested' | 'going' | null;
   hasUserRSVP?: boolean;
+  reviewStatus?: 'approved' | 'pending' | 'rejected';
+  rejectionReason?: string;
 }
 
 export interface CreateEventRequest {
@@ -64,9 +74,13 @@ export interface CreateEventRequest {
   description: string;
   startDate: string;
   endDate: string;
+  venueId?: string;
   location: {
     coordinates: [number, number];
     address: string;
+    address1?: string;
+    city?: string;
+    zip?: string;
   };
   eventType: string;
   ticketing?: {
@@ -79,8 +93,37 @@ export interface CreateEventRequest {
     url: string;
     publicId: string;
   };
+  coverImageUrl?: string;
   tags?: string[];
   capacity?: number;
+}
+
+export interface MyVenue {
+  _id: string;
+  name: string;
+  address: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
+  location: {
+    coordinates: [number, number];
+  };
+}
+
+export interface MyVenueResponse {
+  success: boolean;
+  data: MyVenue | null;
+}
+
+export interface UploadUrlResponse {
+  success: boolean;
+  data: {
+    uploadUrl: string;
+    imageId: string;
+  };
 }
 
 export interface EventsResponse {
@@ -258,6 +301,14 @@ export const eventsApi = createApi({
       query: () => '/user/my-rsvps',
       providesTags: ['UserRSVPs'],
     }),
+
+    // Get Cloudflare Images upload URL
+    getUploadUrl: builder.mutation<UploadUrlResponse, void>({
+      query: () => ({
+        url: '/upload-url',
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
@@ -278,4 +329,5 @@ export const {
   useLazyGetUserEventsQuery,
   useGetUserRSVPsQuery,
   useLazyGetUserRSVPsQuery,
+  useGetUploadUrlMutation,
 } = eventsApi;

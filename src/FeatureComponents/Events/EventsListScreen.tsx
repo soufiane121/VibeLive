@@ -12,20 +12,23 @@ import {
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useGetUpcomingEventsQuery} from '../../../features/Events/EventsApi';
+import {useSelector} from 'react-redux';
 import {Event} from '../../../features/Events/EventsApi';
 import {format, isToday, isTomorrow, isThisWeek} from 'date-fns';
-import useGetLocation from '../../CustomHooks/useGetLocation';
+import {useCoordinates} from '../../CustomHooks/useGetLocation';
 import {
   CommonMaterialCommunityIcons,
   CommonMaterialIcons,
 } from '../../UIComponents/Icons';
 import { GlobalColors, ColorUtils } from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
+import { useAnalytics } from '../../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../../types/AnalyticsEnums';
 
 const colors = GlobalColors.EventsListScreen;
 
 const eventTypeIcons: {[key: string]: string} = {
   music: 'music-note',
-  sports: 'basketball',
   nightlife: 'glass-cocktail',
   festival: 'tent',
   conference: 'domain',
@@ -33,19 +36,22 @@ const eventTypeIcons: {[key: string]: string} = {
   theater: 'theater',
   art: 'palette',
   food: 'silverware-fork-knife',
-  other: 'clock-time-four-outline', // Used "clock" for OTHER badge loosely matching the screenshot
+  happyhour: 'glass-mug-variant',
+  other: 'dots-horizontal',
 };
 
 interface EventItemProps {
   event: Event;
   onPress: () => void;
+  currentUserId?: string;
 }
 
-const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
+const EventItem: React.FC<EventItemProps> = ({event, onPress, currentUserId}) => {
+  const { t } = useTranslation();
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
+    if (isToday(date)) return t('eventsList.today');
+    if (isTomorrow(date)) return t('eventsList.tomorrow');
     return format(date, 'EEEE');
   };
 
@@ -55,12 +61,33 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
 
   const isMusic = event.eventType === 'music';
 
+  const isCreator = currentUserId && event.creator?._id === currentUserId;
+  const showReviewBadge = isCreator && event.reviewStatus && event.reviewStatus !== 'approved';
+
   return (
     <TouchableOpacity
-      style={styles.eventItem}
+      style={[styles.eventItem, showReviewBadge && event.reviewStatus === 'rejected' && { opacity: 0.7 }]}
       onPress={onPress}
       activeOpacity={0.8}>
-
+      {showReviewBadge && (
+        <View style={[
+          styles.reviewStatusBadge,
+          event.reviewStatus === 'pending' ? styles.reviewStatusPending : styles.reviewStatusRejected
+        ]}>
+          <CommonMaterialCommunityIcons
+            name={event.reviewStatus === 'pending' ? 'clock-outline' : 'close-circle-outline'}
+            size={12}
+            color={event.reviewStatus === 'pending' ? '#92400e' : '#991b1b'}
+            style={{marginRight: 4}}
+          />
+          <Text style={[
+            styles.reviewStatusText,
+            event.reviewStatus === 'pending' ? styles.reviewStatusTextPending : styles.reviewStatusTextRejected
+          ]}>
+            {event.reviewStatus === 'pending' ? t('eventsList.underReview') : t('eventsList.rejected')}
+          </Text>
+        </View>
+      )}
       <View style={styles.eventHeader}>
         <View
           style={[
@@ -68,7 +95,9 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
             isMusic ? styles.eventTypeBadgeMusic : null,
           ]}>
           <CommonMaterialCommunityIcons
-            name={(eventTypeIcons[event.eventType] || eventTypeIcons.other) as any}
+            name={
+              (eventTypeIcons[event.eventType] || eventTypeIcons.other) as any
+            }
             size={12}
             color={isMusic ? colors.primary : colors.textSecondary}
             style={{marginRight: 6}}
@@ -78,7 +107,7 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
               styles.eventTypeText,
               {color: isMusic ? colors.primary : colors.textSecondary},
             ]}>
-            {event?.eventType ? event.eventType.toUpperCase() : 'OTHER'}
+            {event?.eventType ? event.eventType.toUpperCase() : t('eventsList.other')}
           </Text>
         </View>
 
@@ -94,8 +123,11 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
 
       <View style={styles.eventContent}>
         <View style={styles.eventImageContainer}>
-          {event.banner?.url ? (
-            <Image source={{uri: event.banner.url}} style={styles.eventImage} />
+          {event.banner?.url || event?.coverImageUrl ? (
+            <Image
+              source={{uri: event?.banner?.url || event?.coverImageUrl}}
+              style={styles.eventImage}
+            />
           ) : (
             <CommonMaterialCommunityIcons
               name={(eventTypeIcons[event.eventType] || 'music-note') as any}
@@ -126,17 +158,20 @@ const EventItem: React.FC<EventItemProps> = ({event, onPress}) => {
           <View style={styles.eventFooter}>
             {event.ticketing?.isFree ? (
               <View style={styles.priceBadge}>
-                <Text style={styles.priceText}>Free</Text>
+                <Text style={styles.priceText}>{t('eventsList.free')}</Text>
               </View>
             ) : (
               <Text style={styles.paidPriceText}>
-                ${event.ticketing?.price || 0} {event.ticketing?.currency || 'USD'}
+                ${event.ticketing?.price || 0}{' '}
+                {event.ticketing?.currency || 'USD'}
               </Text>
             )}
 
             <View style={styles.rsvpInfo}>
               <View style={styles.interestedCircle} />
-              <Text style={styles.rsvpCount}>{event.rsvpCount || 0} interested</Text>
+              <Text style={styles.rsvpCount}>
+                {event.rsvpCount || 0} {t('eventsList.interested')}
+              </Text>
             </View>
 
             <TouchableOpacity style={styles.bookmarkButton}>
@@ -157,8 +192,17 @@ const EventsListScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
-  const {coordinates} = useGetLocation();
-  console.log('from event list screen', {coordinates});
+  const coordinates = useCoordinates();
+  const currentUser = useSelector((state: any) => state.currentUser.currentUser);
+  const { t } = useTranslation();
+  const { trackEvent } = useAnalytics({ screenName: 'EventsList' });
+
+  React.useEffect(() => {
+    trackEvent(AnalyticsEventType.EVENT_LIST_VIEWED, {
+      user_id: currentUser?._id,
+      filter: selectedFilter,
+    });
+  }, []);
 
   const {
     data: eventsResponse,
@@ -184,12 +228,17 @@ const EventsListScreen: React.FC = () => {
   }
 
   const eventFilters: FilterItem[] = [
-    {key: 'all', label: 'All Events', icon: 'animation-play'},
-    {key: 'music', label: 'Music', icon: 'music-note'},
-    {key: 'sports', label: 'Sports', icon: 'basketball'},
-    {key: 'nightlife', label: 'Nightlife', icon: 'glass-cocktail'},
-    {key: 'festival', label: 'Festivals', icon: 'tent'},
-    {key: 'other', label: 'Other', icon: 'dots-horizontal'},
+    {key: 'all', label: t('eventsList.allEvents'), icon: 'animation-play'},
+    {key: 'music', label: t('eventsList.music'), icon: 'music-note'},
+    {key: 'nightlife', label: t('eventsList.nightlife'), icon: 'glass-cocktail'},
+    {key: 'festival', label: t('eventsList.festivals'), icon: 'tent'},
+    {key: 'happyhour', label: t('eventsList.happyHour'), icon: 'glass-mug-variant'},
+    // {key: 'conference', label: 'Conference', icon: 'domain'},
+    {key: 'comedy', label: t('eventsList.comedy'), icon: 'drama-masks'},
+    // {key: 'theater', label: 'Theater', icon: 'theater'},
+    // {key: 'art', label: 'Art', icon: 'palette'},
+    // {key: 'food', label: 'Food', icon: 'silverware-fork-knife'},
+    {key: 'other', label: t('eventsList.otherFilter'), icon: 'dots-horizontal'},
   ];
 
   const sortedEvents = useMemo(() => {
@@ -206,10 +255,19 @@ const EventsListScreen: React.FC = () => {
   }, [refetch]);
 
   const handleEventPress = (event: Event) => {
+    trackEvent(AnalyticsEventType.EVENT_DETAILS_VIEWED, {
+      event_id: event._id,
+      event_title: event.title,
+      event_type: event.eventType,
+    });
     navigation.navigate('EventDetails', {eventId: event._id});
   };
 
   const handleCreateEvent = () => {
+    trackEvent(AnalyticsEventType.BUTTON_PRESSED, {
+      button_name: 'create_event',
+      screen_name: 'EventsList',
+    });
     navigation.navigate('EventCreationFlow');
   };
 
@@ -244,7 +302,7 @@ const EventsListScreen: React.FC = () => {
             <View style={styles.dateSeparatorLine} />
           </View>
         )}
-        <EventItem event={item} onPress={() => handleEventPress(item)} />
+        <EventItem event={item} onPress={() => handleEventPress(item)} currentUserId={currentUser?._id} />
       </View>
     );
   };
@@ -284,11 +342,11 @@ const EventsListScreen: React.FC = () => {
         size={64}
         color={colors.textMuted}
       />
-      <Text style={styles.emptyStateTitle}>No Events Found</Text>
+      <Text style={styles.emptyStateTitle}>{t('eventsList.noEventsFound')}</Text>
       <Text style={styles.emptyStateText}>
         {selectedFilter === 'all'
-          ? 'There are no upcoming events in your area.'
-          : `No ${selectedFilter} events found.`}
+          ? t('eventsList.noEventsInArea')
+          : t('eventsList.noEventsType', {type: selectedFilter})}
       </Text>
     </View>
   );
@@ -300,12 +358,12 @@ const EventsListScreen: React.FC = () => {
         size={64}
         color={colors.error}
       />
-      <Text style={styles.errorTitle}>Unable to Load Events</Text>
+      <Text style={styles.errorTitle}>{t('eventsList.unableToLoad')}</Text>
       <Text style={styles.errorText}>
-        Please check your connection and try again.
+        {t('eventsList.checkConnection')}
       </Text>
       <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
-        <Text style={styles.retryButtonText}>Retry</Text>
+        <Text style={styles.retryButtonText}>{t('eventsList.retry')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -320,7 +378,7 @@ const EventsListScreen: React.FC = () => {
       <View style={styles.header}>
         <View>
           {/* <Text style={styles.headerSubtitle}>CHARLOTTE, NC</Text> */}
-          <Text style={styles.headerTitle}>Events</Text>
+          <Text style={styles.headerTitle}>{t('eventsList.events')}</Text>
         </View>
         <TouchableOpacity
           style={styles.createButton}
@@ -408,6 +466,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth:2,
+    borderColor: colors.border
   },
   filtersWrapper: {
     height: 50,
@@ -473,6 +533,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: 16,
+  },
+  reviewStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  reviewStatusPending: {
+    backgroundColor: '#fef3c7',
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  reviewStatusRejected: {
+    backgroundColor: '#fee2e2',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  reviewStatusText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  reviewStatusTextPending: {
+    color: '#92400e',
+  },
+  reviewStatusTextRejected: {
+    color: '#991b1b',
   },
   eventHeader: {
     flexDirection: 'row',

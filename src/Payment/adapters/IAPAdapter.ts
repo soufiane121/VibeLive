@@ -14,18 +14,28 @@ import { baseUrl } from '../../../baseUrl';
 import { getLocalData } from '../../Utils/LocalStorageHelper';
 
 // Apple App Store product IDs — must match App Store Connect configuration
+// Streaming minutes packages: 30 min, 120 min, 300 min
 const IAP_PRODUCT_IDS = [
-  'com.vibelive.boost.basic',
-  'com.vibelive.boost.premium',
-  'com.vibelive.boost.ultimate',
+  'com.vibelive.minutes.30',
+  'com.vibelive.minutes.120',
+  'com.vibelive.minutes.300',
 ];
 
 // Map tier IDs to App Store product IDs
 const TIER_TO_PRODUCT_ID: Record<string, string> = {
-  basic: 'com.vibelive.boost.basic',
-  premium: 'com.vibelive.boost.premium',
-  ultimate: 'com.vibelive.boost.ultimate',
+  basic: 'com.vibelive.minutes.30',
+  premium: 'com.vibelive.minutes.120',
+  ultimate: 'com.vibelive.minutes.300',
 };
+
+// Map product IDs to minute counts
+const PRODUCT_MINUTES: Record<string, number> = {
+  'com.vibelive.minutes.30': 30,
+  'com.vibelive.minutes.120': 120,
+  'com.vibelive.minutes.300': 300,
+};
+
+export { IAP_PRODUCT_IDS, TIER_TO_PRODUCT_ID, PRODUCT_MINUTES };
 
 export class IAPAdapter implements PaymentAdapter {
   private products: Product[] = [];
@@ -59,6 +69,14 @@ export class IAPAdapter implements PaymentAdapter {
       console.error('IAP initialization failed:', error);
       throw new Error('In-App Purchase service unavailable');
     }
+  }
+
+  /**
+   * Get loaded IAP products for UI display (prices, currency, etc.)
+   * Must be called after initialize()
+   */
+  getLoadedProducts(): Product[] {
+    return [...this.products];
   }
 
   async purchaseBoost(tier: BoostTier, metadata: PurchaseMetadata): Promise<PurchaseResult> {

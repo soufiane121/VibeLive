@@ -2,6 +2,7 @@ import React, {useEffect} from 'react';
 import {View, Text, Linking, StyleSheet, SafeAreaView, TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import GlobalColors from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const C = GlobalColors.VenueClaim;
 
@@ -14,6 +15,7 @@ const VENUE_CLAIM_WEB_URL = 'https://citizen.app/venue';
  */
 export default function VenueClaimWebRedirect() {
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
 
   useEffect(() => {
     Linking.openURL(`${VENUE_CLAIM_WEB_URL}?from=app`).catch(() => {});
@@ -26,19 +28,18 @@ export default function VenueClaimWebRedirect() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.icon}>🌐</Text>
-        <Text style={styles.title}>Claim Your Venue on the Web</Text>
+        <Text style={styles.icon}>{t('common.globeIcon', {defaultValue: '🌐'})}</Text>
+        <Text style={styles.title}>{t('venueClaim.claimOnWeb')}</Text>
         <Text style={styles.subtitle}>
-          The venue claiming process has moved to our web platform for a better
-          experience with document uploads and verification.
+          {t('venueClaim.webRedirectMessage')}
         </Text>
 
         <TouchableOpacity style={styles.primaryBtn} onPress={handleOpenWeb} activeOpacity={0.8}>
-          <Text style={styles.primaryBtnText}>Open in Browser</Text>
+          <Text style={styles.primaryBtnText}>{t('venueClaim.openInBrowser')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
-          <Text style={styles.secondaryBtnText}>Go Back</Text>
+          <Text style={styles.secondaryBtnText}>{t('venueClaim.goBack')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

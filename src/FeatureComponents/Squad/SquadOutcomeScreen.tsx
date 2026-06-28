@@ -9,6 +9,9 @@ import {
 } from 'react-native';
 import {GlobalColors} from '../../styles/GlobalColors';
 import {useSubmitOutcomeMutation} from '../../../features/squad/SquadApi';
+import useTranslation from '../../Hooks/useTranslation';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {AnalyticsEventType} from '../../types/AnalyticsEnums';
 
 const colors = GlobalColors.SquadMode;
 
@@ -23,6 +26,8 @@ const SquadOutcomeScreen: React.FC<SquadOutcomeScreenProps> = ({
   venueName,
   onDismiss,
 }) => {
+  const { t } = useTranslation();
+  const {trackEvent} = useAnalytics({screenName: 'SquadOutcome'});
   const [submitOutcome, {isLoading}] = useSubmitOutcomeMutation();
   const [submitted, setSubmitted] = useState(false);
 
@@ -30,16 +35,21 @@ const SquadOutcomeScreen: React.FC<SquadOutcomeScreenProps> = ({
     async (rating: 'positive' | 'negative') => {
       try {
         await submitOutcome({squad_code: squadCode, rating}).unwrap();
+        trackEvent(AnalyticsEventType.SQUAD_OUTCOME_SUBMITTED, {
+          squad_code: squadCode,
+          venue_name: venueName,
+          rating,
+        });
         setSubmitted(true);
       } catch (err: any) {
         if (err?.status === 409) {
           setSubmitted(true);
         } else {
-          Alert.alert('Error', err?.data?.error || 'Failed to submit feedback');
+          Alert.alert(t('common.error'), err?.data?.error || t('onboarding.squad.outcomeError'));
         }
       }
     },
-    [squadCode, submitOutcome],
+    [squadCode, submitOutcome, trackEvent, venueName],
   );
 
   if (submitted) {
@@ -47,12 +57,12 @@ const SquadOutcomeScreen: React.FC<SquadOutcomeScreenProps> = ({
       <View style={styles.container}>
         <View style={styles.card}>
           <Text style={styles.thankYouEmoji}>🙏</Text>
-          <Text style={styles.thankYouTitle}>Thanks!</Text>
+          <Text style={styles.thankYouTitle}>{t('onboarding.squad.thanks')}</Text>
           <Text style={styles.thankYouSub}>
-            Your feedback helps us find better spots next time.
+            {t('onboarding.squad.feedbackHelps')}
           </Text>
           <TouchableOpacity style={styles.dismissButton} onPress={onDismiss}>
-            <Text style={styles.dismissButtonText}>Done</Text>
+            <Text style={styles.dismissButtonText}>{t('onboarding.squad.done')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -62,9 +72,9 @@ const SquadOutcomeScreen: React.FC<SquadOutcomeScreenProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>How was {venueName}?</Text>
+        <Text style={styles.title}>{t('onboarding.squad.howWasVenue', { venueName })}</Text>
         <Text style={styles.subtitle}>
-          Quick tap — this helps us improve recommendations
+          {t('onboarding.squad.quickTapHint')}
         </Text>
 
         <View style={styles.buttonRow}>
@@ -78,7 +88,7 @@ const SquadOutcomeScreen: React.FC<SquadOutcomeScreenProps> = ({
             ) : (
               <>
                 <Text style={styles.ratingEmoji}>👍</Text>
-                <Text style={styles.ratingLabel}>Great pick</Text>
+                <Text style={styles.ratingLabel}>{t('onboarding.squad.greatPick')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -93,14 +103,14 @@ const SquadOutcomeScreen: React.FC<SquadOutcomeScreenProps> = ({
             ) : (
               <>
                 <Text style={styles.ratingEmoji}>👎</Text>
-                <Text style={styles.ratingLabelDark}>Not great</Text>
+                <Text style={styles.ratingLabelDark}>{t('onboarding.squad.notGreat')}</Text>
               </>
             )}
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={onDismiss} style={styles.skipButton}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{t('onboarding.squad.skip')}</Text>
         </TouchableOpacity>
       </View>
     </View>

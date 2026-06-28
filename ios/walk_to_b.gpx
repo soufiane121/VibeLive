@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<gpx version="1.1" creator="ChatGPT">
+  <trk>
+    <name>A to B with Dwell</name>
+    <trkseg>
+
+  <!-- Start at Point A -->
+  <trkpt lat="35.225845" lon="-80.853607">
+    <time>2026-04-07T10:00:00Z</time>
+  </trkpt>
+
+  <!-- Moving toward B (simulated steps) -->
+  <trkpt lat="35.215000" lon="-80.830000">
+    <time>2026-04-07T10:05:00Z</time>
+  </trkpt>
+
+  <trkpt lat="35.200000" lon="-80.800000">
+    <time>2026-04-07T10:10:00Z</time>
+  </trkpt>
+
+  <trkpt lat="35.185000" lon="-80.770000">
+    <time>2026-04-07T10:15:00Z</time>
+  </trkpt>
+
+  <trkpt lat="35.170000" lon="-80.740000">
+    <time>2026-04-07T10:20:00Z</time>
+  </trkpt>
+
+  <!-- Arriving at Point B -->
+  <trkpt lat="35.153980" lon="-80.713790">
+    <time>2026-04-07T10:25:00Z</time>
+  </trkpt>
+
+  <!-- Dwell at Point B (~5 minutes with slight jitter) -->
+  <trkpt lat="35.153980" lon="-80.713790">
+    <time>2026-04-07T10:26:00Z</time>
+  </trkpt>
+
+  <trkpt lat="35.153982" lon="-80.713788">
+    <time>2026-04-07T10:27:00Z</time>
+  </trkpt>
+
+  <trkpt lat="35.153978" lon="-80.713792">
+    <time>2026-04-07T10:28:00Z</time>
+  </trkpt>
+
+  <trkpt lat="35.153981" lon="-80.713789">
+    <time>2026-04-07T10:29:00Z</time>
+  </trkpt>
+
+  <trkpt lat="35.153979" lon="-80.713791">
+    <time>2026-04-07T10:30:00Z</time>
+  </trkpt>
+
+</trkseg>
+
+  </trk>
+</gpx>

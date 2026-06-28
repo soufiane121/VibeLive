@@ -12,6 +12,9 @@ import {
 import {GlobalColors} from '../../styles/GlobalColors';
 import {NavigateIcon, ShareIcon, CheckmarkIcon, ClockIcon} from '../../UIComponents/Icons';
 import type {ConfirmedVenue, SquadMember} from '../../../features/squad/SquadApi';
+import useTranslation from '../../Hooks/useTranslation';
+import {useAnalytics} from '../../Hooks/useAnalytics';
+import {AnalyticsEventType} from '../../types/AnalyticsEnums';
 
 const colors = GlobalColors.SquadMode;
 
@@ -26,9 +29,15 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
   members,
   venueAlert,
 }) => {
+  const { t } = useTranslation();
+  const {trackEvent} = useAnalytics({screenName: 'SquadConfirmed'});
   // ── Open Maps Navigation ────────────────────────────────────────────
   const handleNavigate = useCallback(() => {
     if (venue.lat == null || venue.lng == null) return;
+    trackEvent(AnalyticsEventType.SQUAD_VENUE_NAVIGATED, {
+      venue_id: venue.venue_id,
+      venue_name: venue.venue_name,
+    });
 
     const encodedName = encodeURIComponent(venue.venue_name);
     const url = Platform.select({
@@ -47,7 +56,7 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
         );
       }
     });
-  }, [venue]);
+  }, [venue, trackEvent]);
 
   // ── Share Venue ─────────────────────────────────────────────────────
   const handleShare = useCallback(async () => {
@@ -58,13 +67,17 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
           : '';
 
       await Share.share({
-        message: `Squad confirmed: ${venue.venue_name}! ${mapsUrl}`,
+        message: t('onboarding.squad.shareMessageConfirmed', { venueName: venue.venue_name, mapsUrl }),
         title: venue.venue_name,
+      });
+      trackEvent(AnalyticsEventType.SQUAD_VENUE_SHARED, {
+        venue_id: venue.venue_id,
+        venue_name: venue.venue_name,
       });
     } catch {
       // User cancelled
     }
-  }, [venue]);
+  }, [venue, trackEvent]);
 
   const confirmedTime = venue.confirmed_at
     ? new Date(venue.confirmed_at).toLocaleTimeString([], {
@@ -85,9 +98,9 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
             <CheckmarkIcon size={32} color={colors.primary} />
           </View>
         </View>
-        <Text style={styles.headerLabel}>SQUAD CONFIRMED</Text>
-        <Text style={styles.title}>You're all set</Text>
-        <Text style={styles.subtitle}>Your squad is heading to</Text>
+        <Text style={styles.headerLabel}>{t('onboarding.squad.squadConfirmed')}</Text>
+        <Text style={styles.title}>{t('onboarding.squad.youreAllSet')}</Text>
+        <Text style={styles.subtitle}>{t('onboarding.squad.squadHeadingTo')}</Text>
       </View>
 
       {/* Venue Card */}
@@ -98,12 +111,12 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
           </Text>
           <View style={styles.confirmBadge}>
             <CheckmarkIcon size={12} color={colors.confirmBadgeIcon} />
-            <Text style={styles.confirmBadgeText}>Confirmed</Text>
+            <Text style={styles.confirmBadgeText}>{t('onboarding.squad.confirmedBadge')}</Text>
           </View>
         </View>
 
         {confirmedTime && (
-          <Text style={styles.confirmedAt}>Confirmed · {confirmedTime}</Text>
+          <Text style={styles.confirmedAt}>{t('onboarding.squad.confirmedAt', { time: confirmedTime })}</Text>
         )}
 
         {/* Venue alert (VibeShift status change) */}
@@ -120,7 +133,7 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
           onPress={handleNavigate}
           activeOpacity={0.8}>
           <NavigateIcon size={20} color={colors.confirmPrimaryButtonText} />
-          <Text style={styles.navigateButtonText}>Get Directions</Text>
+          <Text style={styles.navigateButtonText}>{t('onboarding.squad.getDirections')}</Text>
         </TouchableOpacity>
 
         {/* Share Button */}
@@ -129,14 +142,14 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
           onPress={handleShare}
           activeOpacity={0.8}>
           <ShareIcon size={18} color={colors.confirmSecondaryButtonText} />
-          <Text style={styles.shareButtonText}>Share with Others</Text>
+          <Text style={styles.shareButtonText}>{t('onboarding.squad.shareWithOthers')}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Squad Members Going */}
       <View style={styles.membersSection}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Who's going</Text>
+          <Text style={styles.sectionTitle}>{t('onboarding.squad.whosGoing')}</Text>
           <View style={styles.sectionCountBadge}>
             <Text style={styles.sectionCountText}>{members.length}</Text>
           </View>
@@ -174,16 +187,16 @@ const SquadConfirmedView: React.FC<SquadConfirmedViewProps> = ({
 
       {/* Tips */}
       <View style={styles.tipsSection}>
-        <Text style={styles.tipsTitle}>Tips for tonight</Text>
+        <Text style={styles.tipsTitle}>{t('onboarding.squad.tipsForTonight')}</Text>
         <TipItem
           index={1}
-          text="Screenshot the venue name — signal can be spotty underground"
+          text={t('onboarding.squad.tip1')}
         />
         <TipItem
           index={2}
-          text="Let one person be the point of contact for the group"
+          text={t('onboarding.squad.tip2')}
         />
-        <TipItem index={3} text="Check back here for live venue updates" />
+        <TipItem index={3} text={t('onboarding.squad.tip3')} />
       </View>
     </ScrollView>
   );

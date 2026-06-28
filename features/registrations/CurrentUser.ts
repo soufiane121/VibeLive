@@ -49,6 +49,21 @@ export type CurrentUserTypes = {
       phoneVerified: boolean;
       dataDownloadRequested?: string; // ISO date string
     };
+    // Venue operator status (populated at login/auto-login)
+    operatorVenue?: {
+      _id: string;
+      name: string;
+      address: {
+        street?: string;
+        city?: string;
+        state?: string;
+        zip?: string;
+        country?: string;
+      };
+      location: {
+        coordinates: [number, number];
+      };
+    } | null;
 };
 
 interface CurrentUserInterface {

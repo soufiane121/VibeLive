@@ -9,20 +9,22 @@ import {
   StatusBar,
   TextInput,
   Alert,
-  Switch,
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronBackIcon, ShieldCheckmarkIcon, CheckmarkIcon, InformationCircleIcon, BulbIcon, PasswordIcons } from '../UIComponents/Icons';
+import { ChevronBackIcon, PasswordIcons } from '../UIComponents/Icons';
 import { useAnalytics } from '../Hooks/useAnalytics';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
+import useTranslation from '../Hooks/useTranslation';
+import { GlobalColors } from '../styles/GlobalColors';
 import {
   useChangePasswordMutation,
-  useToggleTwoFactorMutation,
 } from '../../features/settings/SettingsSliceApi';
 
 const PasswordSettings = () => {
   const navigation = useNavigation();
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
   const { currentUser } = useSelector((state: any) => state?.currentUser);
   
   const [currentPassword, setCurrentPassword] = useState('');
@@ -32,10 +34,9 @@ const PasswordSettings = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [changePassword, {isLoading: changePasswordLoading}] = useChangePasswordMutation();
-  const [toggleTwoFactor, {isLoading: toggleTwoFactorLoading}] = useToggleTwoFactorMutation();
 
   React.useEffect(() => {
-    trackEvent('app_opened', {
+    trackEvent(AnalyticsEventType.SCREEN_VIEWED, {
       screen_name: 'PasswordSettings',
       user_id: currentUser?._id,
     });
@@ -51,28 +52,28 @@ const PasswordSettings = () => {
     return {
       isValid: password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar,
       errors: [
-        ...(password.length < minLength ? ['At least 8 characters'] : []),
-        ...(!hasUpperCase ? ['One uppercase letter'] : []),
-        ...(!hasLowerCase ? ['One lowercase letter'] : []),
-        ...(!hasNumbers ? ['One number'] : []),
-        ...(!hasSpecialChar ? ['One special character'] : []),
+        ...(password.length < minLength ? [t('password.requirements.minLength')] : []),
+        ...(!hasUpperCase ? [t('password.requirements.uppercase')] : []),
+        ...(!hasLowerCase ? [t('password.requirements.lowercase')] : []),
+        ...(!hasNumbers ? [t('password.requirements.number')] : []),
+        ...(!hasSpecialChar ? [t('password.requirements.special')] : []),
       ]
     };
   };
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(t('common.error'), t('errors.fillAllFields'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
+      Alert.alert(t('common.error'), t('errors.passwordsDoNotMatch'));
       return;
     }
 
     if (newPassword.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters long');
+      Alert.alert(t('common.error'), t('errors.invalidPassword'));
       return;
     }
 
@@ -83,57 +84,38 @@ const PasswordSettings = () => {
       }).unwrap();
       
       if (response.success) {
-        Alert.alert('Success', 'Password changed successfully');
+        Alert.alert(t('common.success'), t('password.changeSuccess'));
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
         
-        trackEvent('password_changed', {
+        trackEvent(AnalyticsEventType.PASSWORD_CHANGED, {
           user_id: currentUser?._id,
         });
       } else {
-        Alert.alert('Error', response.message || 'Failed to change password');
+        Alert.alert(t('common.error'), response.message || t('password.changeFailed'));
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      Alert.alert('Error', 'Failed to change password');
-    }
-  };
-
-  const handleToggleTwoFactor = async (enabled: boolean) => {
-    try {
-      await toggleTwoFactor(enabled);
-      
-      trackEvent('two_factor_toggled', {
-        enabled,
-        user_id: currentUser?._id,
-      });
-
-      Alert.alert(
-        'Success',
-        `Two-factor authentication has been ${enabled ? 'enabled' : 'disabled'}.`
-      );
-    } catch (error: any) {
-      console.error('Error toggling two-factor:', error);
-      Alert.alert('Error', error.message || 'Failed to update two-factor authentication.');
+      Alert.alert(t('common.error'), t('password.changeFailed'));
     }
   };
 
   const passwordValidation = validatePassword(newPassword);
-  const twoFactorEnabled = currentUser?.accountSettings?.twoFactorEnabled || false;
+  const isAppleUser = currentUser?.authProvider === 'apple';
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <ChevronBackIcon size={24} color="#fff" />
+          <ChevronBackIcon size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Password & Security</Text>
+        <Text style={styles.headerTitle}>{t('password.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -141,91 +123,104 @@ const PasswordSettings = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Change Password</Text>
+          <Text style={styles.sectionTitle}>{t('password.changePasswordTitle')}</Text>
           <Text style={styles.sectionDescription}>
-            Create a strong password to keep your account secure
+            {t('password.changePasswordDescription')}
           </Text>
         </View>
 
+        {isAppleUser && (
+          <View style={styles.appleBanner}>
+            <Text style={styles.appleBannerText}>
+              {t('password.appleUserMessage')}
+            </Text>
+          </View>
+        )}
+
         {/* Current Password */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Current Password</Text>
-          <View style={styles.passwordInput}>
+          <Text style={[styles.inputLabel, isAppleUser && styles.disabledLabel]}>
+            {t('password.currentPassword')}
+          </Text>
+          <View style={[styles.passwordInput, isAppleUser && styles.disabledInput]}>
             <TextInput
               style={styles.textInput}
               value={currentPassword}
               onChangeText={setCurrentPassword}
-              placeholder="Enter current password"
-              placeholderTextColor="#6b7280"
+              placeholder={t('password.currentPasswordPlaceholder')}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry={!showCurrentPassword}
               autoCapitalize="none"
+              editable={!isAppleUser}
             />
-            <TouchableOpacity
-              style={styles.eyeButton}
-              onPress={() => setShowCurrentPassword(!showCurrentPassword)}>
-              <PasswordIcons
-                name={showCurrentPassword ? 'eye-off' : 'eye'}
-                size={20}
-                color="#9ca3af"
-              />
-            </TouchableOpacity>
+            {!isAppleUser && (
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowCurrentPassword(!showCurrentPassword)}>
+                <PasswordIcons
+                  name={showCurrentPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
         {/* New Password */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>New Password</Text>
-          <View style={styles.passwordInput}>
+          <Text style={[styles.inputLabel, isAppleUser && styles.disabledLabel]}>
+            {t('password.newPassword')}
+          </Text>
+          <View style={[styles.passwordInput, isAppleUser && styles.disabledInput]}>
             <TextInput
               style={styles.textInput}
               value={newPassword}
               onChangeText={setNewPassword}
-              placeholder="Enter new password"
-              placeholderTextColor="#6b7280"
+              placeholder={t('password.newPasswordPlaceholder')}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry={!showNewPassword}
               autoCapitalize="none"
+              editable={!isAppleUser}
             />
-            <TouchableOpacity
-              style={styles.eyeButton}
-              onPress={() => setShowNewPassword(!showNewPassword)}>
-              <PasswordIcons
-                name={showNewPassword ? 'eye-off' : 'eye'}
-                size={20}
-                color="#9ca3af"
-              />
-            </TouchableOpacity>
+            {!isAppleUser && (
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowNewPassword(!showNewPassword)}>
+                <PasswordIcons
+                  name={showNewPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Password Strength Indicator */}
-          {newPassword.length > 0 && (
+          {!isAppleUser && newPassword.length > 0 && (
             <View style={styles.passwordStrength}>
-              <Text style={styles.strengthTitle}>Password Requirements:</Text>
+              <Text style={styles.strengthTitle}>{t('password.requirementsTitle')}</Text>
               {[
-                {text: 'At least 8 characters', valid: newPassword.length >= 8},
+                {text: t('password.requirements.minLength'), valid: newPassword.length >= 8},
                 {
-                  text: 'One uppercase letter',
+                  text: t('password.requirements.uppercase'),
                   valid: /[A-Z]/.test(newPassword),
                 },
                 {
-                  text: 'One lowercase letter',
+                  text: t('password.requirements.lowercase'),
                   valid: /[a-z]/.test(newPassword),
                 },
-                {text: 'One number', valid: /\d/.test(newPassword)},
+                {text: t('password.requirements.number'), valid: /\d/.test(newPassword)},
                 {
-                  text: 'One special character',
+                  text: t('password.requirements.special'),
                   valid: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword),
                 },
               ].map((requirement, index) => (
                 <View key={index} style={styles.requirementRow}>
-                  {/* <Icon
-                    name={requirement.valid ? 'checkmark-circle' : 'close-circle'}
-                    size={16}
-                    color={requirement.valid ? '#059669' : '#dc2626'}
-                  /> */}
                   <Text
                     style={[
                       styles.requirementText,
-                      {color: requirement.valid ? '#059669' : '#dc2626'},
+                      {color: requirement.valid ? colors.success : colors.error},
                     ]}>
                     {requirement.text}
                   </Text>
@@ -237,29 +232,34 @@ const PasswordSettings = () => {
 
         {/* Confirm Password */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Confirm New Password</Text>
-          <View style={styles.passwordInput}>
+          <Text style={[styles.inputLabel, isAppleUser && styles.disabledLabel]}>
+            {t('password.confirmNewPassword')}
+          </Text>
+          <View style={[styles.passwordInput, isAppleUser && styles.disabledInput]}>
             <TextInput
               style={styles.textInput}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              placeholder="Confirm new password"
-              placeholderTextColor="#6b7280"
+              placeholder={t('password.confirmNewPasswordPlaceholder')}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry={!showConfirmPassword}
               autoCapitalize="none"
+              editable={!isAppleUser}
             />
-            <TouchableOpacity
-              style={styles.eyeButton}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-              <PasswordIcons
-                name={showConfirmPassword ? 'eye-off' : 'eye'}
-                size={20}
-                color="#9ca3af"
-              />
-            </TouchableOpacity>
+            {!isAppleUser && (
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                <PasswordIcons
+                  name={showConfirmPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
+            )}
           </View>
           {confirmPassword.length > 0 && newPassword !== confirmPassword && (
-            <Text style={styles.errorText}>Passwords do not match</Text>
+            <Text style={styles.errorText}>{t('errors.passwordsDoNotMatch')}</Text>
           )}
         </View>
 
@@ -267,103 +267,20 @@ const PasswordSettings = () => {
         <TouchableOpacity
           style={[
             styles.changePasswordButton,
-            (!passwordValidation.isValid ||
+            (isAppleUser ||
+              !passwordValidation.isValid ||
               newPassword !== confirmPassword ||
               !currentPassword ||
               changePasswordLoading) &&
               styles.disabledButton,
           ]}
           onPress={handleChangePassword}
-          disabled={changePasswordLoading || toggleTwoFactorLoading}>
+          disabled={isAppleUser || changePasswordLoading}>
           <Text style={styles.changePasswordText}>
-            {changePasswordLoading ? 'Changing Password...' : 'Change Password'}
+            {changePasswordLoading ? t('password.changing') : t('password.changePasswordButton')}
           </Text>
         </TouchableOpacity>
 
-        {/* Two-Factor Authentication */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Two-Factor Authentication</Text>
-          <Text style={styles.sectionDescription}>
-            Add an extra layer of security to your account
-          </Text>
-        </View>
-
-        <View style={styles.twoFactorContainer}>
-          <View style={styles.twoFactorLeft}>
-            <View style={styles.iconContainer}>
-              <ShieldCheckmarkIcon size={20} color="#fff" />
-            </View>
-            <View style={styles.textContainer}>
-              <Text style={styles.settingTitle}>Two-Factor Authentication</Text>
-              <Text style={styles.settingSubtitle}>
-                {twoFactorEnabled ? 'Enabled' : 'Disabled'} • Secure your
-                account with 2FA
-              </Text>
-            </View>
-          </View>
-          <Switch
-            value={twoFactorEnabled}
-            onValueChange={handleToggleTwoFactor}
-            trackColor={{false: '#374151', true: '#8b5cf6'}}
-            thumbColor={twoFactorEnabled ? '#fff' : '#9ca3af'}
-          />
-        </View>
-
-        {/* Security Tips */}
-        <View style={styles.securitySection}>
-          <View style={styles.securityHeader}>
-            <BulbIcon size={24} color="#8b5cf6" />
-            <Text style={styles.securityTitle}>Security Tips</Text>
-          </View>
-          <Text style={styles.securityText}>
-            • Use a unique password that you don't use elsewhere{'\n'}• Enable
-            two-factor authentication for extra security{'\n'}• Change your
-            password regularly{'\n'}• Never share your password with anyone
-            {'\n'}• Use a password manager to generate and store secure
-            passwords
-          </Text>
-        </View>
-
-        {/* Account Info */}
-        <View style={styles.accountInfo}>
-          <Text style={styles.accountInfoTitle}>Account Security Status</Text>
-          <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>Email Verified:</Text>
-            <Text
-              style={[
-                styles.statusValue,
-                {
-                  color: currentUser?.accountSettings?.emailVerified
-                    ? '#059669'
-                    : '#dc2626',
-                },
-              ]}>
-              {currentUser?.accountSettings?.emailVerified
-                ? '✓ Verified'
-                : '⚠️ Not Verified'}
-            </Text>
-          </View>
-          <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>Two-Factor Auth:</Text>
-            <Text
-              style={[
-                styles.statusValue,
-                {color: twoFactorEnabled ? '#059669' : '#dc2626'},
-              ]}>
-              {twoFactorEnabled ? '✓ Enabled' : '⚠️ Disabled'}
-            </Text>
-          </View>
-          <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>Last Password Change:</Text>
-            <Text style={styles.statusValue}>
-              {currentUser?.accountSettings?.lastPasswordChange
-                ? new Date(
-                    currentUser.accountSettings.lastPasswordChange,
-                  ).toLocaleDateString()
-                : 'Unknown'}
-            </Text>
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -371,10 +288,12 @@ const PasswordSettings = () => {
 
 export default PasswordSettings;
 
+const colors = GlobalColors.PasswordSettings;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -383,7 +302,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: colors.border,
   },
   backButton: {
     padding: 5,
@@ -391,7 +310,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.text,
   },
   placeholder: {
     width: 34,
@@ -407,12 +326,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.text,
     marginBottom: 5,
   },
   sectionDescription: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   inputContainer: {
@@ -422,22 +341,22 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#fff',
+    color: colors.text,
     marginBottom: 8,
   },
   passwordInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1f2937',
+    backgroundColor: colors.inputBackground,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: colors.inputBorder,
   },
   textInput: {
     flex: 1,
     padding: 16,
     fontSize: 16,
-    color: '#fff',
+    color: colors.text,
   },
   eyeButton: {
     padding: 16,
@@ -445,13 +364,13 @@ const styles = StyleSheet.create({
   passwordStrength: {
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#1f2937',
+    backgroundColor: colors.inputBackground,
     borderRadius: 8,
   },
   strengthTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#fff',
+    color: colors.text,
     marginBottom: 8,
   },
   requirementRow: {
@@ -465,11 +384,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 13,
-    color: '#dc2626',
+    color: colors.error,
     marginTop: 6,
   },
   changePasswordButton: {
-    backgroundColor: '#8b5cf6',
+    backgroundColor: colors.saveButton,
     marginHorizontal: 20,
     paddingVertical: 16,
     borderRadius: 12,
@@ -477,95 +396,32 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   disabledButton: {
-    backgroundColor: '#374151',
+    backgroundColor: colors.disabledButton,
   },
   changePasswordText: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
-  twoFactorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+  appleBanner: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 14,
+    backgroundColor: colors.infoBackground,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.infoBorder,
   },
-  twoFactorLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+  appleBannerText: {
+    fontSize: 13,
+    color: colors.infoText,
+    lineHeight: 20,
+    textAlign: 'center',
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#374151',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 15,
+  disabledInput: {
+    opacity: 0.5,
   },
-  textContainer: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  settingSubtitle: {
-    fontSize: 14,
-    color: '#9ca3af',
-  },
-  securitySection: {
-    margin: 20,
-    padding: 20,
-    backgroundColor: '#1f2937',
-    borderRadius: 12,
-  },
-  securityHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  securityTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginLeft: 10,
-  },
-  securityText: {
-    fontSize: 14,
-    color: '#9ca3af',
-    lineHeight: 22,
-  },
-  accountInfo: {
-    margin: 20,
-    padding: 20,
-    backgroundColor: '#1f2937',
-    borderRadius: 12,
-  },
-  accountInfoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 15,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statusLabel: {
-    fontSize: 14,
-    color: '#9ca3af',
-  },
-  statusValue: {
-    fontSize: 14,
-    fontWeight: '500',
+  disabledLabel: {
+    opacity: 0.5,
   },
 });

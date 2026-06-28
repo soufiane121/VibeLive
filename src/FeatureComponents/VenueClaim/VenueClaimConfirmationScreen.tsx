@@ -10,34 +10,36 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {VenueSearchResult, ClaimStatus, VerificationPath} from '../../../features/venueClaim/VenueClaimApi';
 import GlobalColors from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const C = GlobalColors.VenueClaim;
-
-const STATUS_CONFIG: Record<string, {icon: string; title: string; message: string}> = {
-  pending_verification: {
-    icon: '⏳',
-    title: 'Verification In Progress',
-    message: 'We\'re verifying your claim. This usually takes a few minutes for Google Business and social media verification. You\'ll receive a notification once it\'s reviewed.',
-  },
-  manual_review: {
-    icon: '📋',
-    title: 'Under Manual Review',
-    message: 'Your claim has been submitted for manual review by our team. This typically takes 1-2 business days. We\'ll notify you as soon as a decision is made.',
-  },
-  approved: {
-    icon: '🎉',
-    title: 'Claim Approved!',
-    message: 'Congratulations! Your venue claim has been approved. Your 30-day free trial has started. You can now access your venue dashboard.',
-  },
-};
 
 export default function VenueClaimConfirmationScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { t } = useTranslation();
   const venue: VenueSearchResult = route.params?.venue;
   const claimStatus: ClaimStatus = route.params?.claimStatus || 'pending_verification';
   const path: VerificationPath = route.params?.path;
   const socialVerificationCode: string | undefined = route.params?.socialVerificationCode;
+
+  const STATUS_CONFIG: Record<string, {icon: string; titleKey: string; messageKey: string}> = {
+    pending_verification: {
+      icon: t('common.pendingIcon'),
+      titleKey: 'venueClaim.verificationInProgress',
+      messageKey: 'venueClaim.verificationInProgressMsg',
+    },
+    manual_review: {
+      icon: t('common.reviewIcon'),
+      titleKey: 'venueClaim.underManualReview',
+      messageKey: 'venueClaim.underManualReviewMsg',
+    },
+    approved: {
+      icon: t('common.approvedIcon'),
+      titleKey: 'venueClaim.claimApproved',
+      messageKey: 'venueClaim.claimApprovedMsg',
+    },
+  };
 
   const config = STATUS_CONFIG[claimStatus] || STATUS_CONFIG.pending_verification;
 
@@ -58,24 +60,24 @@ export default function VenueClaimConfirmationScreen() {
           <Text style={styles.icon}>{config.icon}</Text>
         </View>
 
-        <Text style={styles.title}>{config.title}</Text>
-        <Text style={styles.message}>{config.message}</Text>
+        <Text style={styles.title}>{t(config.titleKey)}</Text>
+        <Text style={styles.message}>{t(config.messageKey)}</Text>
 
         {claimStatus === 'pending_verification' && path === 'social_media' && socialVerificationCode && (
           <View style={styles.reminderCard}>
-            <Text style={styles.reminderTitle}>Don't forget!</Text>
+            <Text style={styles.reminderTitle}>{t('venueClaim.dontForget')}</Text>
             <Text style={styles.reminderText}>
-              Make sure the verification code is in your bio:
+              {t('venueClaim.makeSureCodeInBio')}
             </Text>
             <Text style={styles.codeText}>{socialVerificationCode}</Text>
             <Text style={styles.reminderText}>
-              We'll check your bio automatically. You have up to 5 verification attempts.
+              {t('venueClaim.wellCheckBioAutomatically')}
             </Text>
           </View>
         )}
 
         <View style={styles.venueCard}>
-          <Text style={styles.venueLabel}>Venue</Text>
+          <Text style={styles.venueLabel}>{t('common.venue')}</Text>
           <Text style={styles.venueName}>{venue?.name}</Text>
           {venue?.address && (
             <Text style={styles.venueAddr}>
@@ -87,35 +89,35 @@ export default function VenueClaimConfirmationScreen() {
         </View>
 
         <View style={styles.nextStepsCard}>
-          <Text style={styles.nextStepsTitle}>What happens next?</Text>
+          <Text style={styles.nextStepsTitle}>{t('venueClaim.whatHappensNext')}</Text>
           <View style={styles.stepItem}>
-            <Text style={styles.stepBullet}>1</Text>
+            <Text style={styles.stepBullet}>{t('common.stepNumber', {step: 1})}</Text>
             <Text style={styles.stepText}>
               {claimStatus === 'pending_verification'
-                ? 'We verify your submitted evidence'
-                : 'Our admin team reviews your submission'}
+                ? t('venueClaim.weVerifyEvidence')
+                : t('venueClaim.adminTeamReviews')}
             </Text>
           </View>
           <View style={styles.stepItem}>
-            <Text style={styles.stepBullet}>2</Text>
+            <Text style={styles.stepBullet}>{t('common.stepNumber', {step: 2})}</Text>
             <Text style={styles.stepText}>
-              You'll receive a push notification with the result
+              {t('venueClaim.youllReceiveNotification')}
             </Text>
           </View>
           <View style={styles.stepItem}>
-            <Text style={styles.stepBullet}>3</Text>
+            <Text style={styles.stepBullet}>{t('common.stepNumber', {step: 3})}</Text>
             <Text style={styles.stepText}>
-              Once approved, your 30-day free trial begins automatically
+              {t('venueClaim.trialBeginsAutomatically')}
             </Text>
           </View>
         </View>
 
         <TouchableOpacity style={styles.primaryBtn} onPress={handleGoHome} activeOpacity={0.8}>
-          <Text style={styles.primaryBtnText}>Back to Home</Text>
+          <Text style={styles.primaryBtnText}>{t('venueClaim.backToHome')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={handleViewStatus} activeOpacity={0.7}>
-          <Text style={styles.secondaryBtnText}>Check Claim Status</Text>
+          <Text style={styles.secondaryBtnText}>{t('venueClaim.checkClaimStatus')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

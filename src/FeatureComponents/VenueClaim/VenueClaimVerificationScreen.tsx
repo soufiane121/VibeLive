@@ -20,10 +20,12 @@ import {
   useUploadDocumentMutation,
 } from '../../../features/venueClaim/VenueClaimApi';
 import GlobalColors from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const C = GlobalColors.VenueClaim;
 
 export default function VenueClaimVerificationScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const venue: VenueSearchResult = route.params?.venue;
@@ -49,7 +51,7 @@ export default function VenueClaimVerificationScreen() {
 
   const handleGoogleVerify = async () => {
     if (!googleUrl.trim()) {
-      Alert.alert('Missing URL', 'Please enter your Google Business Profile URL.');
+      Alert.alert(t('venueClaim.missingUrl'), t('venueClaim.enterGoogleUrl'));
       return;
     }
     try {
@@ -58,12 +60,12 @@ export default function VenueClaimVerificationScreen() {
         navigation.navigate('VenueClaimTierSelection', {venue, path, verificationData: {googleBusinessUrl: googleUrl.trim()}});
       } else {
         Alert.alert(
-          'No Match Found',
-          'The URL could not be matched to this venue. Please check the URL and try again, or choose a different verification method.',
+          t('venueClaim.noMatchFound'),
+          t('venueClaim.urlNotMatched'),
         );
       }
     } catch (err: any) {
-      Alert.alert('Error', err?.data?.error || 'Verification failed. Please try again.');
+      Alert.alert(t('common.error'), err?.data?.error || t('venueClaim.verificationFailed'));
     }
   };
 
@@ -75,7 +77,7 @@ export default function VenueClaimVerificationScreen() {
 
   const handleSocialContinue = () => {
     if (!handle.trim()) {
-      Alert.alert('Missing Handle', 'Please enter your social media handle.');
+      Alert.alert(t('venueClaim.missingHandle'), t('venueClaim.enterSocialHandle'));
       return;
     }
     navigation.navigate('VenueClaimTierSelection', {
@@ -87,7 +89,7 @@ export default function VenueClaimVerificationScreen() {
 
   const handleDocumentContinue = () => {
     if (!storageRef.trim()) {
-      Alert.alert('Missing Document', 'Please provide a document reference.');
+      Alert.alert(t('venueClaim.missingDocument'), t('venueClaim.provideDocumentRef'));
       return;
     }
     navigation.navigate('VenueClaimTierSelection', {
@@ -100,16 +102,16 @@ export default function VenueClaimVerificationScreen() {
   // ── Google Business Path ───────────────────────────────────────────
   const renderGooglePath = () => (
     <View style={styles.pathSection}>
-      <Text style={styles.pathHeading}>Google Business Verification</Text>
+      <Text style={styles.pathHeading}>{t('venueClaim.googleBusinessVerification')}</Text>
       <Text style={styles.pathDescription}>
-        Paste your Google Business Profile URL below. We'll match it to{' '}
+        {t('venueClaim.pasteGoogleUrl')}{' '}
         <Text style={styles.goldText}>{venue?.name}</Text>.
       </Text>
 
-      <Text style={styles.inputLabel}>Google Business Profile URL</Text>
+      <Text style={styles.inputLabel}>{t('venueClaim.googleBusinessProfileUrl')}</Text>
       <TextInput
         style={styles.input}
-        placeholder="https://business.google.com/..."
+        placeholder={t('venueClaim.googleUrlPlaceholder')}
         placeholderTextColor={C.mutedGray}
         value={googleUrl}
         onChangeText={setGoogleUrl}
@@ -119,11 +121,9 @@ export default function VenueClaimVerificationScreen() {
       />
 
       <View style={styles.tipBox}>
-        <Text style={styles.tipTitle}>How to find your URL</Text>
+        <Text style={styles.tipTitle}>{t('venueClaim.howToFindUrl')}</Text>
         <Text style={styles.tipText}>
-          1. Go to business.google.com{'\n'}
-          2. Select your business{'\n'}
-          3. Copy the URL from your browser
+          {t('venueClaim.howToFindUrlSteps')}
         </Text>
       </View>
 
@@ -135,7 +135,7 @@ export default function VenueClaimVerificationScreen() {
         {googleLoading ? (
           <ActivityIndicator color={C.black} />
         ) : (
-          <Text style={styles.primaryBtnText}>Verify URL</Text>
+          <Text style={styles.primaryBtnText}>{t('venueClaim.verifyUrl')}</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -144,20 +144,20 @@ export default function VenueClaimVerificationScreen() {
   // ── Social Media Path ──────────────────────────────────────────────
   const renderSocialPath = () => (
     <View style={styles.pathSection}>
-      <Text style={styles.pathHeading}>Social Media Verification</Text>
+      <Text style={styles.pathHeading}>{t('venueClaim.socialMediaVerification')}</Text>
       <Text style={styles.pathDescription}>
-        Add the code below to your Instagram or TikTok bio, then we'll verify it automatically.
+        {t('venueClaim.addCodeToBio')}
       </Text>
 
-      <Text style={styles.inputLabel}>Your Verification Code</Text>
+      <Text style={styles.inputLabel}>{t('venueClaim.yourVerificationCode')}</Text>
       <View style={styles.codeRow}>
         <Text style={styles.codeText}>{verificationCode}</Text>
         <TouchableOpacity style={styles.copyBtn} onPress={handleSocialCopyCode}>
-          <Text style={styles.copyBtnText}>{socialCodeCopied ? 'Copied!' : 'Copy'}</Text>
+          <Text style={styles.copyBtnText}>{socialCodeCopied ? t('common.copied') : t('common.copy')}</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.inputLabel}>Platform</Text>
+      <Text style={styles.inputLabel}>{t('common.platform')}</Text>
       <View style={styles.platformRow}>
         <TouchableOpacity
           style={[styles.platformBtn, platform === 'instagram' && styles.platformBtnActive]}
@@ -175,10 +175,10 @@ export default function VenueClaimVerificationScreen() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.inputLabel}>Your Handle</Text>
+      <Text style={styles.inputLabel}>{t('venueClaim.yourHandle')}</Text>
       <TextInput
         style={styles.input}
-        placeholder={platform === 'instagram' ? '@yourvenue' : '@yourvenue'}
+        placeholder={t('venueClaim.handlePlaceholder')}
         placeholderTextColor={C.mutedGray}
         value={handle}
         onChangeText={setHandle}
@@ -187,12 +187,9 @@ export default function VenueClaimVerificationScreen() {
       />
 
       <View style={styles.tipBox}>
-        <Text style={styles.tipTitle}>Instructions</Text>
+        <Text style={styles.tipTitle}>{t('common.instructions')}</Text>
         <Text style={styles.tipText}>
-          1. Copy the verification code above{'\n'}
-          2. Add it anywhere in your {platform === 'instagram' ? 'Instagram' : 'TikTok'} bio{'\n'}
-          3. Enter your handle and continue{'\n'}
-          4. We'll check your bio after you submit
+          {t('venueClaim.socialInstructions', { platform: platform === 'instagram' ? 'Instagram' : 'TikTok' })}
         </Text>
       </View>
 
@@ -201,7 +198,7 @@ export default function VenueClaimVerificationScreen() {
         onPress={handleSocialContinue}
         disabled={isLoading || !handle.trim()}
         activeOpacity={0.8}>
-        <Text style={styles.primaryBtnText}>Continue</Text>
+        <Text style={styles.primaryBtnText}>{t('common.continue')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -209,12 +206,12 @@ export default function VenueClaimVerificationScreen() {
   // ── Business License Path ──────────────────────────────────────────
   const renderLicensePath = () => (
     <View style={styles.pathSection}>
-      <Text style={styles.pathHeading}>Business License Upload</Text>
+      <Text style={styles.pathHeading}>{t('venueClaim.businessLicenseUpload')}</Text>
       <Text style={styles.pathDescription}>
-        Provide your business license or official document for manual review.
+        {t('venueClaim.provideBusinessLicense')}
       </Text>
 
-      <Text style={styles.inputLabel}>Document Type</Text>
+      <Text style={styles.inputLabel}>{t('venueClaim.documentType')}</Text>
       <View style={styles.platformRow}>
         {['business_license', 'liquor_license', 'food_service_permit'].map(dt => (
           <TouchableOpacity
@@ -228,22 +225,19 @@ export default function VenueClaimVerificationScreen() {
         ))}
       </View>
 
-      <Text style={styles.inputLabel}>Document Reference</Text>
+      <Text style={styles.inputLabel}>{t('venueClaim.documentReference')}</Text>
       <TextInput
         style={styles.input}
-        placeholder="Upload reference or file path..."
+        placeholder={t('venueClaim.documentPlaceholder')}
         placeholderTextColor={C.mutedGray}
         value={storageRef}
         onChangeText={setStorageRef}
       />
 
       <View style={styles.tipBox}>
-        <Text style={styles.tipTitle}>Accepted Documents</Text>
+        <Text style={styles.tipTitle}>{t('venueClaim.acceptedDocuments')}</Text>
         <Text style={styles.tipText}>
-          • Business license or registration{'\n'}
-          • Liquor license{'\n'}
-          • Food service permit{'\n'}
-          • Lease agreement with venue name
+          {t('venueClaim.acceptedDocumentsList')}
         </Text>
       </View>
 
@@ -252,7 +246,7 @@ export default function VenueClaimVerificationScreen() {
         onPress={handleDocumentContinue}
         disabled={isLoading || !storageRef.trim()}
         activeOpacity={0.8}>
-        <Text style={styles.primaryBtnText}>Continue</Text>
+        <Text style={styles.primaryBtnText}>{t('common.continue')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -261,9 +255,9 @@ export default function VenueClaimVerificationScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={styles.backText}>{t('common.backArrow')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Verify Ownership</Text>
+        <Text style={styles.title}>{t('venueClaim.verifyOwnership')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">

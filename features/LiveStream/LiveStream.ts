@@ -62,9 +62,9 @@ export const liveStream = createApi({
         body,
       }),
     }),
-    getNearbyVenues: builder.query<NearbyVenuesResponse, {lat: number; lng: number; limit?: number}>({
-      query: ({lat, lng, limit = 5}) => ({
-        url: `/users/nearby-venues?lat=${lat}&lng=${lng}&limit=${limit}`,
+    getNearbyVenues: builder.query<NearbyVenuesResponse, {lat: number; lng: number; limit?: number, radius?: number}>({
+      query: ({lat, lng, limit = 5, radius}) => ({
+        url: `/users/nearby-venues?lat=${lat}&lng=${lng}&limit=${limit}&radius=${radius}`,
         method: 'GET',
       }),
     }),

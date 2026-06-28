@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAnalyticsService } from '../Services/AnalyticsServiceFactory';
+import { AnalyticsEventType } from '../types/AnalyticsEnums';
 
 interface AnalyticsContextType {
   isInitialized: boolean;
@@ -30,11 +31,11 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
     // Track app state changes
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
-        analyticsService.trackEvent('app_foregrounded', {
+        analyticsService.trackEvent(AnalyticsEventType.APP_FOREGROUNDED, {
           timestamp: new Date().toISOString()
         });
       } else if (nextAppState === 'background') {
-        analyticsService.trackEvent('app_backgrounded', {
+        analyticsService.trackEvent(AnalyticsEventType.APP_BACKGROUNDED, {
           timestamp: new Date().toISOString()
         });
       }
@@ -69,7 +70,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
       setIsInitialized(true);
 
       // Track initialization
-      await analyticsService.trackEvent('analytics_initialized', {
+      await analyticsService.trackEvent(AnalyticsEventType.SESSION_STARTED, {
         sessionId: currentSessionId,
         userId,
         timestamp: new Date().toISOString()
@@ -78,7 +79,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
       console.log('Analytics Provider initialized successfully');
     } catch (error) {
       console.error('Failed to initialize analytics:', error);
-      await analyticsService.trackError('error_occurred', {
+      await analyticsService.trackError(AnalyticsEventType.ERROR_OCCURRED as any, {
         error: 'Analytics initialization failed',
         details: error
       });
@@ -106,7 +107,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
 
   const trackError = async (error: any, context: Record<string, any> = {}) => {
     try {
-      await analyticsService.trackError('error_occurred', {
+      await analyticsService.trackError(AnalyticsEventType.ERROR_OCCURRED as any, {
         error: error.message || error.toString(),
         stack: error.stack,
         ...context,

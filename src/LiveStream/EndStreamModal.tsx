@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { CloseIcon, CheckmarkIcon, CommonMaterialCommunityIcons } from '../UIComponents/Icons';
 import { GlobalColors } from '../styles/GlobalColors';
+import useTranslation from '../Hooks/useTranslation';
 
 const colors = GlobalColors.EndStreamModal;
 
@@ -30,6 +31,7 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
   streamDuration,
   isBoosted = false,
 }) => {
+  const { t } = useTranslation();
   const [keepPlayback, setKeepPlayback] = useState(true); // Default to true
   // Format duration for display (MM:SS)
   const formatDuration = (seconds: number): string => {
@@ -53,9 +55,9 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
             <View>
               <View style={styles.actionRequiredWrapper}>
                 <Text style={styles.actionIcon}>!</Text>
-                <Text style={styles.actionText}>ACTION REQUIRED</Text>
+                <Text style={styles.actionText}>{t('streaming.actionRequired')}</Text>
               </View>
-              <Text style={styles.modalTitle}>End live stream?</Text>
+              <Text style={styles.modalTitle}>{t('streaming.endLiveStream')}</Text>
             </View>
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
               <CloseIcon size={14} color={colors.textSecondary} />
@@ -64,9 +66,9 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
           
           {isBoosted && (
             <View style={styles.playbackSection}>
-              <Text style={styles.playbackTitle}>Stream Playback</Text>
+              <Text style={styles.playbackTitle}>{t('streaming.streamPlayback')}</Text>
               <Text style={styles.playbackDescription}>
-                Since this is a boosted stream, viewers can watch the playback for up to 12 hours after it ends.
+                {t('streaming.playbackDescription')}
               </Text>
               
               <TouchableOpacity 
@@ -77,13 +79,13 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
                 <View style={[styles.checkbox, keepPlayback && styles.checkboxChecked]}>
                   {keepPlayback && <CheckmarkIcon size={16} color="white" />}
                 </View>
-                <Text style={styles.checkboxLabel}>Keep stream available for playback</Text>
+                <Text style={styles.checkboxLabel}>{t('streaming.keepPlayback')}</Text>
               </TouchableOpacity>
               
               <Text style={styles.playbackNote}>
                 {keepPlayback 
-                  ? "✅ Viewers will be able to watch your stream for 12 hours"
-                  : "⚠️ Stream will be immediately unavailable after ending"
+                  ? t('streaming.viewersCanWatch')
+                  : t('streaming.streamUnavailable')
                 }
               </Text>
             </View>
@@ -91,14 +93,14 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
           
           <View style={styles.modalStats}>
             <View style={styles.statCard}>
-              <Text style={styles.statLabel}>VIEWERS</Text>
+              <Text style={styles.statLabel}>{t('streaming.viewers')}</Text>
               <Text style={styles.statValue}>{viewerCount}</Text>
-              <Text style={styles.statSubInfo}>right now</Text>
+              <Text style={styles.statSubInfo}>{t('streaming.rightNow')}</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statLabel}>DURATION</Text>
+              <Text style={styles.statLabel}>{t('streaming.duration')}</Text>
               <Text style={styles.statValue}>{formatDuration(streamDuration)}</Text>
-              <Text style={styles.statSubInfo}>elapsed</Text>
+              <Text style={styles.statSubInfo}>{t('streaming.elapsed')}</Text>
             </View>
           </View>
 
@@ -107,20 +109,20 @@ const EndStreamModal: React.FC<EndStreamModalProps> = ({
               <Text style={styles.warningStripIcon}>!</Text>
             </View>
             <Text style={styles.warningStripText}>
-              This will end your stream for all viewers and cannot be undone
+              {t('streaming.endStreamWarning')}
             </Text>
           </View>
           
           <View style={styles.modalButtons}>
             <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-              <Text style={styles.cancelButtonText}>Keep going</Text>
+              <Text style={styles.cancelButtonText}>{t('streaming.keepGoing')}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.endStreamButton} 
               onPress={() => onConfirm(keepPlayback)}
             >
               <View style={styles.stopIconOutline} />
-              <Text style={styles.endStreamButtonText}>End stream</Text>
+              <Text style={styles.endStreamButtonText}>{t('streaming.endStream')}</Text>
             </TouchableOpacity>
           </View>
         </View>

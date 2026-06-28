@@ -1,4 +1,7 @@
 {
   "name": "VibeLive",
-  "displayName": "VibeLive"
+  "displayName": "VibeLive",
+  "plugins": [
+    "expo-font"
+  ]
 }

@@ -10,18 +10,20 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {VenueSearchResult} from '../../../features/venueClaim/VenueClaimApi';
 import GlobalColors from '../../styles/GlobalColors';
+import useTranslation from '../../Hooks/useTranslation';
 
 const C = GlobalColors.VenueClaim;
 
 export default function VenueClaimDetailsScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { t } = useTranslation();
   const venue: VenueSearchResult = route.params?.venue;
 
   if (!venue) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>Venue data not found.</Text>
+        <Text style={styles.errorText}>{t('venueClaim.venueDataNotFound')}</Text>
       </SafeAreaView>
     );
   }
@@ -42,9 +44,9 @@ export default function VenueClaimDetailsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Text style={styles.backText}>{t('common.backArrow')}t('common.backArrow')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Venue Details</Text>
+        <Text style={styles.title}>{t('venueClaim.venueDetails')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -60,57 +62,57 @@ export default function VenueClaimDetailsScreen() {
           )}
           {venue.googlePlaceId && (
             <Text style={styles.placeId}>
-              Google Place ID: {venue.googlePlaceId.slice(0, 20)}...
+              {t('venueClaim.googlePlaceIdLabel', {id: venue.googlePlaceId.slice(0, 20)})}
             </Text>
           )}
         </View>
 
-        <Text style={styles.sectionTitle}>What happens next?</Text>
+        <Text style={styles.sectionTitle}>{t('venueClaim.whatHappensNext')}</Text>
 
         <View style={styles.stepRow}>
           <View style={styles.stepCircle}>
-            <Text style={styles.stepNum}>1</Text>
+            <Text style={styles.stepNum}>{t('common.stepNumber', {step: 1})}</Text>
           </View>
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Choose verification method</Text>
+            <Text style={styles.stepTitle}>{t('venueClaim.step1Title')}</Text>
             <Text style={styles.stepDesc}>
-              Google Business, social media, or business license upload.
+              {t('venueClaim.step1Desc')}
             </Text>
           </View>
         </View>
 
         <View style={styles.stepRow}>
           <View style={styles.stepCircle}>
-            <Text style={styles.stepNum}>2</Text>
+            <Text style={styles.stepNum}>{t('common.stepNumber', {step: 2})}</Text>
           </View>
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Verify your identity</Text>
+            <Text style={styles.stepTitle}>{t('venueClaim.step2Title')}</Text>
             <Text style={styles.stepDesc}>
-              Confirm you represent this venue through the chosen method.
+              {t('venueClaim.step2Desc')}
             </Text>
           </View>
         </View>
 
         <View style={styles.stepRow}>
           <View style={styles.stepCircle}>
-            <Text style={styles.stepNum}>3</Text>
+            <Text style={styles.stepNum}>{t('common.stepNumber', {step: 3})}</Text>
           </View>
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Select your plan</Text>
+            <Text style={styles.stepTitle}>{t('venueClaim.step3Title')}</Text>
             <Text style={styles.stepDesc}>
-              Choose a tier — analytics, notifications, or premium.
+              {t('venueClaim.step3Desc')}
             </Text>
           </View>
         </View>
 
         <View style={styles.stepRow}>
           <View style={styles.stepCircle}>
-            <Text style={styles.stepNum}>4</Text>
+            <Text style={styles.stepNum}>{t('common.stepNumber', {step: 4})}</Text>
           </View>
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Admin review</Text>
+            <Text style={styles.stepTitle}>{t('venueClaim.step4Title')}</Text>
             <Text style={styles.stepDesc}>
-              Our team reviews and approves your claim. You'll get a 30-day free trial.
+              {t('venueClaim.step4Desc')}
             </Text>
           </View>
         </View>
@@ -118,14 +120,14 @@ export default function VenueClaimDetailsScreen() {
         {canResubmit && (
           <View style={styles.resubmitBanner}>
             <Text style={styles.resubmitText}>
-              Your previous claim was rejected. You can resubmit with updated information.
+              {t('venueClaim.resubmitBanner')}
             </Text>
           </View>
         )}
 
         <TouchableOpacity style={styles.continueBtn} onPress={handleContinue} activeOpacity={0.8}>
           <Text style={styles.continueBtnText}>
-            {canResubmit ? 'Resubmit Claim' : 'Start Claiming'}
+            {canResubmit ? t('venueClaim.resubmitClaim') : t('venueClaim.startClaiming')}
           </Text>
         </TouchableOpacity>
       </ScrollView>

@@ -11,6 +11,7 @@ import {
   PanResponder,
 } from 'react-native';
 import {GlobalColors, ColorScheme} from '../styles/GlobalColors';
+import useTranslation from '../Hooks/useTranslation';
 
 const {height: screenHeight} = Dimensions.get('window');
 const MODAL_HEIGHT = screenHeight * 0.7; // 70% of screen height for more content
@@ -36,6 +37,7 @@ const FreeStreamLimitModal: React.FC<FreeStreamLimitModalProps> = ({
   onCancel,
   freeStreamingStatus,
 }) => {
+  const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(MODAL_HEIGHT)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -99,7 +101,7 @@ const FreeStreamLimitModal: React.FC<FreeStreamLimitModalProps> = ({
   ).current;
 
   const formatResetDate = (dateString?: string) => {
-    if (!dateString) return 'Next Friday';
+    if (!dateString) return t('streaming.nextFriday');
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
@@ -141,31 +143,28 @@ const FreeStreamLimitModal: React.FC<FreeStreamLimitModalProps> = ({
           
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Free Streaming Limit Reached</Text>
+            <Text style={styles.title}>{t('streaming.usedFreeMinutes')}</Text>
             <Text style={styles.subtitle}>
-              {freeStreamingStatus?.weeklyStreamsUsed || 2}/2 weekly streams used
+              {t('streaming.weeklyStreamsUsed', { used: freeStreamingStatus?.weeklyStreamsUsed || 2, max: 2 })}
             </Text>
           </View>
 
           {/* Content */}
           <View style={styles.content}>
             <Text style={styles.message}>
-              {freeStreamingStatus?.message || 
-               "You've used your 2 free streams for this week. Each free stream allows up to 10 minutes of streaming time."}
+              {t('streaming.streamEndingGetMinutes')}
             </Text>
 
             <View style={styles.resetInfo}>
               <Text style={styles.resetText}>
-                🔄 Free streams reset: {formatResetDate(freeStreamingStatus?.nextResetDate)}
+                {t('streaming.freeMinutesResetNext', { nextReset: formatResetDate(freeStreamingStatus?.nextResetDate) })}
               </Text>
             </View>
 
-            <View style={styles.boostBenefits}>
-              <Text style={styles.boostTitle}>Boost Benefits:</Text>
-              <Text style={styles.benefit}>• Unlimited streaming time</Text>
-              <Text style={styles.benefit}>• Higher visibility in discovery</Text>
-              <Text style={styles.benefit}>• Priority placement on map</Text>
-              <Text style={styles.benefit}>• No weekly limits</Text>
+            <View style={styles.minutesInfo}>
+              <Text style={styles.minutesInfoText}>
+                {t('streaming.minutesNeverExpireInfo')}
+              </Text>
             </View>
           </View>
 
@@ -174,13 +173,13 @@ const FreeStreamLimitModal: React.FC<FreeStreamLimitModalProps> = ({
             <TouchableOpacity
               style={styles.boostButton}
               onPress={onBoostAndGoLive}>
-              <Text style={styles.boostButtonText}>Boost & Go Live</Text>
+              <Text style={styles.boostButtonText}>{t('event.getMoreMinutes')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={onCancel}>
-              <Text style={styles.cancelButtonText}>Continue Anyway</Text>
+              <Text style={styles.cancelButtonText}>{t('event.maybeLater')}</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -270,7 +269,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
-  boostBenefits: {
+  minutesInfo: {
     backgroundColor: colors.highlightBackground || 'rgba(255, 215, 0, 0.05)',
     padding: 16,
     borderRadius: 8,
@@ -278,17 +277,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.highlightBorder || 'rgba(255, 215, 0, 0.2)',
   },
-  boostTitle: {
-    color: colors.highlight || '#FFD700',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  benefit: {
+  minutesInfoText: {
     color: colors.textSecondary || '#CCCCCC',
     fontSize: 14,
-    marginBottom: 6,
     lineHeight: 20,
+    textAlign: 'center',
   },
   actions: {
     paddingHorizontal: 20,

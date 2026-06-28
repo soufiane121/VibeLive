@@ -67,7 +67,6 @@ export const analyticsApi = createApi({
         method: 'POST',
         body: sessionData,
       }),
-      invalidatesTags: ['Analytics'],
     }),
 
     // Track session end
@@ -77,7 +76,6 @@ export const analyticsApi = createApi({
         method: 'POST',
         body: sessionData,
       }),
-      invalidatesTags: ['Analytics'],
     }),
 
     // Track single event
@@ -87,7 +85,6 @@ export const analyticsApi = createApi({
         method: 'POST',
         body: eventData,
       }),
-      invalidatesTags: ['Analytics'],
     }),
 
     // Track batch events
@@ -97,7 +94,6 @@ export const analyticsApi = createApi({
         method: 'POST',
         body: batchData,
       }),
-      invalidatesTags: ['Analytics'],
     }),
   }),
 });

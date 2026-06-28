@@ -73,20 +73,20 @@ class PaymentServiceClass {
       basic: {
         id: 'basic',
         price: 2.99,
-        duration: 2,
-        features: ['2x visibility', 'Priority in search', 'Basic analytics'],
+        duration: 30,
+        features: ['30 streaming minutes'],
       },
       premium: {
         id: 'premium',
         price: 7.99,
-        duration: 6,
-        features: ['5x visibility', 'Featured placement', 'Advanced analytics', 'Custom badges'],
+        duration: 120,
+        features: ['120 streaming minutes'],
       },
       ultimate: {
         id: 'ultimate',
         price: 14.99,
-        duration: 12,
-        features: ['10x visibility', 'Homepage featured', 'Premium analytics', 'VIP badges', 'Push notifications'],
+        duration: 300,
+        features: ['300 streaming minutes'],
       },
     };
 
