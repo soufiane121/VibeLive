@@ -1,6 +1,5 @@
-import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-import {getLocalData} from '../../src/Utils/LocalStorageHelper';
-import {baseUrl} from '../../baseUrl';
+import {createApi} from '@reduxjs/toolkit/query/react';
+import {createAuthBaseQuery} from '../../src/Services/AuthBaseQuery';
 
 export interface Event {
   _id: string;
@@ -149,16 +148,7 @@ export interface PromoteEventRequest {
 
 export const eventsApi = createApi({
   reducerPath: 'eventsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${baseUrl}/events`,
-    prepareHeaders: async headers => {
-      const token = await getLocalData({key: 'token'});
-      if (token) {
-        headers.set('Authorization', `${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: createAuthBaseQuery('/events'),
   tagTypes: ['Event', 'UserEvents', 'UserRSVPs'],
   endpoints: builder => ({
     // Get upcoming events

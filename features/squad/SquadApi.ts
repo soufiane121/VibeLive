@@ -1,6 +1,5 @@
-import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-import {baseUrl} from '../../baseUrl';
-import {getLocalData} from '../../src/Utils/LocalStorageHelper';
+import {createApi} from '@reduxjs/toolkit/query/react';
+import {authBaseQuery} from '../../src/Services/AuthBaseQuery';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -126,17 +125,7 @@ export interface VetoResponse {
 export const squadApi = createApi({
   reducerPath: 'squadApi',
   tagTypes: ['Squad', 'SquadInvite'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: baseUrl,
-    prepareHeaders: async header => {
-      const token = await getLocalData({key: 'token'});
-      if (token) {
-        header.set('Authorization', `${token}`);
-      }
-      header.set('ngrok-skip-browser-warning', 'true');
-      return header;
-    },
-  }),
+  baseQuery: authBaseQuery,
   endpoints: builder => ({
     // Create a new squad (auth required)
     createSquad: builder.mutation<CreateSquadResponse, {area: SquadArea}>({

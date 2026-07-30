@@ -88,8 +88,8 @@ const SquadJoinScreen: React.FC = () => {
     }
 
     try {
-      const [lng, lat] = coordinates;
-      const hasValidLocation = lat !== 35.160 || lng !== -80.719; // not default
+      const hasValidLocation = coordinates && coordinates.length >= 2;
+      const [lng, lat] = coordinates ?? [0, 0];
 
       const result = await joinSquad({
         squad_code: squadCode,

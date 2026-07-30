@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {View, ActivityIndicator} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import LoginContainer from '../../FeatureComponents/Auth/Login/LoginContainer';
@@ -10,6 +10,8 @@ import {
 import {setCurrentUser} from '../../../features/registrations/CurrentUser';
 import {useDispatch} from 'react-redux';
 import {locationStore} from '../../CustomHooks/useGetLocation';
+import {TokenManager} from '../../Services/TokenManager';
+import {USE_DUAL_TOKEN_AUTH} from '../../Config/AppConfig';
 import StreamPlayer from '../../WatchStream/StreamPlayer';
 import CarrouselContainer from '../../Carrousel/CarrouselContainer';
 import SignUpContainer from '../../FeatureComponents/Auth/SignUp/SignUpContainer';
@@ -68,14 +70,12 @@ const StackNavigation = () => {
   const [autoLoginFetch, {data, isSuccess, isError}] = useAutoLoginMutation();
   const [fetchSignOut] = useSingOutMutation();
   const [authChecked, setAuthChecked] = useState(false);
-  // const [singOutFetch] = useSingOutMutation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const autoLoginCalled = useRef(false);
 
   useEffect(() => {
-    if (!data) {
-      fetchAutoLogin();
-    }
-    // handleSignOut();
-  }, [data]);
+    initializeAuth();
+  }, []);
 
   useEffect(() => {
     if (isSuccess || isError) {
@@ -83,29 +83,77 @@ const StackNavigation = () => {
     }
   }, [isSuccess, isError]);
 
-  // If data already exists from a previous session, auth is known
   useEffect(() => {
-    if (data) {
+    if (data?.data?._id) {
+      setIsAuthenticated(true);
       setAuthChecked(true);
     }
   }, [data]);
 
-  const handleSignOut = async () => {
-    try {
-      await fetchSignOut({});
-    } catch (error) {}
+  const initializeAuth = async () => {
+    if (USE_DUAL_TOKEN_AUTH) {
+      await TokenManager.hydrate();
+
+      // Register sign-out callback for when refresh token expires
+      TokenManager.setSignOutCallback(() => {
+        setIsAuthenticated(false);
+        setAuthChecked(true);
+        dispatch(setCurrentUser({
+          _id: '', firstName: '', lastName: '', email: '', userName: '', password: '', createdAt: '',
+          location: {type: 'Point', coordinates: []},
+        }));
+      });
+
+      const token = await TokenManager.getValidAccessToken();
+
+      if (token) {
+        setIsAuthenticated(true);
+        setAuthChecked(true);
+        // Call auto-login in background to sync user data (non-blocking)
+        fetchAutoLoginBackground();
+      } else {
+        setIsAuthenticated(false);
+        setAuthChecked(true);
+      }
+    } else {
+      // Legacy flow: call auto-login directly
+      fetchAutoLoginLegacy();
+    }
   };
 
-  const fetchAutoLogin = async () => {
+  const fetchAutoLoginBackground = async () => {
+    if (autoLoginCalled.current) return;
+    autoLoginCalled.current = true;
     try {
-      const coords = locationStore.getCoordinates();
+      // Use cached coordinates — don't wait for fresh GPS
+      const coords = locationStore.getCoordinates() ?? undefined;
       const res = await autoLoginFetch({coordinates: coords}).unwrap();
       if (res?.data?._id) {
         dispatch(setCurrentUser(res?.data));
       }
     } catch (error) {
-      // Alert.alert(error as string);
+      // Non-blocking: auth already validated via token, this just syncs user data
     }
+  };
+
+  const fetchAutoLoginLegacy = async () => {
+    try {
+      const coords = locationStore.getCoordinates() ?? undefined;
+      const res = await autoLoginFetch({coordinates: coords}).unwrap();
+      if (res?.data?._id) {
+        dispatch(setCurrentUser(res?.data));
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      setIsAuthenticated(false);
+    }
+    setAuthChecked(true);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await fetchSignOut({});
+    } catch (error) {}
   };
 
   if (!authChecked) {
@@ -126,7 +174,7 @@ const StackNavigation = () => {
     <>
       <VotingInitializer />
       <Stack.Navigator
-        initialRouteName={isSuccess && data?.data?._id ? 'Bottom' : 'Login'}
+        initialRouteName={isAuthenticated ? 'Bottom' : 'Login'}
         screenOptions={{
           animation: 'fade',
           headerBackVisible: false,

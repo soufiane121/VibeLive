@@ -23,6 +23,8 @@ import {setCurrentUser} from '../../../../features/registrations/CurrentUser';
 import useTranslation from '../../../Hooks/useTranslation';
 import {GlobalColors} from '../../../styles/GlobalColors';
 import { AppleIcon } from '../../../UIComponents/Icons';
+import {TokenManager} from '../../../Services/TokenManager';
+import {USE_DUAL_TOKEN_AUTH} from '../../../Config/AppConfig';
 
 const LoginContainer = () => {
   const [email, setEmail] = useState('');
@@ -55,6 +57,9 @@ const LoginContainer = () => {
       if (result?.data) {
         await setLocalData({key: 'token', value: result.data.email});
         await setLocalData({key: 'isAuthenticated', value: 'true'});
+        if (USE_DUAL_TOKEN_AUTH && result.data.tokenPair) {
+          await TokenManager.setTokens(result.data.tokenPair);
+        }
         dispatch(setCurrentUser(result.data));
         navigation.replace('Bottom');
       }
@@ -77,6 +82,9 @@ const LoginContainer = () => {
 
         if (answer.data) {
           await setLocalData({key: 'token', value: answer.data.email});
+          if (USE_DUAL_TOKEN_AUTH && answer.data.tokenPair) {
+            await TokenManager.setTokens(answer.data.tokenPair);
+          }
           dispatch(setCurrentUser(answer.data));
 
           navigation.replace('Bottom');

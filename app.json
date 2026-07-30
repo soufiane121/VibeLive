@@ -1,6 +1,6 @@
 {
   "name": "VibeLive",
-  "displayName": "VibeLive",
+  "displayName": "NightPeek",
   "plugins": [
     "expo-font"
   ]

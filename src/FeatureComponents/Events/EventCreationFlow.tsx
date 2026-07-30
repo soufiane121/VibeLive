@@ -53,7 +53,7 @@ const EventCreationFlow: React.FC = () => {
     endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
     venueId: '',
     location: {
-      coordinates: coordinates as [number, number],
+      coordinates: (coordinates ?? [0, 0]) as [number, number],
       address: '',
       address1: '',
       city: '',

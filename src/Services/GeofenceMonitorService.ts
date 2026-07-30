@@ -14,11 +14,11 @@ const METERS_PER_DEGREE = 111_320;
 // ═══════════════════════════════════════════════════════════════════════════
 // 4-Gate Pipeline Constants (Client-side dwell detection)
 // ═══════════════════════════════════════════════════════════════════════════
-const DWELL_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes to trigger dwell
+const DWELL_THRESHOLD_MS = 10 * 60 * 1000; // 15 minutes to trigger dwell
 const DWELL_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes between dwells
 const MIN_MOVE_METERS = 15; // Movement threshold for gate 1
 const MAX_GPS_ACCURACY_M = 50; // Reject readings with accuracy worse than this
-const KNOWN_PLACE_RADIUS_M = 80; // Radius for known place matching
+const KNOWN_PLACE_RADIUS_M = 50; // Radius for known place matching
 const MAX_REALISTIC_SPEED_MPS = 50; // Filter out impossible GPS jumps
 const KNOWN_PLACE_TTL_MS = 1 * 24 * 60 * 60 * 1000; // 1 day TTL for known places we need one day not 30
 
@@ -300,7 +300,7 @@ class GeofenceMonitorService {
   private lastLocation: LocationUpdate | null = null;
   private config: GeofenceConfig = {
     enabled: true,
-    radiusMeters: 5,
+    radiusMeters: 50,
     batteryThreshold: 15,
   };
   private onVenuesDetected: GeofenceCallback | null = null;

@@ -1,6 +1,5 @@
-import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-import {baseUrl} from '../../baseUrl';
-import {getLocalData} from '../../src/Utils/LocalStorageHelper';
+import {createApi} from '@reduxjs/toolkit/query/react';
+import {createAuthBaseQuery} from '../../src/Services/AuthBaseQuery';
 
 export interface NotificationSettings {
   pushNotifications: boolean;
@@ -82,17 +81,7 @@ export interface VerifyEmailRequest {
 export const settingsApi = createApi({
   reducerPath: 'settingsApi',
   tagTypes: ['Settings', 'BlockedUsers', 'UserProfile'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${baseUrl}/settings`,
-    prepareHeaders: async (headers) => {
-      const token = await getLocalData({key: 'token'});
-      if (token) {
-        headers.set('Authorization', `${token}`);
-      }
-      headers.set('Content-Type', 'application/json');
-      return headers;
-    },
-  }),
+  baseQuery: createAuthBaseQuery('/settings'),
   endpoints: (builder) => ({
     // Get user settings
     getUserSettings: builder.query<UserSettings, string>({

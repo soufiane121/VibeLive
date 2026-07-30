@@ -21,6 +21,7 @@ import useTranslation from '../Hooks/useTranslation';
 import { useSingOutMutation } from '../../features/registrations/LoginSliceApi';
 import { setCurrentUser } from '../../features/registrations/CurrentUser';
 import { setLocalData, getLocalData } from '../Utils/LocalStorageHelper';
+import { TokenManager } from '../Services/TokenManager';
 
 const colors = GlobalColors.Account;
 
@@ -146,6 +147,7 @@ const Settings = () => {
             } catch {}
             await setLocalData({ key: 'isAuthenticated', value: 'false' });
             await setLocalData({ key: 'token', value: '' });
+            await TokenManager.clearTokens();
             dispatch(setCurrentUser({
               _id: '', firstName: '', lastName: '', email: '', userName: '', password: '', createdAt: '',
               location: { type: 'Point', coordinates: [] },

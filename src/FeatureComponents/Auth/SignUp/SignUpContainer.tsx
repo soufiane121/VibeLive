@@ -14,6 +14,8 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import useTranslation from '../../../Hooks/useTranslation';
 import {GlobalColors} from '../../../styles/GlobalColors';
 import { AppleIcon } from '../../../UIComponents/Icons';
+import {TokenManager} from '../../../Services/TokenManager';
+import {USE_DUAL_TOKEN_AUTH} from '../../../Config/AppConfig';
 
 const SignUpContainer = ({navigation}) => {
   const [appleAuth, {isLoading: isAppleLoading}] = useAppleAuthMutation();
@@ -39,6 +41,9 @@ const SignUpContainer = ({navigation}) => {
       if (result?.data?.email) {
         await setLocalData({key: 'token', value: result.data.email});
         await setLocalData({key: 'isAuthenticated', value: 'true'});
+        if (USE_DUAL_TOKEN_AUTH && result.data.tokenPair) {
+          await TokenManager.setTokens(result.data.tokenPair);
+        }
         navigation.navigate('OnboardingAccountCreation', {
           signupData: {
             userName: result.data.userName || '',

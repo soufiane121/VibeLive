@@ -1,6 +1,5 @@
-import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-import {baseUrl} from '../../baseUrl';
-import {getLocalData} from '../../src/Utils/LocalStorageHelper';
+import {createApi} from '@reduxjs/toolkit/query/react';
+import {authBaseQuery} from '../../src/Services/AuthBaseQuery';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -122,17 +121,7 @@ export interface NearbyVenue {
 export const venueClaimApi = createApi({
   reducerPath: 'venueClaimApi',
   tagTypes: ['ClaimStatus', 'VenueSearch', 'NearbyVenues'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: baseUrl,
-    prepareHeaders: async header => {
-      const token = await getLocalData({key: 'token'});
-      if (token) {
-        header.set('Authorization', `${token}`);
-      }
-      header.set('ngrok-skip-browser-warning', 'true');
-      return header;
-    },
-  }),
+  baseQuery: authBaseQuery,
   endpoints: builder => ({
     // ── Search venues by name ────────────────────────────────────────
     searchVenues: builder.query<{venues: VenueSearchResult[]}, string>({

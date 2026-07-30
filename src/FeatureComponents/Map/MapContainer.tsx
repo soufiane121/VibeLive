@@ -274,21 +274,24 @@ const MapContainer = () => {
     useGetAllMapPointsMutation();
   const [featuresPointsData, setFeaturesPointsData] = useState<any[]>([]);
   const isDarkMode = useColorScheme() === 'dark';
+  const initialCameraSet = useRef(false);
 
-  // Fetch events for map
+  // Fetch events for map — skip until real coordinates are available
   const {data: eventsData, isLoading: eventsLoading} = useGetMapEventsQuery({
-    coordinates: `${coordinates[1]},${coordinates[0]}`,
-    useDB: true, // Use database for testing
+    coordinates: coordinates ? `${coordinates[1]},${coordinates[0]}` : '',
+    useDB: true,
+  }, {
+    skip: !coordinates,
   });
 
   const {data: heatmapData, isLoading: heatmapLoading} = useGetHeatmapQuery<any>(
       {
-        latitude: coordinates[1],
-        longitude: coordinates[0],
+        latitude: coordinates ? coordinates[1] : 0,
+        longitude: coordinates ? coordinates[0] : 0,
         radius: 20,
       },
       {
-        skip: coordinates.length < 2,
+        skip: !coordinates,
         pollingInterval: isActive && isFocused ? 45000 : 0,
       },
     );
@@ -363,7 +366,7 @@ const MapContainer = () => {
 
 
 
-  const center = coordinates; // Stable reference from LocationStore — no spread needed
+  const center = coordinates; // Stable reference from LocationStore — null until GPS resolves
   const radius = 0.005; // Radar radius (in degrees)
   const radarRef = useRef<ShapeSource>(null); // Ref for ShapeSource
   const angleRef = useRef(0); // Ref to track current angle
@@ -371,6 +374,19 @@ const MapContainer = () => {
   const throttleUpdate = useRef(false); // Ref for throttling updates
   const cameraRef = useRef<Camera | null>(null);
   const pulseAnimation = useRef(new Animated.Value(0)).current;
+
+  // Fly to user's real location once GPS resolves
+  useEffect(() => {
+    if (initialCameraSet.current || !coordinates) return;
+    initialCameraSet.current = true;
+    setTimeout(() => {
+      cameraRef.current?.setCamera({
+        centerCoordinate: coordinates,
+        zoomLevel: 14,
+        animationDuration: 1000,
+      });
+    }, 100);
+  }, [coordinates]);
 
   // Analytics integration - using powerful useAnalytics for all tracking
   const {trackEvent, trackMapInteraction} = useAnalytics({
@@ -486,13 +502,13 @@ const MapContainer = () => {
   );
 
   useEffect(() => {
-    if (coordinates.length > 0) {
+    if (coordinates && coordinates.length >= 2) {
       // Update bounds based on user location
       const dynamicBounds = calculateDynamicBounds(coordinates, 15); // 15km radius
       setBounds(dynamicBounds);
       handleGetMapsPoints();
     }
-  }, [coordinates.length, calculateDynamicBounds]);
+  }, [coordinates, calculateDynamicBounds]);
 
 
   // Persistent image registry: accumulate all image keys ever seen.
@@ -585,7 +601,7 @@ const MapContainer = () => {
     const hasLiveFeatures = featuresPointsData.length > 0;
     const hasHeatmap = (heatmapData?.heatmap?.length ?? 0) > 0;
     const hasEvents = mapEvents.length > 0;
-
+    
     return !(hasLiveFeatures || hasHeatmap || hasEvents);
   }, [featuresPointsData, heatmapData, mapEvents]);
 
@@ -703,13 +719,14 @@ const MapContainer = () => {
   );
 
   const radarBeam = useMemo(
-    () => newCreateRadarBeam(center, radius, 0, 45, 10), // Reduced numPoints for efficiency
+    () => center ? newCreateRadarBeam(center, radius, 0, 45, 10) : null,
     [center, radius],
   );
 
   const shouldRenderMarkers = zoomLevel > 10;
 
   const handleResetcurrentLocation = () => {
+    if (!coordinates) return;
     cameraRef.current?.setCamera({
       centerCoordinate: coordinates,
       zoomLevel: 14,
@@ -718,7 +735,7 @@ const MapContainer = () => {
   };
   return (
     <View style={styles.container}>
-      {coordinates.length > 0 && (
+      {coordinates && coordinates.length >= 2 && (
         <>
           <MapView
             ref={mapRef}
@@ -734,12 +751,14 @@ const MapContainer = () => {
             // logoPosition={{bottom:730, right: 300}}
             attributionPosition={{top: -33, right: 1}}>
             <Camera
-              zoomLevel={zoomLevel}
-              centerCoordinate={coordinates}
-              maxBounds={USA_BOUNDS} // Restrict the map to USA bounds
-              minZoomLevel={8} // Prevent zooming out too far
-              maxZoomLevel={17}
               ref={cameraRef}
+              defaultSettings={{
+                centerCoordinate: coordinates,
+                zoomLevel: 14,
+              }}
+              maxBounds={USA_BOUNDS}
+              minZoomLevel={8}
+              maxZoomLevel={17}
             />
             {/* still need to copy radar animation to here
              */}
@@ -830,7 +849,9 @@ const MapContainer = () => {
                       feature={{
                         id: cluster.properties.id,
                         isLive: isCluster,
-                        coordinates: cluster.properties.coordinates || cluster.geometry.coordinates,
+                        coordinates:
+                          cluster.properties.coordinates ||
+                          cluster.geometry.coordinates,
                         imageUrl: cluster?.properties?.imageUrl,
                         properties: {
                           ...cluster?.properties,
@@ -892,18 +913,21 @@ const MapContainer = () => {
                 );
               })}
           </MapView>
+          {console.log("================",{isMapEmpty})}
+          <EmptyMapState isVisible={!isAnyLoading && isMapEmpty} />
+          {/* Selected Venue Card Overlay */}
+
           <ResetLocationButton
             onPress={handleResetcurrentLocation}
             styles="
         flex
-        z-10 
+        z-50
         absolute
-        bottom-5 
-        // mb-1
-        right-3 
-        justify-end 
-        items-end 
-        bg-slate-500 
+        bottom-5
+        right-2
+        justify-end
+        items-end
+        bg-slate-500
         w-18
         h-18
         opacity-70
@@ -928,8 +952,6 @@ const MapContainer = () => {
               translateY={translateY}
             />
           )}
-
-          <EmptyMapState isVisible={!isAnyLoading && isMapEmpty} />
         </>
       )}
     </View>

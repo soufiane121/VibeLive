@@ -1,6 +1,8 @@
-import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-import {baseUrl} from '../../baseUrl';
-import {getLocalData, setLocalData} from '../../src/Utils/LocalStorageHelper';
+import {createApi} from '@reduxjs/toolkit/query/react';
+import {authBaseQuery} from '../../src/Services/AuthBaseQuery';
+import {setLocalData} from '../../src/Utils/LocalStorageHelper';
+import {TokenManager, type TokenPair} from '../../src/Services/TokenManager';
+import {USE_DUAL_TOKEN_AUTH} from '../../src/Config/AppConfig';
 
 interface Props {
   email: string;
@@ -11,16 +13,7 @@ interface Props {
 export const loginApi = createApi({
   reducerPath: 'loginApi',
   tagTypes: ['Login'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: baseUrl,
-    prepareHeaders: async header => {
-      const token = await getLocalData({key: 'token'});
-      if (token) {
-        header.set('Authorization', `${token}`);
-      }
-      return header;
-    },
-  }),
+  baseQuery: authBaseQuery,
   endpoints: builder => ({
     login: builder.mutation({
       query: (body: Props) => ({
@@ -36,10 +29,13 @@ export const loginApi = createApi({
         body,
         method: 'POST',
       }),
-      transformResponse: async response => {
+      transformResponse: async (response: any) => {
         if (response?.data?.email) {
           await setLocalData({key: 'isAuthenticated', value: 'true'});
           await setLocalData({key: 'token', value: response?.data?.email});
+          if (USE_DUAL_TOKEN_AUTH && response.data.tokenPair) {
+            await TokenManager.setTokens(response.data.tokenPair as TokenPair);
+          }
         }
         return response;
       },
@@ -50,10 +46,13 @@ export const loginApi = createApi({
         body,
         method: 'POST',
       }),
-      transformResponse: async response => {
+      transformResponse: async (response: any) => {
         if (response?.data?.email) {
           await setLocalData({key: 'isAuthenticated', value: 'true'});
           await setLocalData({key: 'token', value: response?.data?.email});
+          if (USE_DUAL_TOKEN_AUTH && response.data.tokenPair) {
+            await TokenManager.setTokens(response.data.tokenPair as TokenPair);
+          }
         }
         return response;
       },
@@ -116,9 +115,26 @@ export const loginApi = createApi({
         if (response?.data?.email) {
           await setLocalData({key: 'isAuthenticated', value: 'true'});
           await setLocalData({key: 'token', value: response.data.email});
+          if (USE_DUAL_TOKEN_AUTH && response.data.tokenPair) {
+            await TokenManager.setTokens(response.data.tokenPair as TokenPair);
+          }
         }
         return response;
       },
+    }),
+    refreshToken: builder.mutation<TokenPair, {refreshToken: string}>({
+      query: body => ({
+        url: 'users/token/refresh',
+        method: 'POST',
+        body,
+      }),
+    }),
+    updateLocation: builder.mutation<void, {coordinates: [number, number]}>({
+      query: body => ({
+        url: 'users/location',
+        method: 'PATCH',
+        body,
+      }),
     }),
   }),
 });

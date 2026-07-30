@@ -1,6 +1,5 @@
-import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-import {baseUrl} from '../../baseUrl';
-import {getLocalData} from '../../src/Utils/LocalStorageHelper';
+import {createApi} from '@reduxjs/toolkit/query/react';
+import {authBaseQuery} from '../../src/Services/AuthBaseQuery';
 
 export interface VenueAddress {
   street?: string;
@@ -133,17 +132,7 @@ export interface OfflineVote {
 export const votingApi = createApi({
   reducerPath: 'votingApi',
   tagTypes: ['Venues', 'VenueDetail', 'Heatmap', 'Dashboard', 'Preferences', 'VibeShifts', 'Notifications'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: baseUrl,
-    prepareHeaders: async header => {
-      const token = await getLocalData({key: 'token'});
-      if (token) {
-        header.set('Authorization', `${token}`);
-      }
-      header.set('ngrok-skip-browser-warning', 'true');
-      return header;
-    },
-  }),
+  baseQuery: authBaseQuery,
   endpoints: builder => ({
     // Vote endpoints
     castVote: builder.mutation<VoteResult, {venueId: string; voteType: 'hot' | 'dead'; source?: string}>({

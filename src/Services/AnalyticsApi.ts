@@ -1,6 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { baseUrl } from '../../baseUrl';
-import { getLocalData } from '../Utils/LocalStorageHelper';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { authBaseQuery } from './AuthBaseQuery';
 
 // Analytics Event Interface
 interface AnalyticsEvent {
@@ -47,18 +46,7 @@ interface BatchEventsRequest {
 export const analyticsApi = createApi({
   reducerPath: 'analyticsApi',
   tagTypes: ['Analytics'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: baseUrl,
-    prepareHeaders: async (headers) => {
-      const token = await getLocalData({ key: 'token' });
-      if (token) {
-        headers.set('Authorization', `${token}`);
-      }
-      // Add ngrok header to bypass browser warning
-      headers.set('ngrok-skip-browser-warning', 'true');
-      return headers;
-    },
-  }),
+  baseQuery: authBaseQuery,
   endpoints: (builder) => ({
     // Track session start
     trackSessionStart: builder.mutation<void, SessionStartRequest>({

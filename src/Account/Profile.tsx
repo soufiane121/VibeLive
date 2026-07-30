@@ -24,6 +24,7 @@ import { useGetAccountProfileQuery } from '../../features/settings/SettingsSlice
 import { useSingOutMutation } from '../../features/registrations/LoginSliceApi';
 import { setCurrentUser } from '../../features/registrations/CurrentUser';
 import { setLocalData } from '../Utils/LocalStorageHelper';
+import { TokenManager } from '../Services/TokenManager';
 
 const colors = GlobalColors.Account;
 
@@ -163,6 +164,7 @@ const Profile = () => {
           } catch {}
           await setLocalData({ key: 'isAuthenticated', value: 'false' });
           await setLocalData({ key: 'token', value: '' });
+          await TokenManager.clearTokens();
           dispatch(setCurrentUser({
             _id: '', firstName: '', lastName: '', email: '', userName: '', password: '', createdAt: '',
             location: { type: 'Point', coordinates: [] },

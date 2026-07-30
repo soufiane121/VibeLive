@@ -4,6 +4,19 @@
 // All tunables live here. Change a value once and it propagates everywhere.
 // For server-side parity, the backend reads the same knob from process.env.
 
+// ── Authentication Strategy ─────────────────────────────────────────────
+
+/** When true, use dual-token auth (15min access + 30d refresh) with auto-refresh.
+ *  When false, revert to legacy single-JWT (7d) flow via /auto-login. */
+export const USE_DUAL_TOKEN_AUTH = true;
+
+/** Buffer in milliseconds before access token expiry to trigger proactive refresh.
+ *  Prevents edge-case 401s from clock drift or network latency. */
+export const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60_000;
+
+/** Maximum interval (ms) between location syncs to backend. */
+export const LOCATION_SYNC_THROTTLE_MS = 5 * 60 * 1000;
+
 // ── Background Location Suppression ─────────────────────────────────────
 
 /** Number of nightly notifications that trigger background-location suppression.

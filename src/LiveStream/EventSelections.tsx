@@ -265,6 +265,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       setVenueLoadingState('hidden');
       return;
     }
+    if (!coordinates) return;
     // coordinates from useGetLocation are [longitude, latitude]
     const [lng, lat] = coordinates;
     if (!lat || !lng) return;
@@ -277,7 +278,7 @@ const EventSelections = ({onCompleteSelection}: EventSelectionsProps) => {
       setVenueLoadingState(prev => (prev === 'loading' ? 'hidden' : prev));
     }, 5000);
 
-    fetchNearbyVenues({lat, lng, limit: 5, radius: 250})
+    fetchNearbyVenues({lat, lng, limit: 5, radius: 50})
       .unwrap()
       .then(result => {
         clearTimeout(timeoutId);

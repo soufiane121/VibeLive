@@ -1,6 +1,5 @@
-import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-import {baseUrl} from '../../baseUrl';
-import {getLocalData, setLocalData} from '../../src/Utils/LocalStorageHelper';
+import {createApi} from '@reduxjs/toolkit/query/react';
+import {authBaseQuery} from '../../src/Services/AuthBaseQuery';
 
 interface Props {
   email: string;
@@ -13,6 +12,7 @@ export interface NearbyVenue {
   name: string;
   primaryTag: string | null;
   distanceMetres: number;
+  source?: 'db' | 'db_relaxed' | 'external_api';
 }
 
 interface NearbyVenuesResponse {
@@ -23,16 +23,7 @@ interface NearbyVenuesResponse {
 export const liveStream = createApi({
   reducerPath: 'liveStream',
   tagTypes: ['LiveStream'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: baseUrl,
-    prepareHeaders: async header => {
-      let token = await getLocalData({key: 'token'});
-      if (token) {
-        header.set('Authorization', `${token}`);
-      }
-      return header;
-    },
-  }),
+  baseQuery: authBaseQuery,
   endpoints: builder => ({
     startStreaming: builder.mutation({
       query: body => ({

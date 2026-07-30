@@ -87,7 +87,7 @@ const VotingInitializer = () => {
       !currentUser.votingPreferences?.permanentOptOut;
 
     if (votingEnabled) {
-      const radius = currentUser.votingPreferences?.notificationRadius || 5;
+      const radius = currentUser.votingPreferences?.notificationRadius || 50;
       geofenceMonitor.configure({enabled: true, radiusMeters: radius});
       geofenceMonitor.startMonitoring(
         handleVenuesDetected,
